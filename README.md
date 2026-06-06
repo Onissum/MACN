@@ -42,3 +42,39 @@ L'idea è usare hardware già esistente invece di installare nuovi mini data cen
 Il progetto è in fase iniziale/sperimentale.
 
 Questo repository nasce per documentare l'idea, gli esperimenti e le future implementazioni.
+
+## Milestone 0 - Seven Device Test
+
+MACN ha già avuto una prima prova sperimentale reale.
+
+Sono stati collegati contemporaneamente 7 dispositivi tramite WebRTC:
+
+- 3 PC
+- 3 smartphone
+- 1 tablet
+
+Questa prova ha dimostrato la possibilità di creare una comunicazione distribuita tra dispositivi eterogenei.
+
+## Roadmap iniziale
+
+### v0.1 - Network test
+- Comunicazione WebRTC tra più dispositivi
+- Identificazione dei nodi
+- Stato online/offline
+- Test con dispositivi diversi
+
+### v0.2 - Distributed task test
+- Invio di piccoli task computazionali
+- Esecuzione locale sui worker
+- Restituzione del risultato al coordinatore
+- Misurazione dei tempi
+
+### v0.3 - Benchmark distribuito
+- Divisione del lavoro tra nodi
+- Calcolo del contributo di ogni dispositivo
+- Gestione dei nodi lenti o disconnessi
+
+### v0.4 - AI / rendering experiments
+- Test con micro-task AI
+- Test con rendering o encoding distribuito
+- Studio di modelli di contributo volontario
