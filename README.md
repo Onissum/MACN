@@ -78,3 +78,23 @@ Questa prova ha dimostrato la possibilità di creare una comunicazione distribui
 - Test con micro-task AI
 - Test con rendering o encoding distribuito
 - Studio di modelli di contributo volontario
+
+## Historic Prototype v11
+
+Durante la fase sperimentale di ottobre è stata sviluppata una versione avanzata del prototipo MACN:
+
+**MACN v11.0 - Asymmetric Distribution for Active Work-Stealing**
+
+Questa versione includeva già:
+
+- comunicazione WebRTC tra peer
+- distribuzione di task computazionali
+- benchmark Mandelbrot
+- stato dei peer in tempo reale
+- help-offer / help-accept / help-decline
+- cooperative work-stealing
+- distribuzione asimmetrica del carico
+
+La versione storica è conservata in:
+
+`historic-prototypes/v11/`
