@@ -43,3 +43,11 @@ L'obiettivo era verificare la comunicazione tra dispositivi diversi usando WebRT
 Questa cartella contiene file sperimentali, copie e versioni successive del client create durante lo sviluppo.
 
 Il progetto verrà progressivamente ripulito e organizzato nelle prossime versioni.
+
+## Task computazionali
+
+Il prototipo non si limitava alla connessione tra dispositivi.
+
+Durante i test, i dispositivi collegati ricevevano piccoli task computazionali da eseguire e restituivano i risultati al nodo coordinatore.
+
+Questo rappresenta il primo passo concreto verso l'obiettivo principale di MACN: trasformare una rete di dispositivi comuni in una rete volontaria di calcolo distribuito.
