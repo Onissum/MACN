@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MACN v11.0 PAWNS • Work-Stealing Cooperativo</title>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 24px; background: #0b0b0c; color: #eaeaea; line-height: 1.6; }
+    .container { max-width: 1800px; margin: 0 auto; }
+    h1 { font-size: 24px; margin: 0 0 8px; font-weight: 700; }
+    h2 { font-size: 16px; margin: 0 0 12px; font-weight: 600; }
+    p { color: #c7c7c7; font-size: 14px; margin: 0 0 16px; }
+    .alert { background: #1a2a3a; border: 1px solid #2b5cff; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; animation: slideIn 0.3s; }
+    .alert.success { background: #1a3a1a; border-color: #16a34a; }
+    .alert.warning { background: #3a2a1a; border-color: #f59e0b; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .card { background: #141416; border: 1px solid #2a2a2e; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .card.highlight { border: 2px solid #7c3aed; background: linear-gradient(135deg, #1a1a3a 0%, #3a1a1a 100%); }
+    .card.pawns { border: 3px solid #16a34a; background: linear-gradient(135deg, #0a2a0a 0%, #1a3a1a 100%); }
+    button { background: #2b5cff; border: 0; color: white; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+    button.secondary { background: #2a2a2e; }
+    button.success { background: #16a34a; }
+    button.danger { background: #dc2626; }
+    button.purple { background: #7c3aed; }
+    button.orange { background: #f59e0b; }
+    button.pawns { background: linear-gradient(135deg, #16a34a 0%, #059669 50%, #10b981 100%); animation: pawnsGlow 2s infinite; border: 2px solid #fff; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
+    @keyframes pawnsGlow { 0%,100% { box-shadow: 0 0 20px rgba(22,163,74,.8);} 50% { box-shadow: 0 0 40px rgba(16,185,129,1);} }
+    .feature-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+    .feature-badge.pawns { background: #16a34a; color: white; animation: pulse 2s infinite; }
+    .feature-badge.new { background: #7c3aed; color: white; }
+    .feature-badge.fixed { background: #f59e0b; color: white; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .7; } }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    input[type="text"],input[type="number"],select,textarea,input[type="file"]{ flex:1;border-radius:8px;border:1px solid #2b2b2f;background:#0e0e10;color:#eaeaea;padding:10px;font-size:14px;font-family:inherit;}
+    textarea { min-height: 100px; resize: vertical; }
+    .badge { display:inline-block;background:#1e1e22;color:#16a34a;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;margin-left:8px;}
+    #logOutput { background:#0e0e10;border:1px solid #2b2b2f;border-radius:8px;padding:12px;max-height:300px;overflow-y:auto;font-family:'Courier New',monospace;font-size:12px;margin-bottom:12px;}
+    .log-entry{padding:4px 0;border-bottom:1px solid #1a1a1e;}
+    .log-entry.success{color:#16a34a}.log-entry.error{color:#dc2626}.log-entry.warning{color:#f59e0b}.log-entry.info{color:#2b5cff}
+    .task-card{border:2px solid #2a2a2e;border-radius:12px;padding:16px;margin-bottom:12px;cursor:pointer;transition:all .2s;background:#141416}
+    .task-card:hover{border-color:#2b5cff;transform:translateY(-2px)}
+    .task-card.selected{border-color:#16a34a;background:linear-gradient(135deg,#0a2a0a 0%,#1a3a1a 100%)}
+    .task-icon{font-size:32px;margin-bottom:8px}
+    .task-name{font-size:16px;font-weight:600;margin-bottom:4px}
+    .task-desc{font-size:12px;color:#c7c7c7}
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:16px}
+    .stat-box{background:#0e0e10;border:1px solid #2b2b2f;border-radius:8px;padding:16px;text-align:center}
+    .stat-label{font-size:12px;color:#c7c7c7;margin-bottom:8px}
+    .stat-value{font-size:24px;font-weight:700;color:#16a34a}
+    .progress-container{background:#0e0e10;border:1px solid #2b2b2f;border-radius:8px;padding:16px;margin-top:16px;display:none}
+    .progress-header{display:flex;justify-content:space-between;margin-bottom:12px}
+    .progress-title{font-size:14px;font-weight:600}
+    .progress-status{font-size:14px;color:#c7c7c7}
+    .progress-bar{background:#1a1a1e;border-radius:8px;height:32px;overflow:hidden;margin-bottom:12px}
+    .progress-fill{height:100%;background:linear-gradient(90deg,#16a34a 0%,#10b981 100%);width:0%;transition:width .3s;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white}
+    .progress-peers{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+    .progress-peer{background:#1a1a1e;border:1px solid #2b2b2f;border-radius:6px;padding:8px}
+    .progress-peer.completed{border-color:#16a34a;background:#0a2a0a}
+    .progress-peer.excluded{border-color:#dc2626;background:#2a0a0a;opacity:.5}
+    .progress-peer-name{font-size:12px;font-weight:600;margin-bottom:4px}
+    .progress-peer-status{font-size:11px;color:#c7c7c7}
+    .param-hint{font-size:11px;color:#888;font-style:italic;margin-top:2px}
+    .pawns-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px;padding:16px;background:rgba(22,163,74,.1);border-radius:8px;border:1px solid #16a34a}
+    .pawns-stat{text-align:center}
+    .pawns-stat-value{font-size:20px;font-weight:700;color:#16a34a}
+    .pawns-stat-label{font-size:11px;color:#c7c7c7;margin-top:4px}
+    .cluster-badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;margin-left:4px}
+    .cluster-0{background:#dc2626;color:white}.cluster-1{background:#2b5cff;color:white}.cluster-2{background:#16a34a;color:white}.cluster-3{background:#f59e0b;color:white}
+    .steal-animation{animation:stealPulse .5s}
+    @keyframes stealPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1);background:#f59e0b}}
+    .peer-item{background:#1a1a1e;border:1px solid #2b2b2f;border-radius:8px;padding:8px;font-size:12px;position:relative;}
+    .peer-item.connected{border-color:#16a34a;background:rgba(22,163,74,.1)}
+    .peer-item.helping{border-color:#f59e0b;background:rgba(245,158,11,.1);animation:helpingGlow 1.5s infinite;}
+    .peer-item.finished{border-color:#7c3aed;background:rgba(124,58,237,.1);}
+    @keyframes helpingGlow{0%,100%{box-shadow:0 0 10px rgba(245,158,11,.5)}50%{box-shadow:0 0 20px rgba(245,158,11,.8)}}
+    .peer-state-badge{position:absolute;top:4px;right:4px;font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;}
+    .peer-state-badge.working{background:#2b5cff;color:white;}
+    .peer-state-badge.idle{background:#666;color:white;}
+    .peer-state-badge.finished{background:#7c3aed;color:white;}
+    .peer-state-badge.helping{background:#f59e0b;color:white;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+      🌐 MACN v11.0 PAWNS
+      <span class="feature-badge pawns">🚀 COOPERATIVE WORK-STEALING</span>
+      <span class="feature-badge new">✨ SMART HELPING</span>
+    </h1>
+    <p>Sistema Cooperativo di Work-Stealing • Chi finisce aiuta automaticamente chi è più lento</p>
+
+    <div id="alertContainer"></div>
+
+    <section class="card">
+      <h2>🔌 Connessione Server <span id="serverStatus" class="badge">disconnesso</span></h2>
+      <div class="row">
+        <input id="serverUrl" type="text" placeholder="ws://localhost:3000" value="ws://localhost:3000" />
+        <button id="btnConnect" class="success">✅ Connetti</button>
+        <button id="btnDisconnect" class="danger" disabled>❌ Disconnetti</button>
+        <button id="btnFullReset" class="danger">🔄 RESET COMPLETO</button>
+      </div>
+      <p style="margin-top: 8px;">Il tuo Peer ID: <code id="myPeerId">-</code></p>
+    </section>
+
+    <section class="card highlight">
+      <h2>🎯 Seleziona Task</h2>
+      <div class="task-selector" id="taskSelector"></div>
+      <div class="row" style="margin-top: 16px;">
+        <button id="btnCustomTask" class="orange">📝 Task Personalizzato</button>
+        <button id="btnLoadTask" class="purple">📁 Carica da File</button>
+        <button id="btnSaveTask" class="secondary" disabled>💾 Salva Task</button>
+      </div>
+      <input type="file" id="fileInput" accept=".json" style="display: none;" />
+    </section>
+
+    <section class="card pawns">
+      <h2>🌐 PAWNS Network <span id="peerCount" class="badge">0</span> • Connessi <span id="connectedCount" class="badge">0</span></h2>
+      <p style="color: #16a34a; font-weight: 600;">🚀 Sistema Cooperativo: Chi finisce prima aiuta automaticamente il più lento!</p>
+      
+      <!-- 🆕 PANNELLO DEBUG REAL-TIME -->
+      <div id="debugPanel" style="display: none; margin: 12px 0; padding: 12px; background: #1a1a1e; border: 2px solid #f59e0b; border-radius: 8px;">
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #f59e0b;">🔍 DEBUG Real-Time</div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 11px; font-family: monospace;">
+          <div>Il mio stato: <strong id="debugMyState" style="color: #16a34a;">-</strong></div>
+          <div>I miei task: <strong id="debugMyTasks" style="color: #2b5cff;">-</strong></div>
+          <div>Task nel pool: <strong id="debugPoolSize" style="color: #7c3aed;">-</strong></div>
+          <div>Broadcast inviati: <strong id="debugBroadcasts" style="color: #f59e0b;">0</strong></div>
+          <div>Stati ricevuti: <strong id="debugStatesReceived" style="color: #16a34a;">0</strong></div>
+          <div>Offerte inviate: <strong id="debugOffersent" style="color: #dc2626;">0</strong></div>
+        </div>
+        <div style="margin-top: 8px; padding: 8px; background: #0e0e10; border-radius: 4px; max-height: 100px; overflow-y: auto;">
+          <div id="debugLog" style="font-size: 10px; color: #888;"></div>
+        </div>
+      </div>
+      
+      <div id="peerListContainer" style="margin: 12px 0; padding: 12px; background: #0e0e10; border-radius: 8px;">
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Peer disponibili:</div>
+        <div id="peerList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;"></div>
+      </div>
+      <div class="row" style="margin-top: 12px;">
+        <button id="btnConnectAll" class="purple" disabled>⚡ Connetti TUTTI</button>
+        <button id="btnBenchmarkAll" class="orange" disabled>🧪 Auto-Benchmark</button>
+        <button id="btnFormClusters" class="success" disabled>🔗 Forma Proximity Clusters</button>
+        <button id="btnToggleDebug" class="secondary">🔍 Toggle Debug</button>
+        <button id="btnTestP2P" class="orange" disabled>🩺 Test P2P</button>
+      </div>
+      <div class="pawns-stats" id="pawnsStats" style="display: none;">
+        <div class="pawns-stat"><div class="pawns-stat-value" id="statPoolSize">0</div><div class="pawns-stat-label">Task nel Pool</div></div>
+        <div class="pawns-stat"><div class="pawns-stat-value" id="statSteals">0</div><div class="pawns-stat-label">Work Steals</div></div>
+        <div class="pawns-stat"><div class="pawns-stat-value" id="statHelps">0</div><div class="pawns-stat-label">Aiuti Cooperativi</div></div>
+        <div class="pawns-stat"><div class="pawns-stat-value" id="statAvgRTT">0ms</div><div class="pawns-stat-label">RTT Medio</div></div>
+      </div>
+    </section>
+
+    <section class="card" style="border: 3px solid #16a34a;">
+      <h2>🚀 Test Distribuito con PAWNS <span id="currentTaskName" class="badge"></span></h2>
+      <p style="color: #16a34a;">Sistema cooperativo con aiuto automatico tra peer</p>
+      <div class="row">
+        <div style="flex: 1;">
+          <input id="paramWidth" type="number" value="1920" min="1" />
+          <div class="param-hint" id="hintWidth">Larghezza immagine</div>
+        </div>
+        <div style="flex: 1;">
+          <input id="paramHeight" type="number" value="1080" min="1" />
+          <div class="param-hint" id="hintHeight">Altezza immagine</div>
+        </div>
+        <div style="flex: 1;">
+          <input id="paramParam" type="number" value="16" min="1" />
+          <div class="param-hint" id="hintParam">Iterazioni massime</div>
+        </div>
+      </div>
+      <div class="row" style="margin-top: 12px;">
+        <button id="btnRunTest" class="pawns" disabled style="font-size: 16px; padding: 14px 24px;">🚀 ESEGUI TEST PAWNS</button>
+        <button id="btnClearResults" class="secondary">🗑️ Pulisci</button>
+        <button id="btnExportJSON" class="secondary" disabled>📥 Export JSON</button>
+      </div>
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-header">
+          <div class="progress-title">🚀 PAWNS in esecuzione...</div>
+          <div class="progress-status" id="progressStatus">0/0 completati</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill">0%</div></div>
+        <div class="progress-peers" id="progressPeers"></div>
+      </div>
+      <div id="resultsArea" style="display: none; margin-top: 16px;">
+        <h2>📊 Risultati Test con PAWNS</h2>
+        <div class="stats">
+          <div class="stat-box"><div class="stat-label">Peer Utilizzati</div><div class="stat-value" id="resultPeers">0</div></div>
+          <div class="stat-box"><div class="stat-label">Tempo Totale</div><div class="stat-value" id="resultTime">0s</div></div>
+          <div class="stat-box"><div class="stat-label">Work Steals</div><div class="stat-value" id="resultStolen" style="color:#f59e0b">0</div></div>
+          <div class="stat-box"><div class="stat-label">Aiuti Cooperativi</div><div class="stat-value" id="resultHelps" style="color:#7c3aed">0</div></div>
+          <div class="stat-box"><div class="stat-label">Efficienza</div><div class="stat-value" id="resultEfficiency">0%</div></div>
+        </div>
+        <div id="detailsPanel" style="margin-top: 16px;"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>📊 Statistiche Sistema</h2>
+      <div class="stats">
+        <div class="stat-box"><div class="stat-label">Peer Connessi</div><div class="stat-value" id="statPeers">0</div></div>
+        <div class="stat-box"><div class="stat-label">Task Disponibili</div><div class="stat-value" id="statTasks">3</div></div>
+        <div class="stat-box"><div class="stat-label">Test Completati</div><div class="stat-value" id="statTests">0</div></div>
+        <div class="stat-box"><div class="stat-label">Aiuti Totali</div><div class="stat-value" id="statTotalHelps" style="color:#7c3aed">0</div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>📝 Log Eventi 
+        <button id="btnClearLog" class="secondary" style="float: right; padding: 4px 12px; font-size: 12px;">🗑️ Pulisci</button>
+      </h2>
+      <div id="logOutput"></div>
+    </section>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    // ======== STATE ========
+    let socket = null;
+    let myPeerId = null;
+    let availablePeers = [];
+    let peerConnections = new Map();
+    let dataChannels = new Map();
+    let peerPerformance = new Map();
+    let peerRTT = new Map();
+
+    // 🆕 NUOVO: Sistema di tracciamento stati peer
+    let peerStates = new Map(); // { peerId: { state: 'WORKING'|'IDLE'|'FINISHED', workload: number, speed: number, lastUpdate: timestamp } }
+    let myState = 'IDLE'; // Il mio stato attuale
+    
+    // 🆕 DEBUG COUNTERS
+    let debugBroadcastCount = 0;
+    let debugStatesReceivedCount = 0;
+    let debugOffersCount = 0;
+    
+    let taskPool = [];
+    let myCurrentTasks = [];
+    let pawnsActive = false;
+    let workStealCount = 0;
+    let cooperativeHelpCount = 0; // 🆕 Contatore aiuti cooperativi
+    let mySpeed = 1.0;
+    let completedTasksCount = 0;
+    let totalTasksCount = 0;
+    let jobStartTime = 0;
+
+    const taskResults = new Map();
+    let currentTask = null;
+
+    const rtcConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    };
+
+    // ======== TASK REGISTRY ========
+    const TaskRegistry = {
+      tasks: new Map(),
+      register(t){ this.tasks.set(t.id,t); },
+      get(id){ return this.tasks.get(id); },
+      getAll(){ return Array.from(this.tasks.values()); }
+    };
+
+    // Mandelbrot
+    TaskRegistry.register({
+      id:'mandelbrot', name:'Mandelbrot Set', icon:'🎨',
+      description:'Rendering frattale del set di Mandelbrot',
+      params:[
+        {name:'width',label:'Larghezza',default:1920,hint:'Larghezza immagine (px)'},
+        {name:'height',label:'Altezza',default:1080,hint:'Altezza immagine (px)'},
+        {name:'maxIter',label:'Iterazioni',default:256,hint:'Iterazioni massime'}
+      ],
+      split(params,numPeers){
+        const stripHeight=Math.ceil(params.height/numPeers);
+        const tasks=[];
+        for(let i=0;i<numPeers;i++){
+          const yStart=i*stripHeight;
+          const yEnd=Math.min(yStart+stripHeight,params.height);
+          tasks.push({id:`mandelbrot_${i}`,yStart,yEnd,width:params.width,height:params.height,maxIter:params.maxIter});
+        }
+        return tasks;
+      },
+      compute(task){
+        const {yStart,yEnd,width,height,maxIter}=task;
+        const h=yEnd-yStart;
+        const imageData=new Uint8ClampedArray(width*h*4);
+        for(let py=0;py<h;py++){
+          const y=yStart+py;
+          for(let px=0;px<width;px++){
+            const x0=(px/width)*3.5-2.5;
+            const y0=(y/height)*2-1;
+            let x=0, yy=0, iter=0;
+            while(x*x+yy*yy<=4 && iter<maxIter){
+              const xt=x*x-yy*yy+x0;
+              yy=2*x*yy+y0; x=xt; iter++;
+            }
+            const idx=(py*width+px)*4;
+            const color=iter===maxIter?0:(iter/maxIter)*255;
+            imageData[idx]=color; imageData[idx+1]=color*0.5; imageData[idx+2]=color*0.8; imageData[idx+3]=255;
+          }
+        }
+        return { imageData:Array.from(imageData), yStart, yEnd };
+      },
+      merge(results,params){
+        const canvas=document.createElement('canvas');
+        canvas.width=params.width; canvas.height=params.height;
+        const ctx=canvas.getContext('2d');
+        results.sort((a,b)=>a.yStart-b.yStart);
+        for(const r of results){
+          const h=r.yEnd-r.yStart;
+          const img=ctx.createImageData(params.width,h);
+          img.data.set(new Uint8ClampedArray(r.imageData));
+          ctx.putImageData(img,0,r.yStart);
+        }
+        return canvas.toDataURL();
+      }
+    });
+
+    // Primes
+    TaskRegistry.register({
+      id:'primes', name:'Prime Numbers', icon:'🔢',
+      description:'Calcolo numeri primi in range',
+      params:[
+        {name:'start',label:'Inizio',default:1,hint:'Numero iniziale'},
+        {name:'end',label:'Fine',default:1000000,hint:'Numero finale'},
+        {name:'chunks',label:'Chunk',default:100,hint:'Divisioni task'}
+      ],
+      split(params){
+        const range=params.end-params.start;
+        const chunkSize=Math.ceil(range/params.chunks);
+        const tasks=[];
+        for(let i=0;i<params.chunks;i++){
+          const start=params.start+i*chunkSize;
+          const end=Math.min(start+chunkSize,params.end);
+          tasks.push({id:`primes_${i}`,start,end});
+        }
+        return tasks;
+      },
+      compute(task){
+        const primes=[];
+        for(let n=task.start;n<=task.end;n++){
+          if(n<2) continue;
+          let prime=true;
+          for(let i=2;i<=Math.sqrt(n);i++){ if(n%i===0){prime=false;break;} }
+          if(prime) primes.push(n);
+        }
+        return {primes,count:primes.length};
+      },
+      merge(results){
+        const all=[];
+        for(const r of results) all.push(...r.primes);
+        all.sort((a,b)=>a-b);
+        return {primes:all,total:all.length};
+      }
+    });
+
+    // Matrix
+    TaskRegistry.register({
+      id:'matrix', name:'Matrix Multiplication', icon:'🔢',
+      description:'Moltiplicazione matrici',
+      params:[
+        {name:'size',label:'Dimensione',default:512,hint:'Dimensione matrice'},
+        {name:'multiplier',label:'Moltiplicatore',default:2,hint:'Fattore moltiplicazione'},
+        {name:'chunks',label:'Chunk',default:32,hint:'Divisioni task'}
+      ],
+      split(params){
+        const rowsPerChunk=Math.ceil(params.size/params.chunks);
+        const tasks=[];
+        for(let i=0;i<params.chunks;i++){
+          const startRow=i*rowsPerChunk;
+          const endRow=Math.min(startRow+rowsPerChunk,params.size);
+          tasks.push({id:`matrix_${i}`,startRow,endRow,size:params.size,multiplier:params.multiplier});
+        }
+        return tasks;
+      },
+      compute(task){
+        const{startRow,endRow,size,multiplier}=task;
+        const rows=[];
+        for(let i=startRow;i<endRow;i++){
+          const row=[];
+          for(let j=0;j<size;j++){
+            let sum=0;
+            for(let k=0;k<size;k++) sum+=((i+k)%10)*((k+j)%10)*multiplier;
+            row.push(sum);
+          }
+          rows.push(row);
+        }
+        return{startRow,endRow,rows};
+      },
+      merge(results,params){
+        const matrix=[];
+        results.sort((a,b)=>a.startRow-b.startRow);
+        for(const r of results) matrix.push(...r.rows);
+        const checksum=matrix.reduce((acc,row)=>acc+row.reduce((a,b)=>a+b,0),0);
+        return{size:params.size,checksum};
+      }
+    });
+
+    // ======== UI HELPERS ========
+    function renderTaskSelector() {
+      const tasks = TaskRegistry.getAll();
+      const container = document.getElementById('taskSelector');
+      container.innerHTML = tasks.map(t => `
+        <div class="task-card" data-task-id="${t.id}">
+          <div class="task-icon">${t.icon}</div>
+          <div class="task-name">${t.name}</div>
+          <div class="task-desc">${t.description}</div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.task-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const taskId = card.getAttribute('data-task-id');
+          selectTask(taskId);
+        });
+      });
+    }
+
+    function selectTask(taskId) {
+      const t = TaskRegistry.get(taskId);
+      if (!t) return;
+      currentTask = t;
+      
+      document.querySelectorAll('.task-card').forEach(c => c.classList.remove('selected'));
+      document.querySelector(`[data-task-id="${taskId}"]`).classList.add('selected');
+      
+      document.getElementById('currentTaskName').textContent = t.name;
+      
+      if (t.params && t.params.length >= 3) {
+        document.getElementById('paramWidth').value = t.params[0].default;
+        document.getElementById('hintWidth').textContent = t.params[0].hint;
+        document.getElementById('paramHeight').value = t.params[1].default;
+        document.getElementById('hintHeight').textContent = t.params[1].hint;
+        document.getElementById('paramParam').value = t.params[2].default;
+        document.getElementById('hintParam').textContent = t.params[2].hint;
+      }
+      document.getElementById('btnRunTest').disabled = dataChannels.size === 0;
+      document.getElementById('btnSaveTask').disabled = false;
+      log(`✅ Task selezionato: ${t.name}`, 'success');
+    }
+
+    function log(msg, type='info') {
+      const out = document.getElementById('logOutput');
+      const ts = new Date().toLocaleTimeString('it-IT');
+      const el = document.createElement('div');
+      el.className = `log-entry ${type}`;
+      el.textContent = `[${ts}] ${msg}`;
+      out.appendChild(el);
+      out.scrollTop = out.scrollHeight;
+    }
+
+    // 🆕 DEBUG LOG (solo nel pannello debug)
+    function debugLog(msg) {
+      const debugOut = document.getElementById('debugLog');
+      if (!debugOut) return;
+      const ts = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 1 });
+      const line = document.createElement('div');
+      line.textContent = `[${ts}] ${msg}`;
+      line.style.color = '#f59e0b';
+      debugOut.appendChild(line);
+      debugOut.scrollTop = debugOut.scrollHeight;
+      
+      // Mantieni solo le ultime 20 righe
+      while (debugOut.children.length > 20) {
+        debugOut.removeChild(debugOut.firstChild);
+      }
+    }
+
+    // 🆕 Aggiorna UI debug
+    function updateDebugUI() {
+      if (document.getElementById('debugPanel').style.display === 'none') return;
+      document.getElementById('debugMyState').textContent = myState;
+      document.getElementById('debugMyTasks').textContent = myCurrentTasks.length;
+      document.getElementById('debugPoolSize').textContent = taskPool.length;
+      document.getElementById('debugBroadcasts').textContent = debugBroadcastCount;
+      document.getElementById('debugStatesReceived').textContent = debugStatesReceivedCount;
+      document.getElementById('debugOfferSent').textContent = debugOffersCount;
+    }
+
+    // 🆕 MIGLIORATO: Lista peer con stati visivi
+    function updatePeerList() {
+      const listEl = document.getElementById('peerList');
+      document.getElementById('peerCount').textContent = availablePeers.length;
+      document.getElementById('connectedCount').textContent = dataChannels.size;
+      document.getElementById('statPeers').textContent = dataChannels.size;
+
+      if (availablePeers.length === 0) {
+        listEl.innerHTML = '<p style="color: #9ca3af; text-align: center;">Nessun peer disponibile</p>';
+        document.getElementById('btnConnectAll').disabled = true;
+        document.getElementById('btnBenchmarkAll').disabled = true;
+        document.getElementById('btnFormClusters').disabled = true;
+        return;
+      }
+
+      document.getElementById('btnConnectAll').disabled = false;
+      document.getElementById('btnBenchmarkAll').disabled = dataChannels.size === 0;
+      document.getElementById('btnFormClusters').disabled = dataChannels.size < 2;
+      document.getElementById('btnTestP2P').disabled = dataChannels.size === 0;
+
+      listEl.innerHTML = availablePeers
+        .filter(p => p !== myPeerId)
+        .map(peerId => {
+          const isConnected = dataChannels.has(peerId);
+          const perf = peerPerformance.get(peerId);
+          const rtt = peerRTT.get(peerId);
+          const state = peerStates.get(peerId);
+          
+          let peerClass = 'peer-item';
+          if (isConnected) peerClass += ' connected';
+          if (state && state.state === 'FINISHED') peerClass += ' finished';
+          if (state && state.state === 'HELPING') peerClass += ' helping';
+
+          let stateBadge = '';
+          if (state) {
+            stateBadge = `<span class="peer-state-badge ${state.state.toLowerCase()}">${state.state}</span>`;
+          }
+
+          return `
+            <div class="${peerClass}">
+              ${stateBadge}
+              <div style="font-size: 13px; font-weight: 600;">${peerId.slice(0,12)}...</div>
+              ${isConnected ? '<span style="color: #16a34a; font-size: 11px;">● CONNESSO</span>' : ''}
+              ${state ? `<div style="color: #f59e0b; font-size: 11px; margin-top: 4px;">Carico: ${state.workload} task</div>` : ''}
+              ${perf ? `<div style="color: #2b5cff; font-size: 11px;">Speed: ${perf.speed.toFixed(2)}x</div>` : ''}
+              ${rtt ? `<div style="color: #888; font-size: 10px;">RTT: ${rtt}ms</div>` : ''}
+            </div>
+          `;
+        }).join('');
+    }
+
+    // ======== CONNECTION MANAGEMENT ========
+    function connect() {
+      const serverUrl = document.getElementById('serverUrl').value;
+      socket = io(serverUrl);
+
+      socket.on('connect', () => {
+        log('🔌 Connesso al server', 'success');
+        document.getElementById('serverStatus').textContent = 'connesso';
+        document.getElementById('serverStatus').style.color = '#16a34a';
+        document.getElementById('btnConnect').disabled = true;
+        document.getElementById('btnDisconnect').disabled = false;
+        myPeerId = socket.id;
+        document.getElementById('myPeerId').textContent = socket.id;
+        log(`✨ Il tuo Peer ID: ${socket.id}`, 'success');
+      });
+
+      socket.on('disconnect', () => {
+        document.getElementById('serverStatus').textContent = 'disconnesso';
+        document.getElementById('serverStatus').style.color = '#dc2626';
+        document.getElementById('btnConnect').disabled = false;
+        document.getElementById('btnDisconnect').disabled = true;
+      });
+
+      socket.on('peer-id', (id) => {
+        myPeerId = id;
+        const peerIdElement = document.getElementById('myPeerId');
+        if (peerIdElement) peerIdElement.textContent = id;
+        log(`✨ Il tuo Peer ID: ${id}`, 'success');
+      });
+
+      socket.on('peer-list', (peers) => {
+        availablePeers = peers;
+        updatePeerList();
+        log(`📋 ${peers.length} peer disponibili`, 'info');
+      });
+
+      socket.on('peer-joined', (peerId) => {
+        if (!availablePeers.includes(peerId)) {
+          availablePeers.push(peerId);
+          updatePeerList();
+          log(`👋 Nuovo peer: ${peerId.slice(0, 8)}...`, 'info');
+        }
+      });
+
+      socket.on('peer-left', (peerId) => {
+        availablePeers = availablePeers.filter(id => id !== peerId);
+        cleanupPeerConnection(peerId);
+        peerStates.delete(peerId);
+        updatePeerList();
+        log(`👋 Peer disconnesso: ${peerId.slice(0, 8)}...`, 'warning');
+      });
+
+      socket.on('offer', async (data) => {
+        await handleOffer(data.offer, data.from);
+      });
+
+      socket.on('answer', async (data) => {
+        await handleAnswer(data.answer, data.from);
+      });
+
+      socket.on('ice-candidate', async (data) => {
+        const pc = peerConnections.get(data.from);
+        if (pc && data.candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      });
+    }
+
+    function disconnect() {
+      if (socket) {
+        peerConnections.forEach((pc) => { pc.close(); });
+        peerConnections.clear();
+        dataChannels.clear();
+        peerPerformance.clear();
+        peerRTT.clear();
+        peerStates.clear();
+
+        socket.disconnect();
+        socket = null;
+        updatePeerList();
+        log('🔌 Disconnessione completata', 'info');
+      }
+    }
+
+    function fullReset() {
+      disconnect();
+      taskPool = [];
+      myCurrentTasks = [];
+      pawnsActive = false;
+      workStealCount = 0;
+      cooperativeHelpCount = 0;
+      completedTasksCount = 0;
+      totalTasksCount = 0;
+      myState = 'IDLE';
+
+      document.getElementById('resultsArea').style.display = 'none';
+      document.getElementById('progressContainer').style.display = 'none';
+      document.getElementById('pawnsStats').style.display = 'none';
+      document.getElementById('logOutput').innerHTML = '';
+
+      log('🔄 Reset completo eseguito', 'success');
+    }
+
+    function cleanupPeerConnection(peerId) {
+      if (peerConnections.has(peerId)) {
+        peerConnections.get(peerId).close();
+        peerConnections.delete(peerId);
+      }
+      if (dataChannels.has(peerId)) {
+        dataChannels.delete(peerId);
+      }
+      peerPerformance.delete(peerId);
+      peerRTT.delete(peerId);
+      peerStates.delete(peerId);
+    }
+
+    // ======== P2P CONNECTION (WebRTC) ========
+    async function createPeerConnection(targetPeer, isInitiator) {
+      const pc = new RTCPeerConnection(rtcConfig);
+      peerConnections.set(targetPeer, pc);
+
+      pc.onicecandidate = (e) => {
+        if (e.candidate && socket) {
+          socket.emit('ice-candidate', { candidate: e.candidate, target: targetPeer });
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'connected') {
+          log(`✅ P2P connesso: ${targetPeer.slice(0, 8)}...`, 'success');
+          updatePeerList();
+        } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+          log(`❌ P2P disconnesso: ${targetPeer.slice(0, 8)}...`, 'error');
+          cleanupPeerConnection(targetPeer);
+          updatePeerList();
+        }
+      };
+
+      if (isInitiator) {
+        const dc = pc.createDataChannel('pawns');
+        setupDataChannel(dc, targetPeer);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('offer', { offer: pc.localDescription, target: targetPeer });
+      } else {
+        pc.ondatachannel = (e) => setupDataChannel(e.channel, targetPeer);
+      }
+    }
+
+    async function handleOffer(offer, from) {
+      await createPeerConnection(from, false);
+      const pc = peerConnections.get(from);
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('answer', { answer: pc.localDescription, target: from });
+    }
+
+    async function handleAnswer(answer, from) {
+      const pc = peerConnections.get(from);
+      if (pc) {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      }
+    }
+
+    function setupDataChannel(dc, peerId) {
+      dc.binaryType = 'arraybuffer';
+
+      dc.onopen = () => {
+        dataChannels.set(peerId, dc);
+        log(`🎉 DataChannel aperto: ${peerId.slice(0, 8)}...`, 'success');
+        updatePeerList();
+
+        if (currentTask && dataChannels.size > 0) {
+          document.getElementById('btnRunTest').disabled = false;
+        }
+
+        startStateBroadcast();
+      };
+
+      dc.onclose = () => {
+        dataChannels.delete(peerId);
+        peerPerformance.delete(peerId);
+        peerStates.delete(peerId);
+        updatePeerList();
+      };
+
+      dc.onmessage = (e) => handlePeerMessage(e, peerId);
+    }
+
+    // 🆕 HANDLER MESSAGGI MIGLIORATO
+    function handlePeerMessage(event, peerId) {
+      if (event.data instanceof ArrayBuffer) return;
+
+      try {
+        const data = JSON.parse(event.data);
+
+        switch (data.type) {
+          case 'ping':
+            sendToPeer(peerId, { type: 'pong', timestamp: data.timestamp });
+            break;
+
+          case 'pong':
+            const rtt = Date.now() - data.timestamp;
+            peerRTT.set(peerId, rtt);
+            updatePeerList();
+            break;
+
+          case 'benchmark-request':
+            handleBenchmarkRequest(data, peerId);
+            break;
+
+          case 'benchmark-result':
+            handleBenchmarkResult(data, peerId);
+            break;
+
+          // 🆕 Test diagnostico P2P
+          case 'p2p-test':
+            handleP2PTest(peerId, data);
+            break;
+
+          case 'p2p-test-response':
+            handleP2PTestResponse(peerId, data);
+            break;
+
+          // 🆕 NUOVO SISTEMA DI STATI
+          case 'state-broadcast':
+            handleStateBroadcast(peerId, data);
+            break;
+
+          case 'help-offer':
+            handleHelpOffer(peerId, data);
+            break;
+
+          case 'help-accept':
+            handleHelpAccept(peerId, data);
+            break;
+
+          case 'task-transfer':
+            handleTaskTransfer(peerId, data);
+            break;
+
+          case 'compute-task':
+            handleComputeTask(data, peerId);
+            break;
+
+          case 'task-result':
+            handleTaskResult(data, peerId);
+            break;
+        }
+      } catch (err) {
+        console.error('Error handling message:', err);
+      }
+    }
+
+    function sendToPeer(peerId, message) {
+      const dc = dataChannels.get(peerId);
+      if (dc && dc.readyState === 'open') {
+        dc.send(JSON.stringify(message));
+        return true;
+      }
+      return false;
+    }
+
+    function broadcastToAll(message) {
+      dataChannels.forEach((dc, peerId) => {
+        sendToPeer(peerId, message);
+      });
+    }
+
+    // ======== BENCHMARK & RTT ========
+    async function benchmarkAllPeers() {
+      log('🧪 Avvio auto-benchmark...', 'info');
+      for (const [peerId, dc] of dataChannels) {
+        if (dc.readyState === 'open') {
+          sendToPeer(peerId, {
+            type: 'benchmark-request',
+            task: 'mandelbrot',
+            params: { width: 512, height: 512, maxIter: 128 }
+          });
+        }
+      }
+      log(`📊 Benchmark inviato a ${dataChannels.size} peer`, 'success');
+    }
+
+    function handleBenchmarkRequest(data, peerId) {
+      const startTime = performance.now();
+      const task = TaskRegistry.get(data.task);
+      if (task) {
+        const testTask = { yStart: 0, yEnd: 512, width: 512, height: 512, maxIter: 128 };
+        task.compute(testTask);
+        const duration = performance.now() - startTime;
+        sendToPeer(peerId, { type: 'benchmark-result', duration, timestamp: Date.now() });
+      }
+    }
+
+    function handleBenchmarkResult(data, peerId) {
+      const speed = 1000 / data.duration;
+      peerPerformance.set(peerId, {
+        speed,
+        duration: data.duration,
+        category: speed > 2 ? 'FAST' : speed > 1 ? 'MEDIUM' : 'SLOW'
+      });
+      updatePeerList();
+      log(`📊 Benchmark ${peerId.slice(0, 8)}: ${data.duration.toFixed(0)}ms (${speed.toFixed(2)}x)`, 'info');
+    }
+
+    async function measureRTT(peerId) {
+      const timestamp = Date.now();
+      sendToPeer(peerId, { type: 'ping', timestamp });
+    }
+
+    async function formProximityClusters() {
+      log('🔗 Formazione proximity clusters...', 'info');
+      for (const peerId of dataChannels.keys()) {
+        await measureRTT(peerId);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      const rtts = Array.from(peerRTT.values());
+      const avgRTT = rtts.length > 0 ? rtts.reduce((a,b)=>a+b,0)/rtts.length : 0;
+      document.getElementById('statAvgRTT').textContent = `${avgRTT.toFixed(0)}ms`;
+      document.getElementById('pawnsStats').style.display = 'grid';
+      updatePeerList();
+      log(`✅ Clusters pronti (RTT medio: ${avgRTT.toFixed(0)}ms)`, 'success');
+    }
+
+    // ===================================
+    // 🩺 TEST DIAGNOSTICO P2P
+    // ===================================
+    
+    let p2pTestResults = new Map();
+    
+    async function testP2PCommunication() {
+      log('🩺 Avvio test diagnostico P2P...', 'info');
+      debugLog('🩺 TEST P2P: invio messaggi a tutti i peer');
+      
+      p2pTestResults.clear();
+      const testId = Date.now();
+      
+      // Invia messaggio di test a ogni peer
+      for (const peerId of dataChannels.keys()) {
+        sendToPeer(peerId, {
+          type: 'p2p-test',
+          testId,
+          from: myPeerId,
+          timestamp: Date.now()
+        });
+        debugLog(`📤 Test inviato a ${peerId.slice(0,8)}`);
+      }
+      
+      // Aspetta risposte
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verifica risultati
+      const connectedPeers = dataChannels.size;
+      const responsesReceived = p2pTestResults.size;
+      
+      log(`📊 Test P2P completato: ${responsesReceived}/${connectedPeers} peer hanno risposto`, 
+          responsesReceived === connectedPeers ? 'success' : 'warning');
+      
+      if (responsesReceived === 0 && connectedPeers > 0) {
+        log('❌ PROBLEMA: Nessuna risposta P2P! I messaggi non arrivano!', 'error');
+        debugLog('❌ DIAGNOSTICA: DataChannel aperto ma messaggi non arrivano - possibile problema WebRTC');
+      } else if (responsesReceived < connectedPeers) {
+        const missing = Array.from(dataChannels.keys()).filter(id => !p2pTestResults.has(id));
+        log(`⚠️ Alcuni peer non rispondono: ${missing.map(id => id.slice(0,8)).join(', ')}`, 'warning');
+      } else {
+        log('✅ Comunicazione P2P funzionante!', 'success');
+      }
+      
+      // Mostra RTT
+      for (const [peerId, rtt] of p2pTestResults) {
+        debugLog(`  ${peerId.slice(0,8)}: RTT ${rtt}ms`);
+      }
+    }
+    
+    function handleP2PTest(peerId, data) {
+      debugLog(`📥 Ricevuto P2P-TEST da ${peerId.slice(0,8)}`);
+      // Rispondi immediatamente
+      sendToPeer(peerId, {
+        type: 'p2p-test-response',
+        testId: data.testId,
+        originalTimestamp: data.timestamp,
+        timestamp: Date.now()
+      });
+    }
+    
+    function handleP2PTestResponse(peerId, data) {
+      const rtt = Date.now() - data.originalTimestamp;
+      p2pTestResults.set(peerId, rtt);
+      debugLog(`✅ Risposta P2P-TEST da ${peerId.slice(0,8)}: RTT ${rtt}ms`);
+    }
+
+    // ===================================
+    // 🆕 NUOVO SISTEMA DI WORK-STEALING COOPERATIVO
+    // ===================================
+
+    // 🔹 Broadcast periodico del mio stato
+    let broadcastInterval = null;
+    function startStateBroadcast() {
+      if (broadcastInterval) return;
+      broadcastInterval = setInterval(() => {
+        if (!pawnsActive) return;
+        
+        // Aggiorna il mio stato
+        updateMyState();
+        
+        debugBroadcastCount++;
+        debugLog(`📡 Broadcasting: ${myState}, workload=${myCurrentTasks.length}`);
+        
+        // Broadcast a tutti
+        broadcastToAll({
+          type: 'state-broadcast',
+          peerId: myPeerId,
+          state: myState,
+          workload: myCurrentTasks.length,
+          speed: mySpeed,
+          timestamp: Date.now()
+        });
+        
+        updateDebugUI();
+      }, 800); // 🔧 Ridotto a 800ms per essere più reattivo
+    }
+
+    // 🔹 Aggiorna il mio stato attuale
+    function updateMyState() {
+      if (myCurrentTasks.length > 0) {
+        myState = 'WORKING';
+      } else if (taskPool.length === 0 && completedTasksCount < totalTasksCount) {
+        myState = 'IDLE'; // Sono libero ma il job non è finito
+      } else if (completedTasksCount >= totalTasksCount) {
+        myState = 'FINISHED';
+      }
+    }
+
+    // 🔹 Gestisce broadcast di stato da altri peer
+    function handleStateBroadcast(peerId, data) {
+      debugStatesReceivedCount++;
+      debugLog(`📥 Ricevuto stato da ${peerId.slice(0,8)}: ${data.state}, workload=${data.workload}`);
+      
+      peerStates.set(peerId, {
+        state: data.state,
+        workload: data.workload,
+        speed: data.speed,
+        lastUpdate: data.timestamp
+      });
+      updatePeerList();
+      updateDebugUI();
+    }
+
+    // 🔹 LOGICA PRINCIPALE: quando divento IDLE, offro aiuto automaticamente
+    async function offerHelpIfIdle() {
+      if (!pawnsActive || myState !== 'IDLE') {
+        debugLog(`⚠️ offerHelpIfIdle: pawnsActive=${pawnsActive}, myState=${myState}`);
+        return;
+      }
+      
+      debugLog(`🔍 Cerco peer da aiutare... Stati noti: ${peerStates.size}`);
+      
+      // Trova il peer con più carico (il più lento)
+      const busyPeers = Array.from(peerStates.entries())
+        .filter(([id, state]) => {
+          const isConnected = dataChannels.has(id);
+          const isWorking = state.state === 'WORKING';
+          const hasEnoughWork = state.workload > 1; // 🔧 Ridotto da 2 a 1
+          
+          debugLog(`  Peer ${id.slice(0,8)}: connected=${isConnected}, working=${isWorking}, workload=${state.workload}`);
+          
+          return isConnected && isWorking && hasEnoughWork;
+        })
+        .sort((a, b) => b[1].workload - a[1].workload); // Ordina per carico decrescente
+
+      if (busyPeers.length === 0) {
+        debugLog(`❌ Nessun peer da aiutare trovato`);
+        // Nessuno ha bisogno di aiuto, verifico se il job è completo
+        checkJobComplete();
+        return;
+      }
+
+      // Aiuto il peer con più carico
+      const [targetId, targetState] = busyPeers[0];
+      myState = 'HELPING';
+      debugOffersCount++;
+      
+      log(`🤝 Offro aiuto al peer più carico: ${targetId.slice(0,8)}... (${targetState.workload} task)`, 'info');
+      debugLog(`✅ INVIO HELP-OFFER a ${targetId.slice(0,8)}`);
+      
+      sendToPeer(targetId, {
+        type: 'help-offer',
+        from: myPeerId,
+        mySpeed
+      });
+
+      updatePeerList();
+      updateDebugUI();
+    }
+
+    // 🔹 Gestisce offerta di aiuto da un peer
+    function handleHelpOffer(fromPeer, data) {
+      debugLog(`📬 Ricevuta HELP-OFFER da ${fromPeer.slice(0,8)}, ho ${myCurrentTasks.length} task`);
+      
+      if (myCurrentTasks.length < 1) { // 🔧 Ridotto da 2 a 1
+        debugLog(`❌ Rifiuto: non ho abbastanza task (${myCurrentTasks.length})`);
+        // Non ho abbastanza task da condividere
+        sendToPeer(fromPeer, {
+          type: 'help-decline',
+          reason: 'insufficient_tasks'
+        });
+        return;
+      }
+
+      // Calcolo quanti task cedere (metà del mio carico, minimo 1)
+      const toTransfer = Math.max(1, Math.ceil(myCurrentTasks.length / 2));
+      const tasksToGive = myCurrentTasks.splice(0, toTransfer);
+
+      cooperativeHelpCount++;
+      document.getElementById('statHelps').textContent = cooperativeHelpCount;
+      document.getElementById('statTotalHelps').textContent = cooperativeHelpCount;
+
+      log(`🎁 Trasferisco ${toTransfer} task a ${fromPeer.slice(0,8)} per aiuto cooperativo`, 'warning');
+      debugLog(`✅ HELP-ACCEPT inviata con ${toTransfer} task`);
+
+      sendToPeer(fromPeer, {
+        type: 'help-accept',
+        tasks: tasksToGive
+      });
+
+      animateSteal(fromPeer);
+      updateDebugUI();
+    }
+
+    // 🔹 Gestisce accettazione di aiuto
+    function handleHelpAccept(fromPeer, data) {
+      if (!data.tasks || data.tasks.length === 0) {
+        debugLog(`❌ HELP-ACCEPT vuota da ${fromPeer.slice(0,8)}`);
+        return;
+      }
+
+      myCurrentTasks.push(...data.tasks);
+      workStealCount++;
+      document.getElementById('statSteals').textContent = workStealCount;
+
+      log(`💪 Ricevuti ${data.tasks.length} task da ${fromPeer.slice(0,8)} (aiuto cooperativo)`, 'success');
+      debugLog(`✅ HELP-ACCEPT ricevuta: +${data.tasks.length} task, totale=${myCurrentTasks.length}`);
+      
+      myState = 'WORKING';
+      updatePeerList();
+      updateDebugUI();
+      
+      // Riprendo il processing
+      if (myCurrentTasks.length > 0) {
+        processTasks();
+      }
+
+      animateSteal(fromPeer);
+    }
+
+    // 🔹 Gestisce trasferimento diretto di task
+    function handleTaskTransfer(fromPeer, data) {
+      if (!data.tasks || data.tasks.length === 0) return;
+      
+      myCurrentTasks.push(...data.tasks);
+      log(`📥 Ricevuti ${data.tasks.length} task da ${fromPeer.slice(0,8)}`, 'success');
+      
+      if (myState === 'IDLE') {
+        myState = 'WORKING';
+        processTasks();
+      }
+    }
+
+    // ===================================
+    // TASK PROCESSING
+    // ===================================
+
+    function calculateOptimalChunkSize() {
+      // 🔧 NUOVO: Strategia aggressiva
+      // Se è il primo pull (taskPool pieno), prendi un blocco GRANDE
+      // Altrimenti prendi piccoli chunk per bilanciare
+      
+      if (myCurrentTasks.length === 0 && taskPool.length > 0) {
+        // Primo pull: prendi circa 1/numPeers dei task totali + un buffer
+        const numPeers = dataChannels.size + 1;
+        const idealShare = Math.ceil(totalTasksCount / numPeers);
+        const aggressive = Math.ceil(idealShare * 1.5); // 50% in più per creare asimmetria
+        debugLog(`📊 Primo pull: prendo ${aggressive} task (${numPeers} peer, ${totalTasksCount} task totali)`);
+        return Math.min(aggressive, taskPool.length);
+      }
+      
+      // Pull successivi: piccoli chunk
+      const baseSize = 3;
+      return Math.max(1, Math.floor(baseSize * mySpeed));
+    }
+
+    async function findMoreWork() {
+      if (!pawnsActive) return;
+      
+      const chunkSize = calculateOptimalChunkSize();
+      const pulledTasks = pullFromPool(chunkSize);
+
+      if (pulledTasks.length > 0) {
+        myCurrentTasks.push(...pulledTasks);
+        myState = 'WORKING';
+        log(`🎯 Pulled ${pulledTasks.length} tasks dal pool (${taskPool.length} rimanenti)`, 'success');
+        debugLog(`📥 Pulled ${pulledTasks.length} task, pool=${taskPool.length}, myTasks=${myCurrentTasks.length}`);
+        document.getElementById('statPoolSize').textContent = taskPool.length;
+        updateDebugUI();
+        processTasks();
+        return;
+      }
+
+      // Pool vuoto! Aspetto un attimo prima di diventare IDLE
+      // per dare tempo ai messaggi P2P di arrivare
+      debugLog(`⏳ Pool vuoto, aspetto 500ms prima di cercare aiuto...`);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Pool vuoto, divento IDLE e offro aiuto
+      myState = 'IDLE';
+      updatePeerList();
+      updateDebugUI();
+      log('🔍 Pool vuoto, passo in modalità IDLE per aiutare altri peer...', 'warning');
+      debugLog(`⚠️ Pool vuoto! Stato -> IDLE, cerco di aiutare...`);
+      
+      // Offro aiuto automaticamente
+      await offerHelpIfIdle();
+      
+      // Se dopo aver offerto aiuto non ho ancora task, riprovo tra un po'
+      if (myCurrentTasks.length === 0 && pawnsActive) {
+        debugLog(`🔄 Ancora nessun task, riprovo tra 1s...`);
+        setTimeout(() => offerHelpIfIdle(), 1000);
+      }
+    }
+
+    function pullFromPool(count) {
+      return taskPool.splice(0, count);
+    }
+
+    async function processTasks() {
+      if (myCurrentTasks.length === 0) {
+        await findMoreWork();
+        return;
+      }
+
+      const task = myCurrentTasks.shift();
+      const startTime = performance.now();
+
+      const taskDef = currentTask;
+      const result = taskDef.compute(task);
+
+      const duration = performance.now() - startTime;
+      mySpeed = 1000 / duration;
+
+      onTaskComplete(task.id, result, duration);
+
+      // Continua con il prossimo task
+      if (myCurrentTasks.length > 0) {
+        setTimeout(() => processTasks(), 10);
+      } else {
+        // Ho finito i miei task
+        await findMoreWork();
+      }
+    }
+
+    function onTaskComplete(taskId, result, duration) {
+      taskResults.set(taskId, result);
+      completedTasksCount++;
+      updateProgress();
+      log(`✅ Task ${taskId} completato in ${duration.toFixed(0)}ms`, 'success');
+      
+      // Controllo se sono l'ultimo
+      if (completedTasksCount >= totalTasksCount) {
+        checkJobComplete();
+      }
+    }
+
+    function animateSteal(peerId) {
+      const peerElements = document.querySelectorAll('.peer-item');
+      peerElements.forEach(el => {
+        if (el.textContent.includes(peerId.slice(0, 12))) {
+          el.classList.add('steal-animation');
+          setTimeout(() => el.classList.remove('steal-animation'), 500);
+        }
+      });
+    }
+
+    function checkJobComplete() {
+      // Verifico se tutti hanno finito
+      const allFinished = completedTasksCount >= totalTasksCount && 
+                         taskPool.length === 0 && 
+                         myCurrentTasks.length === 0;
+      
+      if (allFinished) {
+        finalizeJob();
+      }
+    }
+
+    function finalizeJob() {
+      pawnsActive = false;
+      myState = 'FINISHED';
+      
+      const endTime = performance.now();
+      const totalTime = (endTime - jobStartTime) / 1000;
+      log(`🎉 Job completato in ${totalTime.toFixed(2)}s!`, 'success');
+      log(`🤝 Aiuti cooperativi: ${cooperativeHelpCount}`, 'success');
+      log(`🎯 Work steals: ${workStealCount}`, 'success');
+
+      const taskDef = currentTask;
+      const results = Array.from(taskResults.values());
+      const params = {
+        width: parseInt(document.getElementById('paramWidth').value),
+        height: parseInt(document.getElementById('paramHeight').value),
+        maxIter: parseInt(document.getElementById('paramParam').value)
+      };
+      
+      const finalResult = taskDef.merge(results, params);
+      displayResults(totalTime, finalResult);
+      document.getElementById('progressContainer').style.display = 'none';
+
+      // Pulisco lo stato
+      peerStates.clear();
+      updatePeerList();
+    }
+
+    function displayResults(totalTime, finalResult) {
+      document.getElementById('resultsArea').style.display = 'block';
+
+      const numPeers = dataChannels.size + 1;
+      const efficiency = ((completedTasksCount / (numPeers * totalTime)) / numPeers * 100).toFixed(1);
+
+      document.getElementById('resultPeers').textContent = numPeers;
+      document.getElementById('resultTime').textContent = totalTime.toFixed(2) + 's';
+      document.getElementById('resultStolen').textContent = workStealCount;
+      document.getElementById('resultHelps').textContent = cooperativeHelpCount;
+      document.getElementById('resultEfficiency').textContent = efficiency + '%';
+
+      const detailsPanel = document.getElementById('detailsPanel');
+      if (currentTask.id === 'mandelbrot' && finalResult) {
+        detailsPanel.innerHTML = `
+          <h3>Anteprima Risultato:</h3>
+          <img src="${finalResult}" style="max-width: 100%; border-radius: 8px; border: 2px solid #16a34a;" />
+        `;
+      } else if (currentTask.id === 'primes') {
+        detailsPanel.innerHTML = `
+          <h3>Risultato:</h3>
+          <p>Numeri primi trovati: <strong>${finalResult.total}</strong></p>
+          <p>Primi 10: ${finalResult.primes.slice(0, 10).join(', ')}...</p>
+        `;
+      } else if (currentTask.id === 'matrix') {
+        detailsPanel.innerHTML = `
+          <h3>Risultato:</h3>
+          <p>Matrice ${finalResult.size}x${finalResult.size} moltiplicata</p>
+          <p>Checksum: ${finalResult.checksum}</p>
+        `;
+      }
+
+      document.getElementById('statTests').textContent =
+        parseInt(document.getElementById('statTests').textContent) + 1;
+
+      document.getElementById('btnExportJSON').disabled = false;
+    }
+
+    function updateProgress() {
+      const progress = (completedTasksCount / totalTasksCount * 100).toFixed(1);
+      const pf = document.getElementById('progressFill');
+      pf.textContent = progress + '%';
+      pf.style.width = progress + '%';
+      document.getElementById('progressStatus').textContent =
+        `${completedTasksCount}/${totalTasksCount} completati`;
+    }
+
+    // ======== RUN TEST ========
+    async function runPawnsTest() {
+      if (!currentTask) { log('❌ Seleziona un task prima!', 'error'); return; }
+      if (dataChannels.size === 0) { log('❌ Nessun peer connesso!', 'error'); return; }
+
+      taskPool = [];
+      myCurrentTasks = [];
+      taskResults.clear();
+      completedTasksCount = 0;
+      workStealCount = 0;
+      cooperativeHelpCount = 0;
+      pawnsActive = true;
+      myState = 'IDLE';
+      peerStates.clear();
+      jobStartTime = performance.now();
+      
+      // 🆕 Reset debug counters
+      debugBroadcastCount = 0;
+      debugStatesReceivedCount = 0;
+      debugOffersCount = 0;
+
+      startStateBroadcast();
+
+      const params = {};
+      if (currentTask.params) {
+        params[currentTask.params[0].name] = parseInt(document.getElementById('paramWidth').value);
+        params[currentTask.params[1].name] = parseInt(document.getElementById('paramHeight').value);
+        params[currentTask.params[2].name] = parseInt(document.getElementById('paramParam').value);
+      }
+
+      const numPeers = dataChannels.size + 1;
+      const tasks = currentTask.split(params, numPeers * 5); // oversubscription 5x
+      taskPool = tasks;
+      totalTasksCount = tasks.length;
+
+      log(`🚀 PAWNS avviato: ${tasks.length} task nel pool`, 'success');
+      log(`👥 ${numPeers} peer disponibili (incluso me)`, 'info');
+      log(`🤝 Sistema cooperativo attivo: chi finisce aiuta automaticamente il più lento`, 'success');
+      debugLog(`🚀 TEST AVVIATO: ${tasks.length} task, ${numPeers} peer`);
+
+      document.getElementById('progressContainer').style.display = 'block';
+      document.getElementById('resultsArea').style.display = 'none';
+      document.getElementById('statPoolSize').textContent = taskPool.length;
+      document.getElementById('statSteals').textContent = '0';
+      document.getElementById('statHelps').textContent = '0';
+      
+      updateDebugUI();
+
+      findMoreWork();
+    }
+
+    function handleComputeTask(data, peerId) {
+      const task = data.task;
+      const startTime = performance.now();
+      const taskDef = currentTask;
+      const result = taskDef.compute(task);
+      const duration = performance.now() - startTime;
+
+      sendToPeer(peerId, {
+        type: 'task-result',
+        taskId: task.id,
+        result,
+        duration
+      });
+    }
+
+    function handleTaskResult(data, peerId) {
+      onTaskComplete(data.taskId, data.result, data.duration);
+    }
+
+    // ======== DYNAMIC SERVER URL ========
+    function setDynamicServerUrl() {
+      const inputEl = document.getElementById('serverUrl');
+      const currentVal = inputEl.value || 'ws://localhost:3000';
+      const isHttpContext = (location.protocol === 'http:' || location.protocol === 'https:');
+      if (isHttpContext && location.host) {
+        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const dynamicServerUrl = protocol + '//' + location.host;
+        inputEl.value = dynamicServerUrl;
+        log(`✨ Server URL dinamico impostato: ${dynamicServerUrl}`, 'success');
+      } else {
+        inputEl.value = currentVal;
+        log(`ℹ️ Server URL mantenuto: ${currentVal}`, 'info');
+      }
+    }
+
+    // ======== CUSTOM TASKS ========
+    function createCustomTask() {
+      const taskCode = prompt(`Inserisci il codice del task personalizzato (formato JSON):
+
+Esempio:
+{
+  "id": "custom1",
+  "name": "Custom Task",
+  "icon": "⚡",
+  "description": "Task personalizzato",
+  "params": [
+    {"name": "param1", "label": "Parametro 1", "default": 100, "hint": "Primo parametro"}
+  ],
+  "splitCode": "function(params, numPeers) { /* split logic */ }",
+  "computeCode": "function(task) { /* compute logic */ }",
+  "mergeCode": "function(results, params) { /* merge logic */ }"
+}
+`);
+      if (!taskCode) return;
+      try {
+        const taskDef = JSON.parse(taskCode);
+        if (!taskDef.id || !taskDef.name || !taskDef.splitCode || !taskDef.computeCode || !taskDef.mergeCode) {
+          throw new Error('Campi obbligatori mancanti');
+        }
+        const task = {
+          id: taskDef.id,
+          name: taskDef.name,
+          icon: taskDef.icon || '⚡',
+          description: taskDef.description || 'Task personalizzato',
+          params: taskDef.params || [],
+          split: eval(`(${taskDef.splitCode})`),
+          compute: eval(`(${taskDef.computeCode})`),
+          merge: eval(`(${taskDef.mergeCode})`)
+        };
+        TaskRegistry.register(task);
+        renderTaskSelector();
+        selectTask(task.id);
+        document.getElementById('statTasks').textContent = TaskRegistry.getAll().length;
+        document.getElementById('btnSaveTask').disabled = false;
+        log(`✅ Task personalizzato "${task.name}" creato!`, 'success');
+      } catch (err) {
+        log(`❌ Errore creazione task: ${err.message}`, 'error');
+        alert(`Errore: ${err.message}`);
+      }
+    }
+
+    function loadTaskFromFile() {
+      document.getElementById('fileInput').click();
+    }
+
+    function handleTaskFileLoad(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const taskDef = JSON.parse(e.target.result);
+          if (!taskDef.id || !taskDef.name || !taskDef.splitCode || !taskDef.computeCode || !taskDef.mergeCode) {
+            throw new Error('Campi obbligatori mancanti nel file');
+          }
+          let taskId = taskDef.id;
+          if (TaskRegistry.get(taskId)) {
+            let counter = 1;
+            while (TaskRegistry.get(taskId + '_' + counter)) counter++;
+            taskId = taskId + '_' + counter;
+            log(`⚠️ ID task duplicato, rinominato in: ${taskId}`, 'warning');
+          }
+          const task = {
+            id: taskId,
+            name: taskDef.name,
+            icon: taskDef.icon || '⚡',
+            description: taskDef.description || 'Task caricato da file',
+            params: taskDef.params || [],
+            split: eval(`(${taskDef.splitCode})`),
+            compute: eval(`(${taskDef.computeCode})`),
+            merge: eval(`(${taskDef.mergeCode})`)
+          };
+          TaskRegistry.register(task);
+          renderTaskSelector();
+          selectTask(task.id);
+          document.getElementById('statTasks').textContent = TaskRegistry.getAll().length;
+          document.getElementById('btnSaveTask').disabled = false;
+          log(`✅ Task "${task.name}" caricato da file!`, 'success');
+        } catch (err) {
+          log(`❌ Errore caricamento file: ${err.message}`, 'error');
+          alert(`Errore caricamento file: ${err.message}`);
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function saveCurrentTask() {
+      if (!currentTask) { log('❌ Nessun task selezionato!', 'error'); return; }
+      const taskDef = {
+        id: currentTask.id,
+        name: currentTask.name,
+        icon: currentTask.icon,
+        description: currentTask.description,
+        params: currentTask.params,
+        splitCode: currentTask.split.toString(),
+        computeCode: currentTask.compute.toString(),
+        mergeCode: currentTask.merge.toString()
+      };
+      const json = JSON.stringify(taskDef, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `task_${currentTask.id}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      log(`✅ Task "${currentTask.name}" salvato!`, 'success');
+    }
+
+    function exportResultsJSON() {
+      const resultsArea = document.getElementById('resultsArea');
+      if (resultsArea.style.display === 'none') { log('❌ Nessun risultato da esportare!', 'error'); return; }
+
+      const results = {
+        timestamp: new Date().toISOString(),
+        task: currentTask ? currentTask.name : 'Unknown',
+        taskId: currentTask ? currentTask.id : 'unknown',
+        peers: parseInt(document.getElementById('resultPeers').textContent),
+        time: document.getElementById('resultTime').textContent,
+        workSteals: parseInt(document.getElementById('resultStolen').textContent),
+        cooperativeHelps: parseInt(document.getElementById('resultHelps').textContent),
+        efficiency: document.getElementById('resultEfficiency').textContent,
+        parameters: {
+          width: parseInt(document.getElementById('paramWidth').value),
+          height: parseInt(document.getElementById('paramHeight').value),
+          param: parseInt(document.getElementById('paramParam').value)
+        },
+        systemStats: {
+          connectedPeers: parseInt(document.getElementById('statPeers').textContent),
+          availableTasks: parseInt(document.getElementById('statTasks').textContent),
+          completedTests: parseInt(document.getElementById('statTests').textContent),
+          totalHelps: parseInt(document.getElementById('statTotalHelps').textContent)
+        }
+      };
+
+      const json = JSON.stringify(results, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `macn_results_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      log('✅ Risultati esportati in JSON!', 'success');
+    }
+
+    // ======== EVENT LISTENERS ========
+    document.getElementById('btnConnect').addEventListener('click', connect);
+    document.getElementById('btnDisconnect').addEventListener('click', disconnect);
+    document.getElementById('btnFullReset').addEventListener('click', fullReset);
+
+    document.getElementById('btnConnectAll').addEventListener('click', async () => {
+      const toConnect = availablePeers.filter(p => !dataChannels.has(p) && p !== myPeerId);
+      log(`⚡ Connessione a ${toConnect.length} peer...`, 'info');
+      for (const peerId of toConnect) {
+        await createPeerConnection(peerId, true);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    });
+
+    document.getElementById('btnBenchmarkAll').addEventListener('click', benchmarkAllPeers);
+    document.getElementById('btnFormClusters').addEventListener('click', formProximityClusters);
+    document.getElementById('btnTestP2P').addEventListener('click', testP2PCommunication);
+    document.getElementById('btnToggleDebug').addEventListener('click', () => {
+      const debugPanel = document.getElementById('debugPanel');
+      if (debugPanel.style.display === 'none') {
+        debugPanel.style.display = 'block';
+        debugLog('🔍 Debug panel attivato');
+        log('🔍 Debug panel attivato', 'info');
+      } else {
+        debugPanel.style.display = 'none';
+        log('🔍 Debug panel disattivato', 'info');
+      }
+    });
+    document.getElementById('btnRunTest').addEventListener('click', runPawnsTest);
+    document.getElementById('btnClearResults').addEventListener('click', () => {
+      document.getElementById('resultsArea').style.display = 'none';
+      document.getElementById('btnExportJSON').disabled = true;
+    });
+    document.getElementById('btnClearLog').addEventListener('click', () => {
+      document.getElementById('logOutput').innerHTML = '';
+    });
+
+    document.getElementById('btnCustomTask').addEventListener('click', createCustomTask);
+    document.getElementById('btnLoadTask').addEventListener('click', loadTaskFromFile);
+    document.getElementById('btnSaveTask').addEventListener('click', saveCurrentTask);
+    document.getElementById('fileInput').addEventListener('change', handleTaskFileLoad);
+    document.getElementById('btnExportJSON').addEventListener('click', exportResultsJSON);
+
+    // ======== INIT ========
+    (async function init() {
+      log('🌐 MACN v11.0 PAWNS - Sistema Cooperativo di Work-Stealing', 'success');
+      log('═══════════════════════════════════════════════════', 'info');
+      log('✅ Autonomous Task Pulling', 'success');
+      log('✅ Cooperative Work Stealing', 'success');
+      log('✅ Smart Helping: chi finisce aiuta automaticamente', 'success');
+      log('✅ Real-time State Broadcasting', 'success');
+      log('═══════════════════════════════════════════════════', 'info');
+
+      setDynamicServerUrl();
+
+      fetch('/current-tunnel-url.txt')
+        .then(response => response.text())
+        .then(url => {
+          if (url && url.startsWith('https://')) {
+            const wsUrl = url.replace('https://', 'wss://');
+            document.getElementById('serverUrl').value = wsUrl;
+            log(`✨ URL tunnel caricato automaticamente: ${wsUrl}`, 'success');
+          }
+        })
+        .catch(() => {
+          log('ℹ️ File URL tunnel non trovato, uso configurazione corrente', 'info');
+        });
+
+      renderTaskSelector();
+      const firstTask = TaskRegistry.getAll()[0];
+      if (firstTask) selectTask(firstTask.id);
+
+      log('✨ Sistema pronto! Connettiti al server', 'success');
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+{
+  id: 'nn-train',
+  name: 'Neural Network Training',
+  description: 'Training semplice rete neurale',
+  category: 'cpu',
+  icon: '🧠',
+  
+  paramLabels: {
+    width: 'Dimensione input',
+    height: 'Epoch',
+    param: 'Learning rate (x1000)'
+  },
+  
+  async compute(params) {
+    const { width: inputSize, height: epochs, param: lrx1000 } = params;
+    const learningRate = lrx1000 / 1000;
+    const startTime = performance.now();
+    
+    // Inizializza rete semplice (1 hidden layer)
+    const hiddenSize = Math.floor(inputSize / 2);
+    let weights1 = randomMatrix(inputSize, hiddenSize);
+    let weights2 = randomMatrix(hiddenSize, 1);
+    
+    // Training loop
+    for (let epoch = 0; epoch < epochs; epoch++) {
+      // Generate random training data
+      const X = randomMatrix(100, inputSize);
+      const y = randomMatrix(100, 1);
+      
+      // Forward pass + Backpropagation (simplified)
+      for (let i = 0; i < 100; i++) {
+        const hidden = sigmoid(matmul(X[i], weights1));
+        const output = sigmoid(matmul(hidden, weights2));
+        
+        // Compute gradient (simplified)
+        const error = y[i] - output;
+        const delta2 = error * sigmoidDerivative(output);
+        const delta1 = matmul(delta2, transpose(weights2)) * sigmoidDerivative(hidden);
+        
+        // Update weights
+        weights2 = add(weights2, scale(matmul(transpose(hidden), delta2), learningRate));
+        weights1 = add(weights1, scale(matmul(transpose(X[i]), delta1), learningRate));
+      }
+      
+      if (epoch % 10 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+    }
+    
+    const took_ms = performance.now() - startTime;
+    return {
+      inputSize,
+      hiddenSize,
+      epochs,
+      learningRate,
+      took_ms: Math.round(took_ms),
+      throughput: epochs / (took_ms / 1000)
+    };
+  }
+}
+
+// Helper functions
+function randomMatrix(rows, cols) {
+  return Array(rows).fill().map(() => 
+    Array(cols).fill().map(() => Math.random() * 2 - 1)
+  );
+}
+
+function sigmoid(x) {
+  if (Array.isArray(x)) return x.map(sigmoid);
+  return 1 / (1 + Math.exp(-x));
+}
+
+function sigmoidDerivative(x) {
+  return x * (1 - x);
+}

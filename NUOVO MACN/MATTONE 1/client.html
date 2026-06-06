@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MACN Mattone 1 — Lista Peer</title>
+
+  <script src="/socket.io/socket.io.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      background: #05070a;
+      color: #e8f0ff;
+      font-family: Consolas, monospace;
+    }
+
+    .box {
+      max-width: 720px;
+      margin: 0 auto 16px auto;
+      padding: 18px;
+      border: 1px solid #1e293b;
+      background: #0b1120;
+      border-radius: 12px;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #00ff88;
+    }
+
+    .label {
+      color: #8ca0bd;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .value {
+      margin-top: 6px;
+      padding: 10px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      word-break: break-all;
+      color: #ffffff;
+    }
+
+    .peer {
+      padding: 10px;
+      margin-top: 8px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      color: #66ccff;
+    }
+
+    .empty {
+      color: #64748b;
+      padding: 10px;
+    }
+
+    .ok {
+      color: #00ff88;
+    }
+
+    .bad {
+      color: #ff3355;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px 14px;
+      border: none;
+      border-radius: 8px;
+      background: #00ff88;
+      color: #001108;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #log {
+      max-height: 260px;
+      overflow-y: auto;
+      font-size: 13px;
+    }
+
+    .log-line {
+      padding: 4px 0;
+      border-bottom: 1px solid #111827;
+    }
+
+    .time {
+      color: #64748b;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="box">
+    <h1>MACN Mattone 1</h1>
+    <div>Signaling server + lista peer connessi</div>
+  </div>
+
+  <div class="box">
+    <div class="label">Stato server</div>
+    <div class="value" id="server-status">connessione...</div>
+
+    <div class="label" style="margin-top:14px;">Il mio ID</div>
+    <div class="value" id="my-id">—</div>
+
+    <button id="refresh-btn">Aggiorna lista peer</button>
+  </div>
+
+  <div class="box">
+    <div class="label">Peer disponibili</div>
+    <div id="peer-list" style="margin-top:10px;">
+      <div class="empty">Nessun peer visibile</div>
+    </div>
+  </div>
+
+  <div class="box">
+    <div class="label">Log</div>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    // =====================================================
+    // MACN Mattone 1 — Client minimale
+    // Obiettivo: mostrare il proprio ID e la lista peer
+    // =====================================================
+
+    const socket = io();
+
+    let myId = null;
+    let peers = new Set();
+
+    const serverStatus = document.getElementById("server-status");
+    const myIdEl = document.getElementById("my-id");
+    const peerListEl = document.getElementById("peer-list");
+    const logEl = document.getElementById("log");
+    const refreshBtn = document.getElementById("refresh-btn");
+
+    function now() {
+      return new Date().toLocaleTimeString("it-IT");
+    }
+
+    function log(msg) {
+      const div = document.createElement("div");
+      div.className = "log-line";
+      div.innerHTML = `<span class="time">${now()}</span>${msg}`;
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function renderPeers() {
+      peerListEl.innerHTML = "";
+
+      if (peers.size === 0) {
+        peerListEl.innerHTML = `<div class="empty">Nessun altro peer connesso</div>`;
+        return;
+      }
+
+      for (const peerId of peers) {
+        const div = document.createElement("div");
+        div.className = "peer";
+        div.textContent = peerId;
+        peerListEl.appendChild(div);
+      }
+    }
+
+    socket.on("connect", () => {
+      serverStatus.innerHTML = `<span class="ok">connesso</span>`;
+      log("Connesso al signaling server");
+    });
+
+    socket.on("disconnect", () => {
+      serverStatus.innerHTML = `<span class="bad">disconnesso</span>`;
+      log("Disconnesso dal signaling server");
+    });
+
+    socket.on("my-id", (id) => {
+      myId = id;
+      myIdEl.textContent = id;
+      log("Il mio ID è: " + id);
+    });
+
+    socket.on("peer-list", (list) => {
+      peers = new Set(list.filter((id) => id !== myId));
+      renderPeers();
+      log("Lista peer ricevuta: " + peers.size + " peer");
+    });
+
+    socket.on("peer-joined", (peerId) => {
+      if (peerId !== myId) {
+        peers.add(peerId);
+        renderPeers();
+        log("Nuovo peer entrato: " + peerId);
+      }
+    });
+
+    socket.on("peer-left", (peerId) => {
+      peers.delete(peerId);
+      renderPeers();
+      log("Peer uscito: " + peerId);
+    });
+
+    refreshBtn.addEventListener("click", () => {
+      socket.emit("get-peers");
+      log("Richiesta nuova lista peer");
+    });
+  </script>
+
+</body>
+</html>

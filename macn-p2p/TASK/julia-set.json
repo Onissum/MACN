@@ -1,0 +1,29 @@
+{
+  "id": "mandelbrot",
+  "name": "Julia Set Fractal",
+  "icon": "🌈",
+  "description": "Frattale di Julia con palette colori arcobaleno",
+  "params": [
+    {
+      "name": "width",
+      "label": "Larghezza",
+      "default": 1920,
+      "hint": "Larghezza immagine (px)"
+    },
+    {
+      "name": "height",
+      "label": "Altezza",
+      "default": 1080,
+      "hint": "Altezza immagine (px)"
+    },
+    {
+      "name": "param",
+      "label": "Iterazioni",
+      "default": 256,
+      "hint": "Iterazioni massime per colore"
+    }
+  ],
+  "splitCode": "function(params, numPeers) { const stripHeight = Math.ceil(params.height / numPeers); const tasks = []; for (let i = 0; i < numPeers; i++) { const yStart = i * stripHeight; const yEnd = Math.min(yStart + stripHeight, params.height); tasks.push({ id: `julia_${i}`, yStart, yEnd, width: params.width, height: params.height, maxIter: params.param }); } return tasks; }",
+  "computeCode": "function(task) { const { yStart, yEnd, width, height, maxIter } = task; const stripHeight = yEnd - yStart; const imageData = new Uint8ClampedArray(width * stripHeight * 4); const cReal = -0.7; const cImag = 0.27015; const zoom = 1.5; for (let py = 0; py < stripHeight; py++) { const y = yStart + py; for (let px = 0; px < width; px++) { let zx = (px - width / 2) / (0.5 * zoom * width); let zy = (y - height / 2) / (0.5 * zoom * height); let iter = 0; while (zx * zx + zy * zy < 4 && iter < maxIter) { const tmp = zx * zx - zy * zy + cReal; zy = 2 * zx * zy + cImag; zx = tmp; iter++; } const idx = (py * width + px) * 4; if (iter === maxIter) { imageData[idx] = 0; imageData[idx + 1] = 0; imageData[idx + 2] = 0; } else { const t = iter / maxIter; const r = Math.floor(9 * (1 - t) * t * t * t * 255); const g = Math.floor(15 * (1 - t) * (1 - t) * t * t * 255); const b = Math.floor(8.5 * (1 - t) * (1 - t) * (1 - t) * t * 255); imageData[idx] = r; imageData[idx + 1] = g; imageData[idx + 2] = b; } imageData[idx + 3] = 255; } } return { imageData: Array.from(imageData), yStart, yEnd }; }",
+  "mergeCode": "function(results, params) { const canvas = document.createElement('canvas'); canvas.width = params.width; canvas.height = params.height; const ctx = canvas.getContext('2d'); results.sort((a, b) => a.yStart - b.yStart); for (const result of results) { const stripHeight = result.yEnd - result.yStart; const imageData = ctx.createImageData(params.width, stripHeight); imageData.data.set(new Uint8ClampedArray(result.imageData)); ctx.putImageData(imageData, 0, result.yStart); } return canvas.toDataURL(); }"
+}

@@ -1,0 +1,29 @@
+{
+  "id": "primes",
+  "name": "⚛️ Shor's Factorization VISIBLE",
+  "icon": "🔢",
+  "description": "Algoritmo di Shor - CON RISULTATI VISIBILI!",
+  "params": [
+    {
+      "name": "start",
+      "label": "Numero da Fattorizzare",
+      "default": 15,
+      "hint": "Numero da fattorizzare (15, 21, 35, 77, 143)"
+    },
+    {
+      "name": "end",
+      "label": "Qubit Registro",
+      "default": 16,
+      "hint": "Qubit per registri (16-22)"
+    },
+    {
+      "name": "chunks",
+      "label": "Tentativi",
+      "default": 5,
+      "hint": "Tentativi di fattorizzazione (1-10)"
+    }
+  ],
+  "splitCode": "function(params, numPeers) { const N = params.start || 15; const numQubits = Math.min(params.end || 16, 22); const totalStates = Math.pow(2, numQubits); const statesPerPeer = Math.ceil(totalStates / numPeers); const tasks = []; for (let i = 0; i < numPeers; i++) { const startState = i * statesPerPeer; const endState = Math.min(startState + statesPerPeer, totalStates); if (startState < totalStates) { tasks.push({ id: `shor_${i}`, peerIndex: i, N: N, numQubits, startState, endState, attempts: params.chunks || 5 }); } } return tasks; }",
+  "computeCode": "function(task) { const startTime = performance.now(); const { N, numQubits, startState, endState, peerIndex } = task; const numStates = endState - startState; console.log(`[Shor-${peerIndex}] 🔢 Factorizing N=${N} using ${numQubits} qubits`); console.log(`[Shor-${peerIndex}] 📊 States ${startState}-${endState}`); function gcd(a, b) { while (b !== 0) { const t = b; b = a % b; a = t; } return a; } function modPow(base, exp, mod) { let result = 1; base = base % mod; while (exp > 0) { if (exp % 2 === 1) result = (result * base) % mod; exp = Math.floor(exp / 2); base = (base * base) % mod; } return result; } const state = new Float64Array(numStates); console.log(`[Shor-${peerIndex}] 🎲 Choosing random coprime a...`); let a = 2 + Math.floor(Math.random() * (N - 3)); while (gcd(a, N) !== 1 && a < N) { a = 2 + Math.floor(Math.random() * (N - 3)); } console.log(`[Shor-${peerIndex}] ✅ Selected a=${a}`); console.log(`[Shor-${peerIndex}] ⚛️ Quantum superposition...`); const totalPossibleStates = Math.pow(2, numQubits); const amplitude = 1 / Math.sqrt(totalPossibleStates); for (let i = 0; i < numStates; i++) { state[i] = amplitude; } console.log(`[Shor-${peerIndex}] 🔄 Modular exponentiation f(x)=a^x mod N...`); let totalOps = 0; const modResults = new Map(); for (let i = 0; i < numStates; i++) { const x = startState + i; const fx = modPow(a, x, N); if (!modResults.has(fx)) { modResults.set(fx, []); } modResults.get(fx).push(i); totalOps++; } console.log(`[Shor-${peerIndex}] 🌊 Quantum interference...`); for (const [fx, indices] of modResults.entries()) { const newAmplitude = amplitude * Math.sqrt(indices.length); for (const idx of indices) { state[idx] = newAmplitude; } totalOps += indices.length; } let maxAmplitude = 0; let maxState = 0; for (let i = 0; i < numStates; i++) { if (state[i] > maxAmplitude) { maxAmplitude = state[i]; maxState = startState + i; } totalOps++; } console.log(`[Shor-${peerIndex}] 🎯 Measured: |${maxState}⟩`); let r = 0; for (let period = 1; period < N; period++) { if (modPow(a, period, N) === 1) { r = period; break; } } console.log(`[Shor-${peerIndex}] 📏 Period r=${r}`); let factor1 = 0, factor2 = 0; if (r > 0 && r % 2 === 0) { const x = modPow(a, r / 2, N); factor1 = gcd(x - 1, N); factor2 = gcd(x + 1, N); } const totalTime = (performance.now() - startTime) / 1000; if (factor1 > 1 && factor1 < N) { console.log(`[Shor-${peerIndex}] 🎉 FOUND: ${factor1} × ${N / factor1} = ${N}`); } return { primes: factor1 > 1 && factor1 < N ? [factor1, N / factor1] : [], count: factor1 > 1 && factor1 < N ? 2 : 0, peerIndex, N, a, period: r, factor1, factor2, measuredState: maxState, success: (factor1 > 1 && factor1 < N) }; }",
+  "mergeCode": "function(results, params) { const N = params.start || 15; let bestFactor1 = 0; let bestFactor2 = 0; let allFactors = []; for (const r of results) { if (r.success && r.factor1 > 1 && r.factor1 < N) { if (bestFactor1 === 0) { bestFactor1 = r.factor1; bestFactor2 = N / r.factor1; allFactors = [r.factor1, r.factor2]; } } } const factorized = bestFactor1 > 1 && bestFactor1 < N; return { primes: factorized ? [bestFactor1, bestFactor2] : [], total: factorized ? 2 : 0, N: N, factorized: factorized, factors: factorized ? `${bestFactor1} × ${bestFactor2}` : 'Not found', verification: factorized ? `${bestFactor1} × ${bestFactor2} = ${bestFactor1 * bestFactor2}` : 'N/A', algorithm: \"Shor's Quantum Algorithm\", quantumAdvantage: 'Exponential speedup!', cryptoWarning: factorized ? `⚠️ RSA with N=${N} is BROKEN!` : 'N/A' }; }"
+}

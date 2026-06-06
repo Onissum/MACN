@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MACN Mattone 4 — Multi Peer</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+body{margin:0;padding:24px;background:#05070a;color:#e8f0ff;font-family:Consolas,monospace}
+.box{max-width:850px;margin:0 auto 16px;padding:18px;border:1px solid #1e293b;background:#0b1120;border-radius:12px}
+h1{margin-top:0;color:#00ff88}.label{color:#8ca0bd;font-size:12px;text-transform:uppercase;letter-spacing:1px}
+.value{margin-top:6px;padding:10px;background:#020617;border:1px solid #1e293b;border-radius:8px;word-break:break-all;color:#fff}
+.peer{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;margin-top:8px;background:#020617;border:1px solid #1e293b;border-radius:8px;color:#66ccff}
+.empty{color:#64748b;padding:10px}.ok{color:#00ff88}.bad{color:#ff3355}.warn{color:#ffcc00}
+button{padding:9px 12px;border:none;border-radius:8px;background:#00ff88;color:#001108;font-weight:bold;cursor:pointer}
+button.secondary{background:#1e293b;color:#66ccff;border:1px solid #334155}button:disabled{opacity:.45;cursor:not-allowed}
+#log{max-height:360px;overflow-y:auto;font-size:13px}.log-line{padding:4px 0;border-bottom:1px solid #111827}.time{color:#64748b;margin-right:8px}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h1>MACN Mattone 4</h1>
+  <div>Multi-peer: più DataChannel aperti insieme</div>
+</div>
+
+<div class="box">
+  <div class="label">Stato signaling server</div>
+  <div class="value" id="server-status">connessione...</div>
+
+  <div class="label" style="margin-top:14px;">URL pagina</div>
+  <div class="value" id="page-url">—</div>
+
+  <div class="label" style="margin-top:14px;">Il mio ID</div>
+  <div class="value" id="my-id">—</div>
+
+  <div class="label" style="margin-top:14px;">Canali aperti</div>
+  <div class="value" id="channels-status">0</div>
+
+  <div style="margin-top:12px;">
+    <button id="refresh-btn">Aggiorna peer</button>
+    <button id="connect-all-btn" class="secondary">Connetti tutti</button>
+    <button id="ping-all-btn" class="secondary" disabled>Ping tutti</button>
+  </div>
+</div>
+
+<div class="box">
+  <div class="label">Peer disponibili</div>
+  <div id="peer-list" style="margin-top:10px;"><div class="empty">Nessun peer visibile</div></div>
+</div>
+
+<div class="box">
+  <div class="label">Log</div>
+  <div id="log"></div>
+</div>
+
+<script>
+const socket = io();
+
+let myId = null;
+let peers = new Set();
+
+const peerConnections = new Map(); // peerId -> RTCPeerConnection
+const dataChannels = new Map();    // peerId -> RTCDataChannel
+
+const rtcConfig = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" }
+  ]
+};
+
+const serverStatus = document.getElementById("server-status");
+const myIdEl = document.getElementById("my-id");
+const peerListEl = document.getElementById("peer-list");
+const logEl = document.getElementById("log");
+const channelsStatus = document.getElementById("channels-status");
+const pingAllBtn = document.getElementById("ping-all-btn");
+document.getElementById("page-url").textContent = location.href;
+
+function now(){ return new Date().toLocaleTimeString("it-IT"); }
+
+function short(id){ return id ? id.slice(0, 8) : "—"; }
+
+function log(msg){
+  const div = document.createElement("div");
+  div.className = "log-line";
+  div.innerHTML = `<span class="time">${now()}</span>${msg}`;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function updateChannelsUI(){
+  channelsStatus.innerHTML = `<span class="ok">${dataChannels.size}</span>`;
+  pingAllBtn.disabled = dataChannels.size === 0;
+  renderPeers();
+}
+
+function renderPeers(){
+  peerListEl.innerHTML = "";
+
+  if(peers.size === 0){
+    peerListEl.innerHTML = `<div class="empty">Nessun altro peer connesso</div>`;
+    return;
+  }
+
+  for(const peerId of peers){
+    const connected = dataChannels.has(peerId);
+    const div = document.createElement("div");
+    div.className = "peer";
+    div.innerHTML = `
+      <span>${peerId}</span>
+      <span>${connected ? '<span class="ok">DataChannel aperto</span>' : '<span class="warn">non connesso</span>'}</span>
+      <button data-peer="${peerId}" ${connected ? "disabled" : ""}>Connetti</button>
+    `;
+    peerListEl.appendChild(div);
+  }
+
+  peerListEl.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => startCall(btn.dataset.peer));
+  });
+}
+
+function getOrCreatePeerConnection(targetId){
+  if(peerConnections.has(targetId)){
+    return peerConnections.get(targetId);
+  }
+
+  const pc = new RTCPeerConnection(rtcConfig);
+  peerConnections.set(targetId, pc);
+
+  pc.onicecandidate = (event) => {
+    if(event.candidate){
+      socket.emit("ice-candidate", { target: targetId, candidate: event.candidate });
+    }
+  };
+
+  pc.oniceconnectionstatechange = () => {
+    log(`ICE ${short(targetId)}: ${pc.iceConnectionState}`);
+  };
+
+  pc.onconnectionstatechange = () => {
+    log(`WebRTC ${short(targetId)}: ${pc.connectionState}`);
+
+    if(pc.connectionState === "failed" || pc.connectionState === "disconnected" || pc.connectionState === "closed"){
+      dataChannels.delete(targetId);
+      peerConnections.delete(targetId);
+      updateChannelsUI();
+    }
+  };
+
+  pc.ondatachannel = (event) => {
+    log(`DataChannel ricevuto da ${short(targetId)}`);
+    setupDataChannel(targetId, event.channel);
+  };
+
+  return pc;
+}
+
+function setupDataChannel(peerId, channel){
+  dataChannels.set(peerId, channel);
+
+  channel.onopen = () => {
+    log(`✅ DataChannel aperto con ${short(peerId)}`);
+    dataChannels.set(peerId, channel);
+    updateChannelsUI();
+
+    sendToPeer(peerId, { type:"hello", from:myId, time:Date.now() });
+  };
+
+  channel.onmessage = (event) => {
+    log(`📩 da ${short(peerId)}: ${event.data}`);
+
+    let data;
+    try { data = JSON.parse(event.data); } catch { return; }
+
+    if(data.type === "hello"){
+      sendToPeer(peerId, { type:"hello_ack", from:myId, time:Date.now() });
+    }
+
+    if(data.type === "ping"){
+      sendToPeer(peerId, { type:"pong", from:myId, originalTime:data.time, time:Date.now() });
+    }
+
+    if(data.type === "pong"){
+      const latency = Date.now() - data.originalTime;
+      log(`🏓 PONG da ${short(peerId)} · ${latency} ms`);
+    }
+  };
+
+  channel.onclose = () => {
+    log(`DataChannel chiuso con ${short(peerId)}`);
+    dataChannels.delete(peerId);
+    updateChannelsUI();
+  };
+
+  channel.onerror = () => {
+    log(`Errore DataChannel con ${short(peerId)}`);
+  };
+}
+
+function sendToPeer(peerId, obj){
+  const channel = dataChannels.get(peerId);
+  if(!channel || channel.readyState !== "open"){
+    log(`Canale non aperto verso ${short(peerId)}`);
+    return false;
+  }
+  channel.send(JSON.stringify(obj));
+  return true;
+}
+
+async function startCall(targetId){
+  if(targetId === myId) return;
+  if(dataChannels.has(targetId)){
+    log(`Già connesso a ${short(targetId)}`);
+    return;
+  }
+
+  log(`Avvio P2P verso ${short(targetId)}`);
+
+  const pc = getOrCreatePeerConnection(targetId);
+  const channel = pc.createDataChannel("macn-control");
+  setupDataChannel(targetId, channel);
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  socket.emit("offer", { target: targetId, offer: pc.localDescription });
+  log(`Offer inviata a ${short(targetId)}`);
+}
+
+socket.on("connect", () => {
+  serverStatus.innerHTML = `<span class="ok">connesso</span>`;
+  log("Connesso al signaling server");
+});
+
+socket.on("disconnect", () => {
+  serverStatus.innerHTML = `<span class="bad">disconnesso</span>`;
+  log("Disconnesso dal signaling server");
+});
+
+socket.on("my-id", (id) => {
+  myId = id;
+  myIdEl.textContent = id;
+  log("Il mio ID è: " + id);
+});
+
+socket.on("peer-list", (list) => {
+  peers = new Set(list.filter(id => id !== myId));
+  renderPeers();
+  log("Lista peer ricevuta: " + peers.size + " peer");
+});
+
+socket.on("peer-joined", (peerId) => {
+  if(peerId !== myId){
+    peers.add(peerId);
+    renderPeers();
+    log("Nuovo peer entrato: " + peerId);
+  }
+});
+
+socket.on("peer-left", (peerId) => {
+  peers.delete(peerId);
+
+  if(dataChannels.has(peerId)){
+    dataChannels.get(peerId).close();
+    dataChannels.delete(peerId);
+  }
+
+  if(peerConnections.has(peerId)){
+    peerConnections.get(peerId).close();
+    peerConnections.delete(peerId);
+  }
+
+  renderPeers();
+  updateChannelsUI();
+  log("Peer uscito: " + short(peerId));
+});
+
+socket.on("offer", async ({ from, offer }) => {
+  log("Offer ricevuta da " + short(from));
+
+  const pc = getOrCreatePeerConnection(from);
+  await pc.setRemoteDescription(new RTCSessionDescription(offer));
+
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  socket.emit("answer", { target: from, answer: pc.localDescription });
+  log("Answer inviata a " + short(from));
+});
+
+socket.on("answer", async ({ from, answer }) => {
+  log("Answer ricevuta da " + short(from));
+
+  const pc = peerConnections.get(from);
+  if(pc){
+    await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    log("Remote description impostata per " + short(from));
+  }
+});
+
+socket.on("ice-candidate", async ({ from, candidate }) => {
+  const pc = peerConnections.get(from);
+  if(pc && candidate){
+    try{
+      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      log("ICE candidate ricevuto da " + short(from));
+    }catch(err){
+      log("Errore ICE da " + short(from) + ": " + err.message);
+    }
+  }
+});
+
+document.getElementById("refresh-btn").addEventListener("click", () => {
+  socket.emit("get-peers");
+  log("Richiesta nuova lista peer");
+});
+
+document.getElementById("connect-all-btn").addEventListener("click", async () => {
+  for(const peerId of peers){
+    if(!dataChannels.has(peerId)){
+      await startCall(peerId);
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+});
+
+document.getElementById("ping-all-btn").addEventListener("click", () => {
+  for(const peerId of dataChannels.keys()){
+    sendToPeer(peerId, { type:"ping", from:myId, time:Date.now() });
+    log("🏓 PING inviato a " + short(peerId));
+  }
+});
+</script>
+</body>
+</html>

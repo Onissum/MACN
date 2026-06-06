@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>MACN — Test Scoperta Nodi V2</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000;
+  --panel:#06090f;
+  --border:#0e1520;
+  --green:#00ff88;
+  --blue:#66ccff;
+  --red:#ff3355;
+  --amber:#ffcc00;
+  --muted:#2a3a4a;
+  --text:#d0dce8;
+  --text-bright:#f0f4ff;
+}
+html,body{
+  width:100%;min-height:100vh;
+  background:var(--bg);color:var(--text);
+  font-family:'Courier New',monospace;
+  overflow-x:hidden;
+}
+body{
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px 16px 40px;
+}
+
+h1{
+  font-size:28px;letter-spacing:3px;color:var(--text-bright);
+  margin-bottom:4px;text-align:center;
+}
+h1 span{color:var(--green);}
+.subtitle{
+  font-size:10px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:24px;text-align:center;
+}
+
+.panel{
+  width:100%;max-width:600px;
+  border:1px solid var(--border);
+  background:var(--panel);
+  margin-bottom:16px;
+}
+.panel-header{
+  padding:8px 12px;border-bottom:1px solid var(--border);
+  font-size:9px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--amber);display:flex;justify-content:space-between;align-items:center;
+}
+.panel-body{
+  padding:12px;
+}
+
+.status-row{
+  display:flex;align-items:center;gap:10px;font-size:11px;
+  padding:8px 12px;border:1px solid var(--border);
+  background:var(--panel);width:100%;max-width:600px;margin-bottom:16px;
+}
+.status-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--muted);flex-shrink:0;
+}
+.status-dot.connected{background:var(--green);box-shadow:0 0 8px rgba(0,255,136,.5);}
+.status-dot.discovering{background:var(--amber);box-shadow:0 0 8px rgba(255,204,0,.5);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+.info-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;font-size:11px;border-bottom:1px solid rgba(255,255,255,.03);
+}
+.info-label{color:var(--muted);text-transform:uppercase;font-size:9px;letter-spacing:1px;}
+.info-value{color:var(--text-bright);font-weight:bold;word-break:break-all;}
+
+.btn{
+  padding:8px 14px;border:none;cursor:pointer;
+  font-family:'Courier New',monospace;font-size:10px;
+  font-weight:bold;letter-spacing:1px;text-transform:uppercase;
+  transition:all .15s;
+}
+.btn:active{transform:scale(.96);}
+.btn-primary{background:var(--green);color:#000;}
+.btn-primary:disabled{background:#0c1810;color:#1a3020;cursor:not-allowed;}
+.btn-secondary{
+  background:transparent;color:var(--blue);
+  border:1px solid rgba(102,204,255,.25);
+}
+.btn-secondary:hover{border-color:var(--blue);}
+
+#peer-list{
+  display:flex;flex-direction:column;gap:6px;
+  max-height:300px;overflow-y:auto;
+}
+.peer-card{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;border:1px solid var(--border);
+  background:#040810;gap:10px;transition:border-color .2s;
+}
+.peer-card:hover{border-color:var(--blue);}
+.peer-card.connected{border-color:var(--green);}
+.peer-id{
+  font-size:11px;color:var(--text-bright);
+  word-break:break-all;flex:1;
+}
+.peer-badge{
+  font-size:8px;padding:2px 6px;border-radius:3px;
+  background:rgba(0,255,136,.1);color:var(--green);
+  border:1px solid rgba(0,255,136,.2);
+  white-space:nowrap;
+}
+
+.log-entry{
+  font-size:10px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.02);
+  line-height:1.4;
+}
+.log-time{color:var(--muted);margin-right:8px;}
+.log-discover{color:var(--blue);}
+.log-success{color:var(--green);}
+.log-error{color:var(--red);}
+.log-info{color:var(--amber);}
+
+.input-row{
+  display:flex;gap:8px;margin-top:8px;
+}
+.input{
+  flex:1;background:transparent;border:none;
+  border-bottom:1px solid var(--muted);
+  color:var(--text-bright);font-family:'Courier New',monospace;
+  font-size:12px;padding:8px 0;outline:none;
+}
+.input:focus{border-bottom-color:var(--green);}
+.input::placeholder{color:#1a2a38;}
+
+.auto-refresh{
+  display:flex;align-items:center;gap:8px;margin-top:8px;
+  font-size:9px;color:var(--muted);
+}
+</style>
+</head>
+<body>
+
+<h1>MAC<span>N</span></h1>
+<div class="subtitle">Mattone Uno · Scoperta Nodi via PeerJS Cloud API</div>
+
+<!-- Stato -->
+<div class="status-row">
+  <div class="status-dot" id="status-dot"></div>
+  <span id="status-text" style="flex:1;">Inizializzazione...</span>
+</div>
+
+<!-- Info nodo -->
+<div class="panel">
+  <div class="panel-header">🔍 Il tuo nodo</div>
+  <div class="panel-body">
+    <div class="info-row">
+      <span class="info-label">ID Nodo</span>
+      <span class="info-value" id="my-id-display">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Nodi scoperti</span>
+      <span class="info-value" id="peers-count">0</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Modalità scoperta</span>
+      <span class="info-value" id="discovery-mode">PeerJS Cloud API</span>
+    </div>
+  </div>
+</div>
+
+<!-- Lista nodi scoperti -->
+<div class="panel">
+  <div class="panel-header">
+    <span>📡 Nodi nella rete</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:10px;color:var(--muted);" id="peers-count-badge">0</span>
+      <button class="btn btn-secondary" id="refresh-btn" style="font-size:8px;padding:2px 6px;">Scansiona ora</button>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div id="peer-list">
+      <div style="text-align:center;color:var(--muted);padding:20px;font-size:11px;">
+        🔎 In attesa di scoprire altri nodi...
+      </div>
+    </div>
+    <div class="auto-refresh">
+      <input type="checkbox" id="auto-refresh-checkbox" checked>
+      <label for="auto-refresh-checkbox">Auto-scansione ogni 5 secondi</label>
+    </div>
+  </div>
+</div>
+
+<!-- Connessione manuale -->
+<div class="panel">
+  <div class="panel-header">🔗 Connessione manuale (fallback)</div>
+  <div class="panel-body">
+    <div class="input-row">
+      <input class="input" id="manual-id-input" 
+             placeholder="Incolla ID nodo remoto..."
+             autocomplete="off" spellcheck="false"/>
+      <button class="btn btn-primary" id="manual-connect-btn" disabled>
+        Connetti
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Log -->
+<div class="panel">
+  <div class="panel-header">
+    <span>📋 Log Scoperta</span>
+    <button class="btn btn-secondary" id="clear-log-btn" style="font-size:8px;padding:2px 6px;">Pulisci</button>
+  </div>
+  <div class="panel-body" id="log-body" style="max-height:250px;overflow-y:auto;">
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   MACN — Test Scoperta Nodi V2
+   Strategia: PeerJS Cloud API per listare i peer
+   GET https://0.peerjs.com/peers
+   Restituisce un array di ID dei peer connessi
+════════════════════════════════════════════════════════ */
+
+// ── Stato ──
+let myPeer = null;
+let myId = null;
+let knownPeers = new Set();      // Peer che abbiamo già visto
+let autoRefreshInterval = null;
+const REFRESH_INTERVAL = 5000;   // 5 secondi
+
+// ── DOM Refs ──
+const statusDot = document.getElementById('status-dot');
+const statusText = document.getElementById('status-text');
+const myIdDisplay = document.getElementById('my-id-display');
+const peersCount = document.getElementById('peers-count');
+const peerList = document.getElementById('peer-list');
+const logBody = document.getElementById('log-body');
+const manualIdInput = document.getElementById('manual-id-input');
+const manualConnectBtn = document.getElementById('manual-connect-btn');
+const peersCountBadge = document.getElementById('peers-count-badge');
+const refreshBtn = document.getElementById('refresh-btn');
+const autoRefreshCheckbox = document.getElementById('auto-refresh-checkbox');
+
+// ── Utility ──
+function ts() {
+  return new Date().toLocaleTimeString('it', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function shortId(id) {
+  if (!id) return '—';
+  return id.length > 16 ? id.slice(0,16) + '...' : id;
+}
+
+function addLog(msg, cls = '') {
+  const el = document.createElement('div');
+  el.className = 'log-entry ' + cls;
+  el.innerHTML = `<span class="log-time">${ts()}</span>${msg}`;
+  logBody.appendChild(el);
+  logBody.scrollTop = logBody.scrollHeight;
+}
+
+// ── Scansione dei peer ──
+async function scanPeers() {
+  try {
+    const response = await fetch('https://0.peerjs.com/peers');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const peers = await response.json();
+    
+    // Filtra: rimuovi il proprio ID e i peer già conosciuti?
+    const otherPeers = peers.filter(id => id !== myId);
+    
+    // Trova nuovi peer
+    let newPeersFound = false;
+    for (const peerId of otherPeers) {
+      if (!knownPeers.has(peerId)) {
+        knownPeers.add(peerId);
+        newPeersFound = true;
+        addLog(`🆕 Nuovo nodo scoperto: <b>${shortId(peerId)}</b>`, 'log-discover');
+      }
+    }
+    
+    // Trova peer scomparsi
+    for (const peerId of knownPeers) {
+      if (!otherPeers.includes(peerId)) {
+        knownPeers.delete(peerId);
+        addLog(`👻 Nodo scomparso: <b>${shortId(peerId)}</b>`, 'log-info');
+      }
+    }
+    
+    // Aggiorna UI
+    renderPeerList(otherPeers);
+    
+    const count = otherPeers.length;
+    peersCount.textContent = count;
+    peersCountBadge.textContent = count;
+    
+    if (newPeersFound) {
+      statusText.textContent = `${count} nodo/i scoperto/i`;
+    }
+    
+    addLog(`📡 Scansione completata: <b>${count} nodo/i attivo/i</b>`, 'log-success');
+    
+  } catch (err) {
+    addLog(`❌ Errore scansione: ${err.message}`, 'log-error');
+    statusText.textContent = 'Errore scansione rete';
+  }
+}
+
+function renderPeerList(peers) {
+  if (peers.length === 0) {
+    peerList.innerHTML = `
+      <div style="text-align:center;color:var(--muted);padding:20px;font-size:11px;">
+        🔎 Nessun altro nodo nella rete<br>
+        <span style="font-size:9px;">Apri questa stessa pagina in un'altra scheda</span>
+      </div>`;
+    return;
+  }
+  
+  peerList.innerHTML = '';
+  
+  for (const peerId of peers) {
+    const card = document.createElement('div');
+    card.className = 'peer-card';
+    card.innerHTML = `
+      <span class="peer-id">${peerId}</span>
+      <span class="peer-badge">disponibile</span>
+      <button class="btn btn-secondary connect-peer-btn" data-peer-id="${peerId}" 
+              style="font-size:8px;padding:4px 8px;">
+        Connetti
+      </button>
+    `;
+    peerList.appendChild(card);
+  }
+  
+  // Event listener per i pulsanti Connetti
+  document.querySelectorAll('.connect-peer-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-peer-id');
+      connectToPeer(targetId);
+    });
+  });
+}
+
+// ── Connessione diretta ──
+function connectToPeer(targetId) {
+  addLog(`🔗 Connessione a: <b>${shortId(targetId)}</b>`, 'log-info');
+  
+  try {
+    const conn = myPeer.connect(targetId, { reliable: true });
+    
+    conn.on('open', () => {
+      addLog(`✅ Connessione aperta con: <b>${shortId(targetId)}</b>`, 'log-success');
+      statusText.textContent = `Connesso a ${shortId(targetId)}`;
+      statusDot.className = 'status-dot connected';
+      
+      // Highlight nella lista
+      document.querySelectorAll('.peer-card').forEach(card => {
+        if (card.querySelector('.peer-id').textContent === targetId) {
+          card.classList.add('connected');
+          card.querySelector('.peer-badge').textContent = 'connesso';
+        }
+      });
+      
+      // Invia hello
+      conn.send(JSON.stringify({
+        type: 'hello',
+        from: myId,
+        timestamp: Date.now()
+      }));
+    });
+    
+    conn.on('data', (data) => {
+      try {
+        const msg = typeof data === 'string' ? JSON.parse(data) : data;
+        addLog(`📨 Messaggio da ${shortId(targetId)}: ${JSON.stringify(msg)}`, 'log-success');
+      } catch(e) {
+        addLog(`📨 Messaggio da ${shortId(targetId)}: ${data}`, 'log-success');
+      }
+    });
+    
+    conn.on('close', () => {
+      addLog(`🔌 Connessione chiusa con: ${shortId(targetId)}`, 'log-error');
+      statusText.textContent = 'In ascolto...';
+      statusDot.className = 'status-dot discovering';
+    });
+    
+    conn.on('error', (err) => {
+      addLog(`❌ Errore connessione: ${err.message || err}`, 'log-error');
+    });
+    
+  } catch(e) {
+    addLog(`❌ Errore: ${e.message}`, 'log-error');
+  }
+}
+
+// ── Connessione manuale ──
+manualIdInput.addEventListener('input', () => {
+  manualConnectBtn.disabled = manualIdInput.value.trim().length < 5;
+});
+
+manualIdInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !manualConnectBtn.disabled) {
+    manualConnectBtn.click();
+  }
+});
+
+manualConnectBtn.addEventListener('click', () => {
+  const targetId = manualIdInput.value.trim();
+  if (!targetId) return;
+  connectToPeer(targetId);
+  manualIdInput.value = '';
+});
+
+// ── Auto-refresh ──
+function toggleAutoRefresh() {
+  if (autoRefreshCheckbox.checked) {
+    autoRefreshInterval = setInterval(scanPeers, REFRESH_INTERVAL);
+    addLog('🔄 Auto-scansione avviata (ogni 5s)', 'log-info');
+  } else {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+    addLog('⏸️ Auto-scansione fermata', 'log-info');
+  }
+}
+
+autoRefreshCheckbox.addEventListener('change', toggleAutoRefresh);
+
+// ── Refresh manuale ──
+refreshBtn.addEventListener('click', async () => {
+  addLog('🔍 Scansione manuale...', 'log-info');
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = '...';
+  
+  await scanPeers();
+  
+  refreshBtn.disabled = false;
+  refreshBtn.textContent = 'Scansiona ora';
+});
+
+// ── Inizializzazione ──
+function initPeer() {
+  statusDot.className = 'status-dot discovering';
+  statusText.textContent = 'Connessione al server PeerJS...';
+  
+  addLog('🚀 Avvio MACN Mattone Uno - Scoperta Nodi V2', 'log-success');
+  addLog('📡 Strategia: PeerJS Cloud API (/peers)', 'log-info');
+  
+  myPeer = new Peer({
+    host: '0.peerjs.com',
+    port: 443,
+    path: '/',
+    secure: true,
+    debug: 0,
+    config: {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    }
+  });
+  
+  myPeer.on('open', (id) => {
+    myId = id;
+    myIdDisplay.textContent = id;
+    statusDot.className = 'status-dot connected';
+    statusText.textContent = 'Connesso. Scansione nodi in corso...';
+    
+    addLog(`🆔 Il tuo ID: <b>${id}</b>`, 'log-success');
+    
+    // Prima scansione immediata
+    scanPeers();
+    
+    // Avvia auto-refresh
+    toggleAutoRefresh();
+    
+    // Abilita input manuale
+    manualConnectBtn.disabled = false;
+  });
+  
+  myPeer.on('connection', (incoming) => {
+    addLog(`📞 Connessione in entrata da: <b>${shortId(incoming.peer)}</b>`, 'log-discover');
+    
+    incoming.on('open', () => {
+      addLog(`✅ Connessione aperta con: <b>${shortId(incoming.peer)}</b>`, 'log-success');
+    });
+    
+    incoming.on('data', (data) => {
+      try {
+        const msg = typeof data === 'string' ? JSON.parse(data) : data;
+        addLog(`📨 Da ${shortId(incoming.peer)}: ${JSON.stringify(msg)}`, 'log-success');
+      } catch(e) {
+        addLog(`📨 Da ${shortId(incoming.peer)}: ${data}`, 'log-success');
+      }
+    });
+    
+    incoming.on('close', () => {
+      addLog(`🔌 Connessione chiusa con: ${shortId(incoming.peer)}`, 'log-error');
+    });
+  });
+  
+  myPeer.on('error', (err) => {
+    addLog(`❌ Errore PeerJS: ${err.message || err}`, 'log-error');
+    statusDot.className = 'status-dot';
+    statusText.textContent = 'Errore: ' + (err.message || 'sconosciuto');
+  });
+}
+
+// ── Pulisci log ──
+document.getElementById('clear-log-btn').addEventListener('click', () => {
+  logBody.innerHTML = '';
+  addLog('📋 Log pulito', '');
+});
+
+// ── Avvio ──
+window.addEventListener('load', () => {
+  initPeer();
+});
+
+// ── Cleanup ──
+window.addEventListener('beforeunload', () => {
+  if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+});
+</script>
+
+</body>
+</html>

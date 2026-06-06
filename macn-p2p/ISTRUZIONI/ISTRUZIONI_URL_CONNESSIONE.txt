@@ -1,0 +1,50 @@
+Perfetto! Ti scrivo tutto chiaro:
+
+---
+
+## **📋 URL DA SALVARE E USARE:**
+
+### **🖥️ PC (da usare sul PC principale dove gira il server):**
+
+**URL pagina:** 
+```
+http://localhost:3000/client.html
+```
+
+**URL server nel campo (una volta aperta la pagina):**
+```
+http://localhost:3000
+```
+
+---
+
+### **📱 CELLULARE / ALTRI DISPOSITIVI (da usare su cellulare o altri PC):**
+
+**URL pagina:**
+```
+https://aphanitic-jaxon-dilapidated.ngrok-free.dev/client.html
+```
+
+**URL server nel campo (già preimpostato, non cambiare):**
+```
+https://aphanitic-jaxon-dilapidated.ngrok-free.dev
+```
+
+---
+
+## **⚠️ IMPORTANTE:**
+
+- Il PC **DEVE** usare `http://localhost:3000` nel campo URL server
+- Il cellulare **DEVE** usare `https://aphanitic-jaxon-dilapidated.ngrok-free.dev` nel campo URL server
+
+Se apri l'URL del telefono sul PC, vedrai l'URL ngrok preimpostato nel campo → **devi cambiarlo manualmente** a `http://localhost:3000` prima di cliccare Connetti.
+
+---
+
+## **💡 CONSIGLIO:**
+
+**Sul PC:** Usa sempre l'URL localhost che viene aperto automaticamente dallo script `start-macn.bat`
+
+**Sul cellulare:** Salva nei preferiti `https://aphanitic-jaxon-dilapidated.ngrok-free.dev/client.html`
+
+Così non sbagli mai! 📌

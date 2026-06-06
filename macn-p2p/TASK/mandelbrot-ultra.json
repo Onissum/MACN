@@ -1,0 +1,18 @@
+{
+  "id": "mandelbrot-ultra",
+  "name": "Mandelbrot ULTRA 4K",
+  "description": "Rendering 4K ultra-dettagliato - stress test estremo per CPU",
+  "category": "cpu",
+  "icon": "🔥",
+  "paramLabels": {
+    "width": "Larghezza 4K",
+    "height": "Altezza 4K",
+    "param": "Iterazioni max"
+  },
+  "paramHints": {
+    "width": "Risoluzione larghezza (es: 3840 = 4K)",
+    "height": "Risoluzione altezza (es: 2160 = 4K)",
+    "param": "Iterazioni massime (es: 5000 = ultra-dettaglio)"
+  },
+  "computeCode": "(async function(params) {\n  const { width, height, maxIterations } = params;\n  const startTime = performance.now();\n  let operations = 0;\n  let insideSet = 0;\n  let outsideSet = 0;\n  \n  const zoom = 1.5;\n  const offsetX = -0.7;\n  const offsetY = 0.0;\n  const scaleX = (3.5 / zoom) / width;\n  const scaleY = (2.0 / zoom) / height;\n  \n  const pixels = new Uint32Array(width * height);\n  \n  for (let py = 0; py < height; py++) {\n    for (let px = 0; px < width; px++) {\n      const cx = (px - width / 2) * scaleX + offsetX;\n      const cy = (py - height / 2) * scaleY + offsetY;\n      let x = 0, y = 0, iteration = 0;\n      \n      while (x*x + y*y <= 4 && iteration < maxIterations) {\n        const xTemp = x*x - y*y + cx;\n        y = 2*x*y + cy;\n        x = xTemp;\n        iteration++;\n        operations++;\n      }\n      \n      if (iteration === maxIterations) {\n        insideSet++;\n      } else {\n        outsideSet++;\n      }\n      \n      pixels[py * width + px] = iteration;\n    }\n    \n    if (py % 100 === 0 && py > 0) {\n      await new Promise(resolve => setTimeout(resolve, 0));\n    }\n  }\n  \n  const took_ms = performance.now() - startTime;\n  const mpxPerSec = (width * height) / (took_ms / 1000) / 1000000;\n  \n  return {\n    pixels: width * height,\n    resolution: width + 'x' + height,\n    iterations: maxIterations,\n    operations,\n    insideSet,\n    outsideSet,\n    convergenceRatio: (insideSet / (width * height) * 100).toFixed(2) + '%',\n    took_ms: Math.round(took_ms),\n    throughput: (width * height) / (took_ms / 1000),\n    mpxPerSec: mpxPerSec.toFixed(3) + ' Mpx/s',\n    estimatedMemory: ((width * height * 4) / 1024 / 1024).toFixed(2) + ' MB'\n  };\n})"
+}

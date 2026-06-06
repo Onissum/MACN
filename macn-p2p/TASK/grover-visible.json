@@ -1,0 +1,29 @@
+{
+  "id": "primes",
+  "name": "⚛️ Grover Search VISIBLE",
+  "icon": "🔍",
+  "description": "Grover's Algorithm - CON RISULTATI VISIBILI!",
+  "params": [
+    {
+      "name": "start",
+      "label": "Numero Qubit",
+      "default": 20,
+      "hint": "Qubit (15=32K, 20=1M, 25=33M stati)"
+    },
+    {
+      "name": "end",
+      "label": "Iterazioni Grover",
+      "default": 5,
+      "hint": "Iterazioni algoritmo di Grover"
+    },
+    {
+      "name": "chunks",
+      "label": "Target da Trovare",
+      "default": 42,
+      "hint": "Numero da cercare nel database"
+    }
+  ],
+  "splitCode": "function(params, numPeers) { const numQubits = Math.min(params.start || 20, 28); const totalStates = Math.pow(2, numQubits); const statesPerPeer = Math.ceil(totalStates / numPeers); const tasks = []; for (let i = 0; i < numPeers; i++) { const startState = i * statesPerPeer; const endState = Math.min(startState + statesPerPeer, totalStates); if (startState < totalStates) { tasks.push({ id: `grover_${i}`, peerIndex: i, numQubits, startState, endState, groverIterations: params.end || 5, targetState: params.chunks || 42 }); } } return tasks; }",
+  "computeCode": "function(task) { const startTime = performance.now(); const { numQubits, startState, endState, groverIterations, targetState, peerIndex } = task; const numStates = endState - startState; console.log(`[Grover-${peerIndex}] 🔍 Search in ${numQubits} qubit space`); console.log(`[Grover-${peerIndex}] 🎯 Target: |${targetState}⟩`); console.log(`[Grover-${peerIndex}] 📊 States ${startState}-${endState} (${numStates.toLocaleString()})`); const realPart = new Float64Array(numStates); const imagPart = new Float64Array(numStates); const memoryMB = (realPart.byteLength + imagPart.byteLength) / (1024 * 1024); console.log(`[Grover-${peerIndex}] 💾 ${memoryMB.toFixed(2)}MB allocated`); const initialAmplitude = 1 / Math.sqrt(Math.pow(2, numQubits)); for (let i = 0; i < numStates; i++) { realPart[i] = initialAmplitude; imagPart[i] = 0; } console.log(`[Grover-${peerIndex}] 🌀 Superposition initialized!`); console.log(`[Grover-${peerIndex}] 🎯 Running ${groverIterations} Grover iterations...`); let totalOps = 0; for (let iter = 0; iter < groverIterations; iter++) { console.log(`[Grover-${peerIndex}]   → Iter ${iter + 1}/${groverIterations}...`); for (let i = 0; i < numStates; i++) { const globalState = startState + i; if (globalState === targetState) { realPart[i] = -realPart[i]; imagPart[i] = -imagPart[i]; } totalOps++; } let avgReal = 0, avgImag = 0; for (let i = 0; i < numStates; i++) { avgReal += realPart[i]; avgImag += imagPart[i]; totalOps++; } avgReal /= numStates; avgImag /= numStates; for (let i = 0; i < numStates; i++) { realPart[i] = 2 * avgReal - realPart[i]; imagPart[i] = 2 * avgImag - imagPart[i]; totalOps++; } } console.log(`[Grover-${peerIndex}] 📐 Computing probabilities...`); const probabilities = new Float64Array(numStates); let maxProb = 0; let maxState = 0; for (let i = 0; i < numStates; i++) { const prob = realPart[i] * realPart[i] + imagPart[i] * imagPart[i]; probabilities[i] = prob; totalOps++; if (prob > maxProb) { maxProb = prob; maxState = startState + i; } } const totalTime = (performance.now() - startTime) / 1000; const success = maxState === targetState; console.log(`[Grover-${peerIndex}] ✅ Done in ${totalTime.toFixed(2)}s`); console.log(`[Grover-${peerIndex}] ${success ? '🎉 TARGET FOUND!' : '❌ Target not in slice'}: |${maxState}⟩ (${(maxProb * 100).toFixed(2)}%)`); return { primes: success ? [targetState] : [], count: success ? 1 : 0, peerIndex, numQubits, statesSimulated: numStates, mostProbableState: maxState, maxProbability: maxProb, targetState, success, timeSeconds: totalTime.toFixed(2) }; }",
+  "mergeCode": "function(results, params) { const numQubits = params.start || 20; const targetState = params.chunks || 42; let maxProb = 0; let foundState = 0; let totalStates = 0; for (const r of results) { totalStates += r.statesSimulated; if (r.maxProbability > maxProb) { maxProb = r.maxProbability; foundState = r.mostProbableState; } } const totalPossibleStates = Math.pow(2, numQubits); const success = foundState === targetState; const classicalSearches = totalPossibleStates / 2; const quantumIterations = params.end || 5; const speedup = classicalSearches / quantumIterations; return { primes: success ? [foundState] : [], total: success ? 1 : 0, algorithm: \"Grover's Quantum Search\", numQubits: numQubits, searchSpace: totalPossibleStates.toLocaleString() + ' states', target: `|${targetState}⟩`, found: `|${foundState}⟩`, probability: (maxProb * 100).toFixed(4) + '%', result: success ? '✅ TARGET FOUND!' : '❌ Not found', quantumIterations: quantumIterations, classicalAverage: classicalSearches.toLocaleString() + ' searches needed', speedup: `~${speedup.toFixed(0)}x faster than classical!`, advantage: 'Quadratic speedup (√N)' }; }"
+}

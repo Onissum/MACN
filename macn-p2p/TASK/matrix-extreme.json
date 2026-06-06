@@ -1,0 +1,29 @@
+{
+  "id": "matrix-extreme",
+  "name": "Matrix Multiplication EXTREME",
+  "icon": "🧮",
+  "description": "Moltiplicazione matrici massive con cache optimization (PAWNS distribuito)",
+  "params": [
+    {
+      "name": "width",
+      "label": "Dimensione Matrice",
+      "default": 256,
+      "hint": "Dimensione matrice NxN (es: 256 = 256x256)"
+    },
+    {
+      "name": "height",
+      "label": "Iterazioni",
+      "default": 10,
+      "hint": "Numero iterazioni (es: 10)"
+    },
+    {
+      "name": "param",
+      "label": "Densità %",
+      "default": 70,
+      "hint": "Percentuale elementi non-zero (es: 70)"
+    }
+  ],
+  "splitCode": "function(params, numPeers) { const size = Math.min(params.width || 256, 512); const totalIterations = Math.min(params.height || 10, 20); const density = params.param || 70; const iterPerPeer = Math.ceil(totalIterations / numPeers); const tasks = []; for (let i = 0; i < numPeers; i++) { const iterStart = i * iterPerPeer; const iterEnd = Math.min(iterStart + iterPerPeer, totalIterations); if (iterStart < totalIterations) { tasks.push({ id: `matrix_extreme_${i}`, size, iterStart, iterEnd, density }); } } return tasks; }",
+  "computeCode": "async function(task) { const size = task.size; const iterations = task.iterEnd - task.iterStart; const density = task.density; const startTime = performance.now(); const matrixA = []; const matrixB = []; let nonZeroA = 0, nonZeroB = 0; for (let i = 0; i < size; i++) { matrixA[i] = []; matrixB[i] = []; for (let j = 0; j < size; j++) { const valA = Math.random() * 100 < density ? Math.random() * 10 : 0; const valB = Math.random() * 100 < density ? Math.random() * 10 : 0; matrixA[i][j] = valA; matrixB[i][j] = valB; if (valA !== 0) nonZeroA++; if (valB !== 0) nonZeroB++; } } let result; let totalOps = 0; let totalAdditions = 0; let totalMultiplications = 0; let maxValue = 0; let minValue = Infinity; for (let iter = 0; iter < iterations; iter++) { result = []; for (let i = 0; i < size; i++) { result[i] = new Array(size).fill(0); } const blockSize = 32; for (let ii = 0; ii < size; ii += blockSize) { for (let jj = 0; jj < size; jj += blockSize) { for (let kk = 0; kk < size; kk += blockSize) { const iMax = Math.min(ii + blockSize, size); const jMax = Math.min(jj + blockSize, size); const kMax = Math.min(kk + blockSize, size); for (let i = ii; i < iMax; i++) { for (let j = jj; j < jMax; j++) { let sum = result[i][j]; for (let k = kk; k < kMax; k++) { sum += matrixA[i][k] * matrixB[k][j]; totalOps++; totalMultiplications++; if (k < kMax - 1) totalAdditions++; } result[i][j] = sum; } } } } if (ii % 64 === 0 && ii > 0) { await new Promise(resolve => setTimeout(resolve, 0)); } } if (iter === iterations - 1) { for (let i = 0; i < size; i++) { for (let j = 0; j < size; j++) { const val = result[i][j]; if (val > maxValue) maxValue = val; if (val < minValue) minValue = val; } } } } const took_ms = performance.now() - startTime; const gflops = (totalOps / (took_ms / 1000)) / 1000000000; return { matrixSize: size, iterations, operations: totalOps, multiplications: totalMultiplications, additions: totalAdditions, densityA: nonZeroA / (size * size) * 100, densityB: nonZeroB / (size * size) * 100, maxValue, minValue, took_ms, throughput: totalOps / (took_ms / 1000), gflops, estimatedMemory: (size * size * 8 * 3) / 1024 / 1024 }; }",
+  "mergeCode": "function(results, params) { let totalOps = 0; let totalMultiplications = 0; let totalAdditions = 0; let totalTime = 0; let totalIterations = 0; let globalMax = 0; let globalMin = Infinity; let totalGflops = 0; let totalThroughput = 0; let avgDensityA = 0; let avgDensityB = 0; let totalMemory = 0; const size = results[0] ? results[0].matrixSize : 0; for (const r of results) { totalOps += r.operations; totalMultiplications += r.multiplications; totalAdditions += r.additions; totalTime += r.took_ms; totalIterations += r.iterations; totalGflops += r.gflops; totalThroughput += r.throughput; avgDensityA += r.densityA; avgDensityB += r.densityB; totalMemory = r.estimatedMemory; if (r.maxValue > globalMax) globalMax = r.maxValue; if (r.minValue < globalMin) globalMin = r.minValue; } const numPeers = results.length; return { summary: `Matrix ${size}x${size} - ${totalIterations} iterations distributed across ${numPeers} peers`, matrixSize: size + 'x' + size, totalIterations, peersUsed: numPeers, operations: totalOps, multiplications: totalMultiplications, additions: totalAdditions, avgDensityA: (avgDensityA / numPeers).toFixed(1) + '%', avgDensityB: (avgDensityB / numPeers).toFixed(1) + '%', resultRange: globalMin.toFixed(2) + ' to ' + globalMax.toFixed(2), totalTime_ms: Math.round(totalTime), avgTime_ms: Math.round(totalTime / numPeers), totalThroughput: totalThroughput, avgGflops: (totalGflops / numPeers).toFixed(3) + ' GFLOPS', peakGflops: Math.max(...results.map(r => r.gflops)).toFixed(3) + ' GFLOPS', estimatedMemoryPerPeer: totalMemory.toFixed(2) + ' MB' }; }"
+}

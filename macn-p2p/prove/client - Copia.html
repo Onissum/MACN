@@ -1,0 +1,1997 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MACN v10.0 PAWNS • P2P Work-Stealing</title>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #0b0b0c;
+      color: #eaeaea;
+      line-height: 1.6;
+    }
+    .container { max-width: 1800px; margin: 0 auto; }
+    h1 { font-size: 24px; margin: 0 0 8px; font-weight: 700; }
+    h2 { font-size: 16px; margin: 0 0 12px; font-weight: 600; }
+    p { color: #c7c7c7; font-size: 14px; margin: 0 0 16px; }
+    
+    .alert {
+      background: #1a2a3a;
+      border: 1px solid #2b5cff;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      animation: slideIn 0.3s;
+    }
+    .alert.success { background: #1a3a1a; border-color: #16a34a; }
+    .alert.warning { background: #3a2a1a; border-color: #f59e0b; }
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .card {
+      background: #141416;
+      border: 1px solid #2a2a2e;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    
+    .card.highlight {
+      border: 2px solid #7c3aed;
+      background: linear-gradient(135deg, #1a1a3a 0%, #3a1a1a 100%);
+    }
+    
+    .card.pawns {
+      border: 3px solid #16a34a;
+      background: linear-gradient(135deg, #0a2a0a 0%, #1a3a1a 100%);
+    }
+    
+    button {
+      background: #2b5cff;
+      border: 0;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    button.secondary { background: #2a2a2e; }
+    button.success { background: #16a34a; }
+    button.danger { background: #dc2626; }
+    button.purple { background: #7c3aed; }
+    button.orange { background: #f59e0b; }
+    button.pawns {
+      background: linear-gradient(135deg, #16a34a 0%, #059669 50%, #10b981 100%);
+      animation: pawnsGlow 2s infinite;
+      border: 2px solid #fff;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
+    
+    @keyframes pawnsGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(22, 163, 74, 0.8); }
+      50% { box-shadow: 0 0 40px rgba(16, 185, 129, 1); }
+    }
+    
+    .feature-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    .feature-badge.pawns {
+      background: #16a34a;
+      color: white;
+      animation: pulse 2s infinite;
+    }
+    .feature-badge.new {
+      background: #7c3aed;
+      color: white;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    
+    .row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    
+    input[type="text"], input[type="number"], select, textarea, input[type="file"] {
+      flex: 1;
+      border-radius: 8px;
+      border: 1px solid #2b2b2f;
+      background: #0e0e10;
+      color: #eaeaea;
+      padding: 10px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    
+    .badge {
+      display: inline-block;
+      background: #1e1e22;
+      color: #16a34a;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    
+    #logOutput {
+      background: #0e0e10;
+      border: 1px solid #2b2b2f;
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid #1a1a1e;
+    }
+    
+    .log-entry.success { color: #16a34a; }
+    .log-entry.error { color: #dc2626; }
+    .log-entry.warning { color: #f59e0b; }
+    .log-entry.info { color: #2b5cff; }
+    
+    .task-card {
+      border: 2px solid #2a2a2e;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #141416;
+    }
+    
+    .task-card:hover {
+      border-color: #2b5cff;
+      transform: translateY(-2px);
+    }
+    
+    .task-card.selected {
+      border-color: #16a34a;
+      background: linear-gradient(135deg, #0a2a0a 0%, #1a3a1a 100%);
+    }
+    
+    .task-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    
+    .task-name {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .task-desc {
+      font-size: 12px;
+      color: #c7c7c7;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .stat-box {
+      background: #0e0e10;
+      border: 1px solid #2b2b2f;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #c7c7c7;
+      margin-bottom: 8px;
+    }
+    
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #16a34a;
+    }
+    
+    .progress-container {
+      background: #0e0e10;
+      border: 1px solid #2b2b2f;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+      display: none;
+    }
+    
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    
+    .progress-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .progress-status {
+      font-size: 14px;
+      color: #c7c7c7;
+    }
+    
+    .progress-bar {
+      background: #1a1a1e;
+      border-radius: 8px;
+      height: 32px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #16a34a 0%, #10b981 100%);
+      width: 0%;
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: white;
+    }
+    
+    .progress-peers {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+    }
+    
+    .progress-peer {
+      background: #1a1a1e;
+      border: 1px solid #2b2b2f;
+      border-radius: 6px;
+      padding: 8px;
+    }
+    
+    .progress-peer.completed {
+      border-color: #16a34a;
+      background: #0a2a0a;
+    }
+    
+    .progress-peer.excluded {
+      border-color: #dc2626;
+      background: #2a0a0a;
+      opacity: 0.5;
+    }
+    
+    .progress-peer-name {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .progress-peer-status {
+      font-size: 11px;
+      color: #c7c7c7;
+    }
+    
+    .param-hint {
+      font-size: 11px;
+      color: #888;
+      font-style: italic;
+      margin-top: 2px;
+    }
+    
+    /* PAWNS Specific Styles */
+    .pawns-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(22, 163, 74, 0.1);
+      border-radius: 8px;
+      border: 1px solid #16a34a;
+    }
+    
+    .pawns-stat {
+      text-align: center;
+    }
+    
+    .pawns-stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #16a34a;
+    }
+    
+    .pawns-stat-label {
+      font-size: 11px;
+      color: #c7c7c7;
+      margin-top: 4px;
+    }
+    
+    .cluster-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-left: 4px;
+    }
+    
+    .cluster-0 { background: #dc2626; color: white; }
+    .cluster-1 { background: #2b5cff; color: white; }
+    .cluster-2 { background: #16a34a; color: white; }
+    .cluster-3 { background: #f59e0b; color: white; }
+    
+    .steal-animation {
+      animation: stealPulse 0.5s;
+    }
+    
+    @keyframes stealPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); background: #f59e0b; }
+    }
+
+    .peer-item {
+      background: #1a1a1e;
+      border: 1px solid #2b2b2f;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    .peer-item.connected {
+      border-color: #16a34a;
+      background: rgba(22, 163, 74, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+      🌐 MACN v10.0 PAWNS
+      <span class="feature-badge pawns">🚀 WORK-STEALING P2P</span>
+      <span class="feature-badge new">🧠 PROXIMITY CLUSTERING</span>
+    </h1>
+    <p>Proximity-Aware Work-Stealing Network System • Autonomous P2P Computing</p>
+
+    <div id="alertContainer"></div>
+
+    <section class="card">
+      <h2>🔌 Connessione Server <span id="serverStatus" class="badge">disconnesso</span></h2>
+      <div class="row">
+        <input id="serverUrl" type="text" placeholder="ws://localhost:3000" value="ws://localhost:3000" />
+        <button id="btnConnect" class="success">✅ Connetti</button>
+        <button id="btnDisconnect" class="danger" disabled>❌ Disconnetti</button>
+        <button id="btnFullReset" class="danger">🔄 RESET COMPLETO</button>
+      </div>
+      <p style="margin-top: 8px;">Il tuo Peer ID: <code id="myPeerId">-</code></p>
+    </section>
+
+    <section class="card highlight">
+      <h2>🎯 Seleziona Task</h2>
+      <div class="task-selector" id="taskSelector"></div>
+      <div class="row" style="margin-top: 16px;">
+        <button id="btnCustomTask" class="orange">📝 Task Personalizzato</button>
+        <button id="btnLoadTask" class="purple">📁 Carica da File</button>
+        <button id="btnSaveTask" class="secondary" disabled>💾 Salva Task</button>
+      </div>
+      <input type="file" id="fileInput" accept=".json" style="display: none;" />
+    </section>
+
+    <section class="card pawns">
+      <h2>🌐 PAWNS Network <span id="peerCount" class="badge">0</span> • Connessi <span id="connectedCount" class="badge">0</span></h2>
+      <p style="color: #16a34a; font-weight: 600;">
+        🚀 Work-Stealing P2P attivo • Peer autonomi con proximity clustering
+      </p>
+      
+      <div id="peerListContainer" style="margin: 12px 0; padding: 12px; background: #0e0e10; border-radius: 8px;">
+        <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Peer disponibili:</div>
+        <div id="peerList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;"></div>
+      </div>
+
+      <div class="row" style="margin-top: 12px;">
+        <button id="btnConnectAll" class="purple" disabled>⚡ Connetti TUTTI</button>
+        <button id="btnBenchmarkAll" class="orange" disabled>🧪 Auto-Benchmark</button>
+        <button id="btnFormClusters" class="success" disabled>🔗 Forma Proximity Clusters</button>
+      </div>
+
+      <!-- PAWNS Stats -->
+      <div class="pawns-stats" id="pawnsStats" style="display: none;">
+        <div class="pawns-stat">
+          <div class="pawns-stat-value" id="statPoolSize">0</div>
+          <div class="pawns-stat-label">Task nel Pool</div>
+        </div>
+        <div class="pawns-stat">
+          <div class="pawns-stat-value" id="statSteals">0</div>
+          <div class="pawns-stat-label">Work Steals</div>
+        </div>
+        <div class="pawns-stat">
+          <div class="pawns-stat-value" id="statClusters">0</div>
+          <div class="pawns-stat-label">Clusters Formati</div>
+        </div>
+        <div class="pawns-stat">
+          <div class="pawns-stat-value" id="statAvgRTT">0ms</div>
+          <div class="pawns-stat-label">RTT Medio</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="border: 3px solid #16a34a;">
+      <h2>🚀 Test Distribuito con PAWNS <span id="currentTaskName" class="badge"></span></h2>
+      <p style="color: #16a34a;">Autonomous pull + P2P work stealing</p>
+
+      <div class="row">
+        <div style="flex: 1;">
+          <input id="paramWidth" type="number" value="1920" min="1" />
+          <div class="param-hint" id="hintWidth">Larghezza immagine</div>
+        </div>
+        <div style="flex: 1;">
+          <input id="paramHeight" type="number" value="1080" min="1" />
+          <div class="param-hint" id="hintHeight">Altezza immagine</div>
+        </div>
+        <div style="flex: 1;">
+          <input id="paramParam" type="number" value="16" min="1" />
+          <div class="param-hint" id="hintParam">Iterazioni massime</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 12px;">
+        <button id="btnRunTest" class="pawns" disabled style="font-size: 16px; padding: 14px 24px;">🚀 ESEGUI TEST PAWNS</button>
+        <button id="btnClearResults" class="secondary">🗑️ Pulisci</button>
+        <button id="btnExportJSON" class="secondary" disabled>📥 Export JSON</button>
+      </div>
+
+      <!-- Progress Container -->
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-header">
+          <div class="progress-title">🚀 PAWNS in esecuzione...</div>
+          <div class="progress-status" id="progressStatus">0/0 completati</div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill">0%</div>
+        </div>
+        <div class="progress-peers" id="progressPeers"></div>
+      </div>
+
+      <!-- Results Area -->
+      <div id="resultsArea" style="display: none; margin-top: 16px;">
+        <h2>📊 Risultati Test con PAWNS</h2>
+        <div class="stats">
+          <div class="stat-box">
+            <div class="stat-label">Peer Utilizzati</div>
+            <div class="stat-value" id="resultPeers">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Peer Esclusi</div>
+            <div class="stat-value" id="resultExcluded" style="color: #dc2626;">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Tempo Totale</div>
+            <div class="stat-value" id="resultTime">0s</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Work Steals</div>
+            <div class="stat-value" id="resultStolen" style="color: #f59e0b;">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Efficienza</div>
+            <div class="stat-value" id="resultEfficiency">0%</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Soglia Dinamica</div>
+            <div class="stat-value" id="resultThreshold" style="font-size: 16px;">0</div>
+          </div>
+        </div>
+        <div id="detailsPanel" style="margin-top: 16px;"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>📊 Statistiche Sistema</h2>
+      <div class="stats">
+        <div class="stat-box">
+          <div class="stat-label">Peer Connessi</div>
+          <div class="stat-value" id="statPeers">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Task Disponibili</div>
+          <div class="stat-value" id="statTasks">3</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Test Completati</div>
+          <div class="stat-value" id="statTests">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Peer Esclusi Totali</div>
+          <div class="stat-value" id="statExcluded" style="color: #dc2626;">0</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>📝 Log Eventi 
+        <button id="btnClearLog" class="secondary" style="float: right; padding: 4px 12px; font-size: 12px;">🗑️ Pulisci</button>
+      </h2>
+      <div id="logOutput"></div>
+    </section>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    // ============================================================
+    // PAWNS GLOBAL STATE
+    // ============================================================
+    let socket = null;
+    let myPeerId = null;
+    let availablePeers = [];
+    let peerConnections = new Map();
+    let dataChannels = new Map();
+    let peerPerformance = new Map();
+    let peerRTT = new Map();
+    let peerClusters = [];
+    let myCluster = null;
+    let myClusterPeers = [];
+    
+    // PAWNS specific state
+    let taskPool = [];
+    let myCurrentTasks = [];
+    let pawnsActive = false;
+    let workStealCount = 0;
+    let peerWorkload = new Map(); // Track other peers' workloads
+    let mySpeed = 1.0;
+    let completedTasksCount = 0;
+    let totalTasksCount = 0;
+    
+    // Current task selection
+    let currentTask = null;
+    
+    // RTCPeerConnection config
+    const rtcConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    };
+
+    // ============================================================
+    // TASK REGISTRY
+    // ============================================================
+    const TaskRegistry = {
+      tasks: new Map(),
+      
+      register(task) {
+        this.tasks.set(task.id, task);
+      },
+      
+      get(id) {
+        return this.tasks.get(id);
+      },
+      
+      getAll() {
+        return Array.from(this.tasks.values());
+      }
+    };
+
+    // ============================================================
+    // BUILT-IN TASKS
+    // ============================================================
+    
+    // Mandelbrot Set Task
+    TaskRegistry.register({
+      id: 'mandelbrot',
+      name: 'Mandelbrot Set',
+      icon: '🎨',
+      description: 'Rendering frattale del set di Mandelbrot',
+      params: [
+        { name: 'width', label: 'Larghezza', default: 1920, hint: 'Larghezza immagine (px)' },
+        { name: 'height', label: 'Altezza', default: 1080, hint: 'Altezza immagine (px)' },
+        { name: 'maxIter', label: 'Iterazioni', default: 256, hint: 'Iterazioni massime' }
+      ],
+      
+      split(params, numPeers) {
+        const stripHeight = Math.ceil(params.height / numPeers);
+        const tasks = [];
+        for (let i = 0; i < numPeers; i++) {
+          const yStart = i * stripHeight;
+          const yEnd = Math.min(yStart + stripHeight, params.height);
+          tasks.push({
+            id: `mandelbrot_${i}`,
+            yStart,
+            yEnd,
+            width: params.width,
+            height: params.height,
+            maxIter: params.maxIter
+          });
+        }
+        return tasks;
+      },
+      
+      compute(task) {
+        const { yStart, yEnd, width, height, maxIter } = task;
+        const stripHeight = yEnd - yStart;
+        const imageData = new Uint8ClampedArray(width * stripHeight * 4);
+        
+        for (let py = 0; py < stripHeight; py++) {
+          const y = yStart + py;
+          for (let px = 0; px < width; px++) {
+            const x0 = (px / width) * 3.5 - 2.5;
+            const y0 = (y / height) * 2 - 1;
+            
+            let x = 0, y_val = 0, iter = 0;
+            while (x * x + y_val * y_val <= 4 && iter < maxIter) {
+              const xtemp = x * x - y_val * y_val + x0;
+              y_val = 2 * x * y_val + y0;
+              x = xtemp;
+              iter++;
+            }
+            
+            const idx = (py * width + px) * 4;
+            const color = iter === maxIter ? 0 : (iter / maxIter) * 255;
+            imageData[idx] = color;
+            imageData[idx + 1] = color * 0.5;
+            imageData[idx + 2] = color * 0.8;
+            imageData[idx + 3] = 255;
+          }
+        }
+        
+        return { imageData: Array.from(imageData), yStart, yEnd };
+      },
+      
+      merge(results, params) {
+        const canvas = document.createElement('canvas');
+        canvas.width = params.width;
+        canvas.height = params.height;
+        const ctx = canvas.getContext('2d');
+        
+        results.sort((a, b) => a.yStart - b.yStart);
+        
+        for (const result of results) {
+          const stripHeight = result.yEnd - result.yStart;
+          const imageData = ctx.createImageData(params.width, stripHeight);
+          imageData.data.set(new Uint8ClampedArray(result.imageData));
+          ctx.putImageData(imageData, 0, result.yStart);
+        }
+        
+        return canvas.toDataURL();
+      }
+    });
+
+    // Prime Numbers Task
+    TaskRegistry.register({
+      id: 'primes',
+      name: 'Prime Numbers',
+      icon: '🔢',
+      description: 'Calcolo numeri primi in range',
+      params: [
+        { name: 'start', label: 'Inizio', default: 1, hint: 'Numero iniziale' },
+        { name: 'end', label: 'Fine', default: 1000000, hint: 'Numero finale' },
+        { name: 'chunks', label: 'Chunk', default: 100, hint: 'Divisioni task' }
+      ],
+      
+      split(params, numPeers) {
+        const range = params.end - params.start;
+        const chunkSize = Math.ceil(range / params.chunks);
+        const tasks = [];
+        
+        for (let i = 0; i < params.chunks; i++) {
+          const start = params.start + i * chunkSize;
+          const end = Math.min(start + chunkSize, params.end);
+          tasks.push({
+            id: `primes_${i}`,
+            start,
+            end
+          });
+        }
+        
+        return tasks;
+      },
+      
+      compute(task) {
+        const primes = [];
+        for (let n = task.start; n <= task.end; n++) {
+          if (n < 2) continue;
+          let isPrime = true;
+          for (let i = 2; i <= Math.sqrt(n); i++) {
+            if (n % i === 0) {
+              isPrime = false;
+              break;
+            }
+          }
+          if (isPrime) primes.push(n);
+        }
+        return { primes, count: primes.length };
+      },
+      
+      merge(results, params) {
+        const allPrimes = [];
+        for (const result of results) {
+          allPrimes.push(...result.primes);
+        }
+        allPrimes.sort((a, b) => a - b);
+        return { primes: allPrimes, total: allPrimes.length };
+      }
+    });
+
+    // Matrix Multiplication Task
+    TaskRegistry.register({
+      id: 'matrix',
+      name: 'Matrix Multiply',
+      icon: '🧮',
+      description: 'Moltiplicazione matrici sparse',
+      params: [
+        { name: 'size', label: 'Dimensione', default: 512, hint: 'Dimensione matrice NxN' },
+        { name: 'density', label: 'Densità', default: 0.1, hint: 'Percentuale valori non-zero' },
+        { name: 'chunks', label: 'Chunk', default: 64, hint: 'Divisioni task' }
+      ],
+      
+      split(params, numPeers) {
+        const rowsPerChunk = Math.ceil(params.size / params.chunks);
+        const tasks = [];
+        
+        // Generate matrices once
+        const matrixA = [];
+        const matrixB = [];
+        for (let i = 0; i < params.size; i++) {
+          matrixA[i] = [];
+          matrixB[i] = [];
+          for (let j = 0; j < params.size; j++) {
+            matrixA[i][j] = Math.random() < params.density ? Math.random() : 0;
+            matrixB[i][j] = Math.random() < params.density ? Math.random() : 0;
+          }
+        }
+        
+        for (let i = 0; i < params.chunks; i++) {
+          const startRow = i * rowsPerChunk;
+          const endRow = Math.min(startRow + rowsPerChunk, params.size);
+          tasks.push({
+            id: `matrix_${i}`,
+            startRow,
+            endRow,
+            size: params.size,
+            matrixA: matrixA.slice(startRow, endRow),
+            matrixB
+          });
+        }
+        
+        return tasks;
+      },
+      
+      compute(task) {
+        const { startRow, endRow, size, matrixA, matrixB } = task;
+        const result = [];
+        
+        for (let i = 0; i < matrixA.length; i++) {
+          result[i] = [];
+          for (let j = 0; j < size; j++) {
+            let sum = 0;
+            for (let k = 0; k < size; k++) {
+              sum += matrixA[i][k] * matrixB[k][j];
+            }
+            result[i][j] = sum;
+          }
+        }
+        
+        return { result, startRow, endRow };
+      },
+      
+      merge(results, params) {
+        const finalMatrix = [];
+        results.sort((a, b) => a.startRow - b.startRow);
+        
+        for (const r of results) {
+          finalMatrix.push(...r.result);
+        }
+        
+        let sum = 0;
+        for (let i = 0; i < finalMatrix.length; i++) {
+          for (let j = 0; j < finalMatrix[i].length; j++) {
+            sum += finalMatrix[i][j];
+          }
+        }
+        
+        return { 
+          matrix: finalMatrix, 
+          size: params.size,
+          checksum: sum.toFixed(4)
+        };
+      }
+    });
+
+    // ============================================================
+    // UI FUNCTIONS
+    // ============================================================
+    
+    function renderTaskSelector() {
+      const container = document.getElementById('taskSelector');
+      const tasks = TaskRegistry.getAll();
+      
+      container.innerHTML = tasks.map(task => `
+        <div class="task-card" data-task-id="${task.id}">
+          <div class="task-icon">${task.icon}</div>
+          <div class="task-name">${task.name}</div>
+          <div class="task-desc">${task.description}</div>
+        </div>
+      `).join('');
+      
+      container.querySelectorAll('.task-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const taskId = card.dataset.taskId;
+          selectTask(taskId);
+        });
+      });
+    }
+    
+    function selectTask(taskId) {
+      currentTask = TaskRegistry.get(taskId);
+      if (!currentTask) return;
+      
+      // Update UI
+      document.querySelectorAll('.task-card').forEach(card => {
+        card.classList.toggle('selected', card.dataset.taskId === taskId);
+      });
+      
+      document.getElementById('currentTaskName').textContent = currentTask.name;
+      
+      // Update parameter inputs
+      if (currentTask.params && currentTask.params.length >= 3) {
+        document.getElementById('paramWidth').value = currentTask.params[0].default;
+        document.getElementById('hintWidth').textContent = currentTask.params[0].hint;
+        document.getElementById('paramHeight').value = currentTask.params[1].default;
+        document.getElementById('hintHeight').textContent = currentTask.params[1].hint;
+        document.getElementById('paramParam').value = currentTask.params[2].default;
+        document.getElementById('hintParam').textContent = currentTask.params[2].hint;
+      }
+      
+      // Enable run button if peers connected
+      document.getElementById('btnRunTest').disabled = dataChannels.size === 0;
+      
+      log(`✅ Task selezionato: ${currentTask.name}`, 'success');
+    }
+    
+    function log(message, type = 'info') {
+      const logOutput = document.getElementById('logOutput');
+      const timestamp = new Date().toLocaleTimeString('it-IT');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${timestamp}] ${message}`;
+      logOutput.appendChild(entry);
+      logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    function updatePeerList() {
+      const listEl = document.getElementById('peerList');
+      document.getElementById('peerCount').textContent = availablePeers.length;
+      document.getElementById('connectedCount').textContent = dataChannels.size;
+      document.getElementById('statPeers').textContent = dataChannels.size;
+      
+      if (availablePeers.length === 0) {
+        listEl.innerHTML = '<p style="color: #9ca3af; text-align: center;">Nessun peer disponibile</p>';
+        document.getElementById('btnConnectAll').disabled = true;
+        document.getElementById('btnBenchmarkAll').disabled = true;
+        document.getElementById('btnFormClusters').disabled = true;
+        return;
+      }
+      
+      document.getElementById('btnConnectAll').disabled = false;
+      document.getElementById('btnBenchmarkAll').disabled = dataChannels.size === 0;
+      document.getElementById('btnFormClusters').disabled = dataChannels.size < 2;
+      
+      listEl.innerHTML = availablePeers
+        .filter(p => p !== myPeerId)
+        .map(peerId => {
+          const isConnected = dataChannels.has(peerId);
+          const perf = peerPerformance.get(peerId);
+          const rtt = peerRTT.get(peerId);
+          const cluster = getClusterForPeer(peerId);
+          
+          return `
+            <div class="peer-item ${isConnected ? 'connected' : ''}">
+              <div style="font-size: 13px; font-weight: 600;">${peerId.slice(0,12)}...</div>
+              ${isConnected ? '<span style="color: #16a34a; font-size: 11px;">● CONNESSO</span>' : ''}
+              ${perf ? `<div style="color: #2b5cff; font-size: 11px; margin-top: 4px;">Speed: ${perf.speed.toFixed(2)}x</div>` : ''}
+              ${rtt ? `<div style="color: #f59e0b; font-size: 10px;">RTT: ${rtt}ms</div>` : ''}
+              ${cluster !== null ? `<span class="cluster-badge cluster-${cluster % 4}">Cluster ${cluster}</span>` : ''}
+            </div>
+          `;
+        }).join('');
+    }
+    
+    function getClusterForPeer(peerId) {
+      for (let i = 0; i < peerClusters.length; i++) {
+        if (peerClusters[i].includes(peerId)) {
+          return i;
+        }
+      }
+      return null;
+    }
+
+    // ============================================================
+    // CONNECTION MANAGEMENT
+    // ============================================================
+    
+    function connect() {
+      const serverUrl = document.getElementById('serverUrl').value;
+      socket = io(serverUrl);
+      
+      socket.on('connect', () => {
+        log('🔌 Connesso al server', 'success');
+        document.getElementById('serverStatus').textContent = 'connesso';
+        document.getElementById('serverStatus').style.color = '#16a34a';
+        document.getElementById('btnConnect').disabled = true;
+        document.getElementById('btnDisconnect').disabled = false;
+      });
+      
+      socket.on('disconnect', () => {
+        log('❌ Disconnesso dal server', 'error');
+        document.getElementById('serverStatus').textContent = 'disconnesso';
+        document.getElementById('serverStatus').style.color = '#dc2626';
+        document.getElementById('btnConnect').disabled = false;
+        document.getElementById('btnDisconnect').disabled = true;
+      });
+      
+      socket.on('peer-id', (id) => {
+        myPeerId = id;
+        document.getElementById('myPeerId').textContent = id;
+        log(`✨ Il tuo Peer ID: ${id}`, 'success');
+      });
+      
+      socket.on('peer-list', (peers) => {
+        availablePeers = peers;
+        updatePeerList();
+        log(`📋 ${peers.length} peer disponibili`, 'info');
+      });
+      
+      socket.on('peer-joined', (peerId) => {
+        if (!availablePeers.includes(peerId)) {
+          availablePeers.push(peerId);
+          updatePeerList();
+          log(`👋 Nuovo peer: ${peerId.slice(0, 8)}...`, 'info');
+        }
+      });
+      
+      socket.on('peer-left', (peerId) => {
+        availablePeers = availablePeers.filter(id => id !== peerId);
+        cleanupPeerConnection(peerId);
+        updatePeerList();
+        log(`👋 Peer disconnesso: ${peerId.slice(0, 8)}...`, 'warning');
+      });
+      
+      socket.on('offer', async (data) => {
+        await handleOffer(data.offer, data.from);
+      });
+      
+      socket.on('answer', async (data) => {
+        await handleAnswer(data.answer, data.from);
+      });
+      
+      socket.on('ice-candidate', async (data) => {
+        const pc = peerConnections.get(data.from);
+        if (pc && data.candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      });
+    }
+    
+    function disconnect() {
+      if (socket) {
+        // Close all peer connections
+        peerConnections.forEach((pc, peerId) => {
+          pc.close();
+        });
+        peerConnections.clear();
+        dataChannels.clear();
+        peerPerformance.clear();
+        peerRTT.clear();
+        
+        socket.disconnect();
+        socket = null;
+        updatePeerList();
+        log('🔌 Disconnessione completata', 'info');
+      }
+    }
+    
+    function fullReset() {
+      disconnect();
+      taskPool = [];
+      myCurrentTasks = [];
+      pawnsActive = false;
+      workStealCount = 0;
+      completedTasksCount = 0;
+      totalTasksCount = 0;
+      peerClusters = [];
+      myCluster = null;
+      myClusterPeers = [];
+      
+      document.getElementById('resultsArea').style.display = 'none';
+      document.getElementById('progressContainer').style.display = 'none';
+      document.getElementById('pawnsStats').style.display = 'none';
+      document.getElementById('logOutput').innerHTML = '';
+      
+      log('🔄 Reset completo eseguito', 'success');
+    }
+    
+    function cleanupPeerConnection(peerId) {
+      if (peerConnections.has(peerId)) {
+        peerConnections.get(peerId).close();
+        peerConnections.delete(peerId);
+      }
+      if (dataChannels.has(peerId)) {
+        dataChannels.delete(peerId);
+      }
+      peerPerformance.delete(peerId);
+      peerRTT.delete(peerId);
+    }
+
+    // ============================================================
+    // P2P CONNECTION SETUP
+    // ============================================================
+    
+    async function createPeerConnection(targetPeer, isInitiator) {
+      const pc = new RTCPeerConnection(rtcConfig);
+      peerConnections.set(targetPeer, pc);
+      
+      pc.onicecandidate = (e) => {
+        if (e.candidate && socket) {
+          socket.emit('ice-candidate', { candidate: e.candidate, target: targetPeer });
+        }
+      };
+      
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'connected') {
+          log(`✅ P2P connesso: ${targetPeer.slice(0, 8)}...`, 'success');
+          updatePeerList();
+        } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+          log(`❌ P2P disconnesso: ${targetPeer.slice(0, 8)}...`, 'error');
+          cleanupPeerConnection(targetPeer);
+          updatePeerList();
+        }
+      };
+      
+      if (isInitiator) {
+        const dc = pc.createDataChannel('pawns');
+        setupDataChannel(dc, targetPeer);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('offer', { offer: pc.localDescription, target: targetPeer });
+      } else {
+        pc.ondatachannel = (e) => setupDataChannel(e.channel, targetPeer);
+      }
+    }
+    
+    async function handleOffer(offer, from) {
+      await createPeerConnection(from, false);
+      const pc = peerConnections.get(from);
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('answer', { answer: pc.localDescription, target: from });
+    }
+    
+    async function handleAnswer(answer, from) {
+      const pc = peerConnections.get(from);
+      if (pc) {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      }
+    }
+    
+    function setupDataChannel(dc, peerId) {
+      dc.binaryType = 'arraybuffer';
+      
+      dc.onopen = () => {
+        dataChannels.set(peerId, dc);
+        log(`🎉 DataChannel aperto: ${peerId.slice(0, 8)}...`, 'success');
+        updatePeerList();
+        
+        if (currentTask && dataChannels.size > 0) {
+          document.getElementById('btnRunTest').disabled = false;
+        }
+        
+        // Start periodic state broadcast
+        startStateBroadcast();
+      };
+      
+      dc.onclose = () => {
+        dataChannels.delete(peerId);
+        peerPerformance.delete(peerId);
+        updatePeerList();
+      };
+      
+      dc.onmessage = (e) => handlePeerMessage(e, peerId);
+    }
+    
+    function handlePeerMessage(event, peerId) {
+      if (event.data instanceof ArrayBuffer) return;
+      
+      try {
+        const data = JSON.parse(event.data);
+        
+        switch (data.type) {
+          case 'ping':
+            sendToPeer(peerId, { type: 'pong', timestamp: data.timestamp });
+            break;
+            
+          case 'pong':
+            const rtt = Date.now() - data.timestamp;
+            peerRTT.set(peerId, rtt);
+            updatePeerList();
+            break;
+            
+          case 'benchmark-request':
+            handleBenchmarkRequest(data, peerId);
+            break;
+            
+          case 'benchmark-result':
+            handleBenchmarkResult(data, peerId);
+            break;
+            
+          case 'compute-task':
+            handleComputeTask(data, peerId);
+            break;
+            
+          case 'task-result':
+            handleTaskResult(data, peerId);
+            break;
+            
+          case 'workload-update':
+            handleWorkloadUpdate(peerId, data);
+            break;
+            
+          case 'steal-request':
+            handleStealRequest(peerId, data);
+            break;
+            
+          case 'steal-response':
+            handleStealResponse(peerId, data);
+            break;
+        }
+      } catch (err) {
+        console.error('Error handling message:', err);
+      }
+    }
+    
+    function sendToPeer(peerId, message) {
+      const dc = dataChannels.get(peerId);
+      if (dc && dc.readyState === 'open') {
+        dc.send(JSON.stringify(message));
+        return true;
+      }
+      return false;
+    }
+    
+    function broadcastToCluster(message) {
+      myClusterPeers.forEach(peerId => {
+        sendToPeer(peerId, message);
+      });
+    }
+
+    // ============================================================
+    // BENCHMARK & RTT MEASUREMENT
+    // ============================================================
+    
+    async function benchmarkAllPeers() {
+      log('🧪 Avvio auto-benchmark...', 'info');
+      
+      for (const [peerId, dc] of dataChannels) {
+        if (dc.readyState === 'open') {
+          sendToPeer(peerId, {
+            type: 'benchmark-request',
+            task: 'mandelbrot',
+            params: { width: 512, height: 512, maxIter: 128 }
+          });
+        }
+      }
+      
+      log(`📊 Benchmark inviato a ${dataChannels.size} peer`, 'success');
+    }
+    
+    function handleBenchmarkRequest(data, peerId) {
+      // Perform benchmark
+      const startTime = performance.now();
+      
+      // Simple benchmark task
+      const task = TaskRegistry.get(data.task);
+      if (task) {
+        const testTask = {
+          yStart: 0,
+          yEnd: 512,
+          width: 512,
+          height: 512,
+          maxIter: 128
+        };
+        
+        task.compute(testTask);
+        const duration = performance.now() - startTime;
+        
+        sendToPeer(peerId, {
+          type: 'benchmark-result',
+          duration,
+          timestamp: Date.now()
+        });
+      }
+    }
+    
+    function handleBenchmarkResult(data, peerId) {
+      const speed = 1000 / data.duration; // Higher is faster
+      peerPerformance.set(peerId, {
+        speed,
+        duration: data.duration,
+        category: speed > 2 ? 'FAST' : speed > 1 ? 'MEDIUM' : 'SLOW'
+      });
+      
+      updatePeerList();
+      log(`📊 Benchmark ${peerId.slice(0, 8)}: ${data.duration.toFixed(0)}ms (${speed.toFixed(2)}x)`, 'info');
+    }
+    
+    async function measureRTT(peerId) {
+      const timestamp = Date.now();
+      sendToPeer(peerId, { type: 'ping', timestamp });
+    }
+    
+    async function formProximityClusters() {
+      log('🔗 Formazione proximity clusters...', 'info');
+      
+      // Measure RTT to all peers
+      for (const peerId of dataChannels.keys()) {
+        await measureRTT(peerId);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Wait for RTT measurements
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Simple clustering: group by RTT threshold
+      const threshold = 50; // ms
+      const peers = Array.from(dataChannels.keys());
+      const visited = new Set();
+      peerClusters = [];
+      
+      for (const peer of peers) {
+        if (visited.has(peer)) continue;
+        
+        const cluster = [peer];
+        visited.add(peer);
+        
+        const peerRTTValue = peerRTT.get(peer) || Infinity;
+        
+        for (const otherPeer of peers) {
+          if (visited.has(otherPeer)) continue;
+          
+          const otherRTTValue = peerRTT.get(otherPeer) || Infinity;
+          
+          if (Math.abs(peerRTTValue - otherRTTValue) < threshold) {
+            cluster.push(otherPeer);
+            visited.add(otherPeer);
+          }
+        }
+        
+        peerClusters.push(cluster);
+      }
+      
+      // Find my cluster
+      for (let i = 0; i < peerClusters.length; i++) {
+        if (peerClusters[i].some(p => dataChannels.has(p))) {
+          myCluster = i;
+          myClusterPeers = peerClusters[i];
+          break;
+        }
+      }
+      
+      // Calculate average RTT
+      const rtts = Array.from(peerRTT.values());
+      const avgRTT = rtts.length > 0 ? rtts.reduce((a, b) => a + b, 0) / rtts.length : 0;
+      
+      // Update UI
+      document.getElementById('statClusters').textContent = peerClusters.length;
+      document.getElementById('statAvgRTT').textContent = `${avgRTT.toFixed(0)}ms`;
+      document.getElementById('pawnsStats').style.display = 'grid';
+      
+      updatePeerList();
+      log(`✅ Formati ${peerClusters.length} cluster (RTT medio: ${avgRTT.toFixed(0)}ms)`, 'success');
+    }
+
+    // ============================================================
+    // PAWNS: AUTONOMOUS TASK PULLING
+    // ============================================================
+    
+    function calculateOptimalChunkSize() {
+      // Fast peer → bigger chunks
+      const baseSize = 5;
+      return Math.max(1, Math.floor(baseSize * mySpeed));
+    }
+    
+    async function findMoreWork() {
+      if (!pawnsActive) return;
+      
+      // STEP 1: Try pull from central pool
+      const chunkSize = calculateOptimalChunkSize();
+      const pulledTasks = pullFromPool(chunkSize);
+      
+      if (pulledTasks.length > 0) {
+        myCurrentTasks.push(...pulledTasks);
+        log(`🎯 Pulled ${pulledTasks.length} tasks dal pool (${taskPool.length} rimanenti)`, 'success');
+        document.getElementById('statPoolSize').textContent = taskPool.length;
+        processTasks();
+        return;
+      }
+      
+      // STEP 2: Pool empty, try P2P work stealing
+      log('🔍 Pool vuoto, tentativo work stealing...', 'warning');
+      await attemptWorkStealing();
+    }
+    
+    function pullFromPool(count) {
+      return taskPool.splice(0, count);
+    }
+    
+    async function processTasks() {
+      if (myCurrentTasks.length === 0) {
+        await findMoreWork();
+        return;
+      }
+      
+      const task = myCurrentTasks.shift();
+      const startTime = performance.now();
+      
+      // Compute task locally
+      const taskDef = currentTask;
+      const result = taskDef.compute(task);
+      
+      const duration = performance.now() - startTime;
+      
+      // Update my speed
+      mySpeed = 1000 / duration;
+      
+      // Task complete
+      onTaskComplete(task.id, result, duration);
+      
+      // Continue processing
+      if (myCurrentTasks.length > 0) {
+        setTimeout(() => processTasks(), 10);
+      } else {
+        await findMoreWork();
+      }
+    }
+
+    // ============================================================
+    // PAWNS: P2P WORK STEALING
+    // ============================================================
+    
+    async function attemptWorkStealing() {
+      if (!pawnsActive) return;
+      
+      // Get cluster peers sorted by workload
+      const busyPeers = myClusterPeers
+        .map(peerId => ({
+          id: peerId,
+          workload: peerWorkload.get(peerId) || 0
+        }))
+        .filter(p => p.workload > 2)
+        .sort((a, b) => b.workload - a.workload);
+      
+      if (busyPeers.length === 0) {
+        log('ℹ️ Nessun peer da cui rubare lavoro', 'info');
+        // All done, check if job complete
+        checkJobComplete();
+        return;
+      }
+      
+      // Try stealing from busiest peer
+      const target = busyPeers[0];
+      log(`🎯 Tentativo stealing da ${target.id.slice(0, 8)}... (workload: ${target.workload})`, 'info');
+      requestWorkFrom(target.id);
+    }
+    
+    function requestWorkFrom(peerId) {
+      sendToPeer(peerId, {
+        type: 'steal-request',
+        requesterId: myPeerId,
+        mySpeed
+      });
+    }
+    
+    function handleStealRequest(peerId, message) {
+      // Someone wants to help me!
+      
+      if (myCurrentTasks.length < 3) {
+        // Not enough to share
+        sendToPeer(peerId, {
+          type: 'steal-response',
+          accepted: false,
+          reason: 'insufficient_work'
+        });
+        return;
+      }
+      
+      // Calculate how much to give
+      const theirSpeed = message.mySpeed || 1.0;
+      const ratio = theirSpeed / (mySpeed + theirSpeed);
+      const toGive = Math.floor(myCurrentTasks.length * ratio);
+      
+      if (toGive === 0) {
+        sendToPeer(peerId, {
+          type: 'steal-response',
+          accepted: false
+        });
+        return;
+      }
+      
+      // Give tasks
+      const givenTasks = myCurrentTasks.splice(0, toGive);
+      
+      sendToPeer(peerId, {
+        type: 'steal-response',
+        accepted: true,
+        tasks: givenTasks
+      });
+      
+      log(`🎁 Dato ${toGive} task a ${peerId.slice(0, 8)}...`, 'warning');
+      
+      // Animate steal
+      animateSteal(peerId);
+    }
+    
+    function handleStealResponse(peerId, message) {
+      if (!message.accepted) {
+        log(`❌ Steal rifiutato da ${peerId.slice(0, 8)}...`, 'error');
+        // Try next peer or check completion
+        setTimeout(() => attemptWorkStealing(), 1000);
+        return;
+      }
+      
+      // Got work!
+      const stolenTasks = message.tasks;
+      myCurrentTasks.push(...stolenTasks);
+      
+      workStealCount++;
+      document.getElementById('statSteals').textContent = workStealCount;
+      
+      log(`🎉 Rubati ${stolenTasks.length} task da ${peerId.slice(0, 8)}...!`, 'success');
+      
+      // Start processing
+      processTasks();
+      
+      // Animate steal
+      animateSteal(peerId);
+    }
+    
+    function handleWorkloadUpdate(peerId, message) {
+      peerWorkload.set(peerId, message.workload);
+    }
+    
+    function animateSteal(peerId) {
+      // Simple visual feedback
+      const peerElements = document.querySelectorAll('.peer-item');
+      peerElements.forEach(el => {
+        if (el.textContent.includes(peerId.slice(0, 12))) {
+          el.classList.add('steal-animation');
+          setTimeout(() => el.classList.remove('steal-animation'), 500);
+        }
+      });
+    }
+
+    // ============================================================
+    // PERIODIC STATE BROADCAST
+    // ============================================================
+    
+    let broadcastInterval = null;
+    
+    function startStateBroadcast() {
+      if (broadcastInterval) return;
+      
+      broadcastInterval = setInterval(() => {
+        if (!pawnsActive) return;
+        
+        // Broadcast my current state to cluster peers
+        broadcastToCluster({
+          type: 'workload-update',
+          workload: myCurrentTasks.length,
+          speed: mySpeed
+        });
+      }, 3000);
+    }
+
+    // ============================================================
+    // TASK COMPLETION & JOB FINALIZATION
+    // ============================================================
+    
+    const taskResults = new Map();
+    
+    function onTaskComplete(taskId, result, duration) {
+      taskResults.set(taskId, result);
+      completedTasksCount++;
+      
+      // Update progress
+      updateProgress();
+      
+      log(`✅ Task ${taskId} completato in ${duration.toFixed(0)}ms`, 'success');
+    }
+    
+    function checkJobComplete() {
+      if (taskPool.length === 0 && myCurrentTasks.length === 0 && 
+          completedTasksCount === totalTasksCount) {
+        finalizeJob();
+      }
+    }
+    
+    function finalizeJob() {
+      pawnsActive = false;
+      
+      const endTime = performance.now();
+      const totalTime = (endTime - jobStartTime) / 1000;
+      
+      log(`🎉 Job completato in ${totalTime.toFixed(2)}s!`, 'success');
+      
+      // Merge results
+      const taskDef = currentTask;
+      const results = Array.from(taskResults.values());
+      
+      const params = {
+        width: parseInt(document.getElementById('paramWidth').value),
+        height: parseInt(document.getElementById('paramHeight').value),
+        maxIter: parseInt(document.getElementById('paramParam').value)
+      };
+      
+      const finalResult = taskDef.merge(results, params);
+      
+      // Display results
+      displayResults(totalTime, finalResult);
+      
+      // Hide progress
+      document.getElementById('progressContainer').style.display = 'none';
+    }
+    
+    function displayResults(totalTime, finalResult) {
+      document.getElementById('resultsArea').style.display = 'block';
+      
+      const numPeers = dataChannels.size;
+      const efficiency = ((totalTasksCount / (numPeers * totalTime)) / numPeers * 100).toFixed(1);
+      
+      document.getElementById('resultPeers').textContent = numPeers;
+      document.getElementById('resultExcluded').textContent = '0';
+      document.getElementById('resultTime').textContent = totalTime.toFixed(2) + 's';
+      document.getElementById('resultStolen').textContent = workStealCount;
+      document.getElementById('resultEfficiency').textContent = efficiency + '%';
+      document.getElementById('resultThreshold').textContent = 'N/A';
+      
+      // Show result preview
+      const detailsPanel = document.getElementById('detailsPanel');
+      
+      if (currentTask.id === 'mandelbrot' && finalResult) {
+        detailsPanel.innerHTML = `
+          <h3>Anteprima Risultato:</h3>
+          <img src="${finalResult}" style="max-width: 100%; border-radius: 8px; border: 2px solid #16a34a;" />
+        `;
+      } else if (currentTask.id === 'primes') {
+        detailsPanel.innerHTML = `
+          <h3>Risultato:</h3>
+          <p>Numeri primi trovati: <strong>${finalResult.total}</strong></p>
+          <p>Primi 10: ${finalResult.primes.slice(0, 10).join(', ')}...</p>
+        `;
+      } else if (currentTask.id === 'matrix') {
+        detailsPanel.innerHTML = `
+          <h3>Risultato:</h3>
+          <p>Matrice ${finalResult.size}x${finalResult.size} moltiplicata</p>
+          <p>Checksum: ${finalResult.checksum}</p>
+        `;
+      }
+      
+      document.getElementById('statTests').textContent = 
+        parseInt(document.getElementById('statTests').textContent) + 1;
+      
+      // Enable export button
+      document.getElementById('btnExportJSON').disabled = false;
+    }
+    
+    function updateProgress() {
+      const progress = (completedTasksCount / totalTasksCount * 100).toFixed(1);
+      document.getElementById('progressFill').textContent = progress + '%';
+      document.getElementById('progressFill').style.width = progress + '%';
+      document.getElementById('progressStatus').textContent = 
+        `${completedTasksCount}/${totalTasksCount} completati`;
+    }
+
+    // ============================================================
+    // RUN TEST WITH PAWNS
+    // ============================================================
+    
+    let jobStartTime = 0;
+    
+    async function runPawnsTest() {
+      if (!currentTask) {
+        log('❌ Seleziona un task prima!', 'error');
+        return;
+      }
+      
+      if (dataChannels.size === 0) {
+        log('❌ Nessun peer connesso!', 'error');
+        return;
+      }
+      
+      // Reset state
+      taskPool = [];
+      myCurrentTasks = [];
+      taskResults.clear();
+      completedTasksCount = 0;
+      workStealCount = 0;
+      pawnsActive = true;
+      jobStartTime = performance.now();
+      
+      // Get parameters
+      const params = {};
+      if (currentTask.params) {
+        params[currentTask.params[0].name] = parseInt(document.getElementById('paramWidth').value);
+        params[currentTask.params[1].name] = parseInt(document.getElementById('paramHeight').value);
+        params[currentTask.params[2].name] = parseInt(document.getElementById('paramParam').value);
+      }
+      
+      // Split tasks
+      const numPeers = dataChannels.size + 1; // +1 for me
+      const tasks = currentTask.split(params, numPeers * 5); // 5x oversubscription
+      
+      taskPool = tasks;
+      totalTasksCount = tasks.length;
+      
+      log(`🚀 PAWNS avviato: ${tasks.length} task nel pool`, 'success');
+      log(`👥 ${numPeers} peer disponibili (incluso me)`, 'info');
+      
+      // Update UI
+      document.getElementById('progressContainer').style.display = 'block';
+      document.getElementById('resultsArea').style.display = 'none';
+      document.getElementById('statPoolSize').textContent = taskPool.length;
+      document.getElementById('statSteals').textContent = '0';
+      
+      // Start processing
+      findMoreWork();
+      
+      // Notify all peers to start pulling
+      dataChannels.forEach((dc, peerId) => {
+        sendToPeer(peerId, {
+          type: 'pawns-start',
+          poolSize: taskPool.length
+        });
+      });
+    }
+
+    // ============================================================
+    // COMPUTE TASK (for P2P requests)
+    // ============================================================
+    
+    function handleComputeTask(data, peerId) {
+      const task = data.task;
+      const startTime = performance.now();
+      
+      const taskDef = currentTask;
+      const result = taskDef.compute(task);
+      
+      const duration = performance.now() - startTime;
+      
+      sendToPeer(peerId, {
+        type: 'task-result',
+        taskId: task.id,
+        result,
+        duration
+      });
+    }
+    
+    function handleTaskResult(data, peerId) {
+      onTaskComplete(data.taskId, data.result, data.duration);
+    }
+
+    // ============================================================
+    // DYNAMIC SERVER URL
+    // ============================================================
+    
+    function setDynamicServerUrl() {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const dynamicServerUrl = protocol + '//' + location.host;
+      document.getElementById('serverUrl').value = dynamicServerUrl;
+      log(`✨ Server URL dinamico impostato: ${dynamicServerUrl} (per supporto Ngrok)`, 'success');
+    }
+
+    // ============================================================
+    // CUSTOM TASK MANAGEMENT
+    // ============================================================
+    
+    function createCustomTask() {
+      const taskCode = prompt(`Inserisci il codice del task personalizzato (formato JSON):
+
+Esempio:
+{
+  "id": "custom1",
+  "name": "Custom Task",
+  "icon": "⚡",
+  "description": "Task personalizzato",
+  "params": [
+    {"name": "param1", "label": "Parametro 1", "default": 100, "hint": "Primo parametro"}
+  ],
+  "splitCode": "function(params, numPeers) { /* split logic */ }",
+  "computeCode": "function(task) { /* compute logic */ }",
+  "mergeCode": "function(results, params) { /* merge logic */ }"
+}
+`);
+      
+      if (!taskCode) return;
+      
+      try {
+        const taskDef = JSON.parse(taskCode);
+        
+        // Validate required fields
+        if (!taskDef.id || !taskDef.name || !taskDef.splitCode || !taskDef.computeCode || !taskDef.mergeCode) {
+          throw new Error('Campi obbligatori mancanti (id, name, splitCode, computeCode, mergeCode)');
+        }
+        
+        // Convert code strings to functions
+        const task = {
+          id: taskDef.id,
+          name: taskDef.name,
+          icon: taskDef.icon || '⚡',
+          description: taskDef.description || 'Task personalizzato',
+          params: taskDef.params || [],
+          split: eval(`(${taskDef.splitCode})`),
+          compute: eval(`(${taskDef.computeCode})`),
+          merge: eval(`(${taskDef.mergeCode})`)
+        };
+        
+        // Register task
+        TaskRegistry.register(task);
+        
+        // Update UI
+        renderTaskSelector();
+        selectTask(task.id);
+        
+        // Update task count
+        document.getElementById('statTasks').textContent = TaskRegistry.getAll().length;
+        
+        // Enable save button
+        document.getElementById('btnSaveTask').disabled = false;
+        
+        log(`✅ Task personalizzato "${task.name}" creato!`, 'success');
+      } catch (err) {
+        log(`❌ Errore creazione task: ${err.message}`, 'error');
+        alert(`Errore: ${err.message}`);
+      }
+    }
+    
+    function loadTaskFromFile() {
+      const fileInput = document.getElementById('fileInput');
+      fileInput.click();
+    }
+    
+    function handleTaskFileLoad(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const taskDef = JSON.parse(e.target.result);
+          
+          // Validate required fields
+          if (!taskDef.id || !taskDef.name || !taskDef.splitCode || !taskDef.computeCode || !taskDef.mergeCode) {
+            throw new Error('Campi obbligatori mancanti nel file');
+          }
+          
+          // Check if task ID already exists and generate unique ID if needed
+          let taskId = taskDef.id;
+          if (TaskRegistry.get(taskId)) {
+            let counter = 1;
+            while (TaskRegistry.get(taskId + '_' + counter)) {
+              counter++;
+            }
+            taskId = taskId + '_' + counter;
+            log(`⚠️ ID task duplicato, rinominato in: ${taskId}`, 'warning');
+          }
+          
+          // Convert code strings to functions
+          const task = {
+            id: taskId,
+            name: taskDef.name,
+            icon: taskDef.icon || '⚡',
+            description: taskDef.description || 'Task caricato da file',
+            params: taskDef.params || [],
+            split: eval(`(${taskDef.splitCode})`),
+            compute: eval(`(${taskDef.computeCode})`),
+            merge: eval(`(${taskDef.mergeCode})`)
+          };
+          
+          // Register task
+          TaskRegistry.register(task);
+          
+          // Update UI
+          renderTaskSelector();
+          selectTask(task.id);
+          
+          // Update task count
+          document.getElementById('statTasks').textContent = TaskRegistry.getAll().length;
+          
+          // Enable save button
+          document.getElementById('btnSaveTask').disabled = false;
+          
+          log(`✅ Task "${task.name}" caricato da file!`, 'success');
+        } catch (err) {
+          log(`❌ Errore caricamento file: ${err.message}`, 'error');
+          alert(`Errore caricamento file: ${err.message}`);
+        }
+      };
+      reader.readAsText(file);
+      
+      // Reset input
+      event.target.value = '';
+    }
+    
+    function saveCurrentTask() {
+      if (!currentTask) {
+        log('❌ Nessun task selezionato!', 'error');
+        return;
+      }
+      
+      // Convert task to JSON-serializable format
+      const taskDef = {
+        id: currentTask.id,
+        name: currentTask.name,
+        icon: currentTask.icon,
+        description: currentTask.description,
+        params: currentTask.params,
+        splitCode: currentTask.split.toString(),
+        computeCode: currentTask.compute.toString(),
+        mergeCode: currentTask.merge.toString()
+      };
+      
+      const json = JSON.stringify(taskDef, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `task_${currentTask.id}.json`;
+      a.click();
+      
+      URL.revokeObjectURL(url);
+      
+      log(`✅ Task "${currentTask.name}" salvato!`, 'success');
+    }
+    
+    function exportResultsJSON() {
+      const resultsArea = document.getElementById('resultsArea');
+      if (resultsArea.style.display === 'none') {
+        log('❌ Nessun risultato da esportare!', 'error');
+        return;
+      }
+      
+      const results = {
+        timestamp: new Date().toISOString(),
+        task: currentTask ? currentTask.name : 'Unknown',
+        taskId: currentTask ? currentTask.id : 'unknown',
+        peers: parseInt(document.getElementById('resultPeers').textContent),
+        excluded: parseInt(document.getElementById('resultExcluded').textContent),
+        time: document.getElementById('resultTime').textContent,
+        workSteals: parseInt(document.getElementById('resultStolen').textContent),
+        efficiency: document.getElementById('resultEfficiency').textContent,
+        threshold: document.getElementById('resultThreshold').textContent,
+        parameters: {
+          width: parseInt(document.getElementById('paramWidth').value),
+          height: parseInt(document.getElementById('paramHeight').value),
+          param: parseInt(document.getElementById('paramParam').value)
+        },
+        systemStats: {
+          connectedPeers: parseInt(document.getElementById('statPeers').textContent),
+          availableTasks: parseInt(document.getElementById('statTasks').textContent),
+          completedTests: parseInt(document.getElementById('statTests').textContent),
+          totalExcluded: parseInt(document.getElementById('statExcluded').textContent)
+        }
+      };
+      
+      const json = JSON.stringify(results, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `macn_results_${Date.now()}.json`;
+      a.click();
+      
+      URL.revokeObjectURL(url);
+      
+      log('✅ Risultati esportati in JSON!', 'success');
+    }
+
+    // ============================================================
+    // EVENT LISTENERS
+    // ============================================================
+    
+    document.getElementById('btnConnect').addEventListener('click', connect);
+    document.getElementById('btnDisconnect').addEventListener('click', disconnect);
+    document.getElementById('btnFullReset').addEventListener('click', fullReset);
+    
+    document.getElementById('btnConnectAll').addEventListener('click', async () => {
+      const toConnect = availablePeers.filter(p => !dataChannels.has(p) && p !== myPeerId);
+      log(`⚡ Connessione a ${toConnect.length} peer...`, 'info');
+      
+      for (const peerId of toConnect) {
+        await createPeerConnection(peerId, true);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    });
+    
+    document.getElementById('btnBenchmarkAll').addEventListener('click', benchmarkAllPeers);
+    document.getElementById('btnFormClusters').addEventListener('click', formProximityClusters);
+    document.getElementById('btnRunTest').addEventListener('click', runPawnsTest);
+    document.getElementById('btnClearResults').addEventListener('click', () => {
+      document.getElementById('resultsArea').style.display = 'none';
+      document.getElementById('btnExportJSON').disabled = true;
+    });
+    document.getElementById('btnClearLog').addEventListener('click', () => {
+      document.getElementById('logOutput').innerHTML = '';
+    });
+    
+    // Task management buttons
+    document.getElementById('btnCustomTask').addEventListener('click', createCustomTask);
+    document.getElementById('btnLoadTask').addEventListener('click', loadTaskFromFile);
+    document.getElementById('btnSaveTask').addEventListener('click', saveCurrentTask);
+    document.getElementById('fileInput').addEventListener('change', handleTaskFileLoad);
+    
+    // Export results button
+    document.getElementById('btnExportJSON').addEventListener('click', exportResultsJSON);
+
+    // ============================================================
+    // INITIALIZATION
+    // ============================================================
+    
+    (async function init() {
+      log('🌐 MACN v10.0 PAWNS - Proximity-Aware Work-Stealing', 'success');
+      log('═══════════════════════════════════════════════════', 'info');
+      log('✅ Autonomous Task Pulling', 'success');
+      log('✅ P2P Work Stealing', 'success');
+      log('✅ Proximity Clustering', 'success');
+      log('✅ Real-time Load Balancing', 'success');
+      log('═══════════════════════════════════════════════════', 'info');
+      
+      // Set dynamic server URL
+      setDynamicServerUrl();
+      
+      renderTaskSelector();
+      
+      const firstTask = TaskRegistry.getAll()[0];
+      if (firstTask) {
+        selectTask(firstTask.id);
+      }
+      
+      log('✨ Sistema pronto! Connettiti al server', 'success');
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "id": "primes-mega",
+  "name": "Prime Numbers MEGA",
+  "description": "Ricerca numeri primi su range massivo - calcolo intensivo",
+  "category": "math",
+  "icon": "🔢",
+  "paramLabels": {
+    "width": "Range Size",
+    "height": "Offset Inizio",
+    "param": "Batch Size"
+  },
+  "paramHints": {
+    "width": "Dimensione range (es: 100000 = 100K numeri)",
+    "height": "Offset iniziale (es: 10000)",
+    "param": "Dimensione batch per yield (es: 500)"
+  },
+  "computeCode": "(async function(params) {\n  const rangeSize = params.width || 100000;\n  const offset = params.height || 10000;\n  const batchSize = params.param || 500;\n  \n  const start = Math.max(2, offset);\n  const end = start + rangeSize;\n  \n  const startTime = performance.now();\n  const primes = [];\n  let checksPerformed = 0;\n  let compositesFound = 0;\n  let batchCount = 0;\n  \n  const sieve = new Array(rangeSize + 1).fill(true);\n  sieve[0] = sieve[1] = false;\n  \n  for (let n = start; n <= end; n++) {\n    const localIndex = n - start;\n    \n    if (!sieve[localIndex]) {\n      compositesFound++;\n      continue;\n    }\n    \n    let isPrime = true;\n    const sqrt = Math.sqrt(n);\n    \n    for (let i = 2; i <= sqrt; i++) {\n      checksPerformed++;\n      if (n % i === 0) {\n        isPrime = false;\n        sieve[localIndex] = false;\n        compositesFound++;\n        break;\n      }\n    }\n    \n    if (isPrime) {\n      primes.push(n);\n      \n      for (let multiple = n * 2; multiple <= end; multiple += n) {\n        const multipleIndex = multiple - start;\n        if (multipleIndex >= 0 && multipleIndex <= rangeSize) {\n          sieve[multipleIndex] = false;\n        }\n      }\n    }\n    \n    if ((n - start) % batchSize === 0) {\n      batchCount++;\n      await new Promise(resolve => setTimeout(resolve, 0));\n    }\n  }\n  \n  const took_ms = performance.now() - startTime;\n  const numbersChecked = end - start + 1;\n  \n  const largestPrime = primes[primes.length - 1];\n  const smallestPrime = primes[0];\n  const avgGap = primes.length > 1 ? (largestPrime - smallestPrime) / (primes.length - 1) : 0;\n  \n  return {\n    range: start + '-' + end,\n    rangeSize: numbersChecked,\n    primesFound: primes.length,\n    compositesFound: compositesFound,\n    primesDensity: (primes.length / numbersChecked * 100).toFixed(3) + '%',\n    smallestPrime,\n    largestPrime,\n    averageGap: avgGap.toFixed(2),\n    checksPerformed,\n    batchesProcessed: batchCount,\n    took_ms: Math.round(took_ms),\n    throughput: numbersChecked / (took_ms / 1000),\n    primesPerSecond: Math.round(primes.length / (took_ms / 1000))\n  };\n})"
+}

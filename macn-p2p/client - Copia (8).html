@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MACN v12.0 PAWNS • Force Test</title>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 24px; background: #0b0b0c; color: #eaeaea; line-height: 1.6; }
+    .container { max-width: 1800px; margin: 0 auto; }
+    h1 { font-size: 24px; margin: 0 0 8px; font-weight: 700; }
+    h2 { font-size: 16px; margin: 0 0 12px; font-weight: 600; }
+    p { color: #c7c7c7; font-size: 14px; margin: 0 0 16px; }
+    .card { background: #141416; border: 1px solid #2a2a2e; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .card.highlight { border: 2px solid #7c3aed; }
+    .card.pawns { border: 3px solid #16a34a; }
+    .card.test { border: 3px solid #f59e0b; background: linear-gradient(135deg, #2a1a0a 0%, #1a1a0a 100%); }
+    button { background: #2b5cff; border: 0; color: white; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+    button.secondary { background: #2a2a2e; }
+    button.success { background: #16a34a; }
+    button.danger { background: #dc2626; }
+    button.purple { background: #7c3aed; }
+    button.orange { background: #f59e0b; }
+    button.pawns { background: linear-gradient(135deg, #16a34a 0%, #059669 50%, #10b981 100%); animation: pawnsGlow 2s infinite; border: 2px solid #fff; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.9; }
+    @keyframes pawnsGlow { 0%,100% { box-shadow: 0 0 20px rgba(22,163,74,.8);} 50% { box-shadow: 0 0 40px rgba(16,185,129,1);} }
+    .feature-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-left: 8px; }
+    .feature-badge.pawns { background: #16a34a; color: white; }
+    .feature-badge.new { background: #f59e0b; color: white; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    input[type="text"],input[type="number"]{ flex:1;border-radius:8px;border:1px solid #2b2b2f;background:#0e0e10;color:#eaeaea;padding:10px;font-size:14px;}
+    .badge { display:inline-block;background:#1e1e22;color:#16a34a;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600;margin-left:8px;}
+    #logOutput { background:#0e0e10;border:1px solid #2b2b2f;border-radius:8px;padding:12px;max-height:300px;overflow-y:auto;font-family:'Courier New',monospace;font-size:12px;}
+    .log-entry{padding:4px 0;border-bottom:1px solid #1a1a1e;}
+    .log-entry.success{color:#16a34a}.log-entry.error{color:#dc2626}.log-entry.warning{color:#f59e0b}.log-entry.info{color:#2b5cff}
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px}
+    .stat-box{background:#0e0e10;border:1px solid #2b2b2f;border-radius:8px;padding:16px;text-align:center}
+    .stat-label{font-size:12px;color:#c7c7c7;margin-bottom:8px}
+    .stat-value{font-size:24px;font-weight:700;color:#16a34a}
+    .peer-item{background:#1a1a1e;border:1px solid #2b2b2f;border-radius:8px;padding:12px;font-size:12px;margin-bottom:8px;}
+    .peer-item.connected{border-color:#16a34a;background:rgba(22,163,74,.1)}
+    .peer-state-badge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;margin-left:4px;}
+    .peer-state-badge.working{background:#2b5cff;color:white;}
+    .peer-state-badge.idle{background:#666;color:white;}
+    .peer-state-badge.helping{background:#f59e0b;color:white;}
+    #debugLog{background:#0e0e10;padding:8px;border-radius:4px;max-height:200px;overflow-y:auto;font-size:10px;color:#888;font-family:monospace;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+      🌐 MACN v12.0 PAWNS
+      <span class="feature-badge pawns">🚀 WORK-STEALING</span>
+      <span class="feature-badge new">⚡ FORCE TEST</span>
+    </h1>
+    <p>Test Manuale del Sistema Work-Stealing Cooperativo</p>
+
+    <section class="card">
+      <h2>🔌 Connessione Server <span id="serverStatus" class="badge">disconnesso</span></h2>
+      <div class="row">
+        <input id="serverUrl" type="text" placeholder="ws://localhost:3000" value="ws://localhost:3000" />
+        <button id="btnConnect" class="success">✅ Connetti</button>
+        <button id="btnDisconnect" class="danger" disabled>❌ Disconnetti</button>
+      </div>
+      <p style="margin-top: 8px;">Il tuo Peer ID: <code id="myPeerId">-</code></p>
+    </section>
+
+    <section class="card pawns">
+      <h2>🌐 PAWNS Network <span id="peerCount" class="badge">0</span> • Connessi <span id="connectedCount" class="badge">0</span></h2>
+      <div id="peerList"></div>
+      <div class="row" style="margin-top:12px;">
+        <button id="btnConnectAll" class="purple" disabled>⚡ Connetti TUTTI</button>
+        <button id="btnTestP2P" class="orange" disabled>🩺 Test P2P</button>
+      </div>
+    </section>
+
+    <section class="card test">
+      <h2>⚡ TEST MANUALE WORK-STEALING</h2>
+      <div style="background:#dc2626;color:white;padding:12px;border-radius:8px;margin-bottom:16px;font-weight:600;">
+        ⚠️ IMPORTANTE: Questo test richiede DUE finestre/dispositivi!<br>
+        🔹 PEER A (questo): aggiungi task e invia broadcast<br>
+        🔹 PEER B (altra finestra): controlla "Stati Ricevuti" e forza help<br>
+        📍 Non puoi testare tutto sullo stesso peer!
+      </div>
+      <p style="color:#f59e0b;font-weight:600;">🎯 Usa questi bottoni per testare il sistema MANUALMENTE</p>
+      
+      <div style="background:#1a1a1e;padding:16px;border-radius:8px;margin-bottom:16px;">
+        <h3 style="margin:0 0 12px;font-size:14px;">📊 Il mio stato attuale:</h3>
+        <div class="stats">
+          <div class="stat-box">
+            <div class="stat-label">Stato</div>
+            <div class="stat-value" id="myState" style="font-size:18px;color:#2b5cff;">IDLE</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Miei Task</div>
+            <div class="stat-value" id="myTaskCount">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Broadcast Inviati</div>
+            <div class="stat-value" id="broadcastCount" style="font-size:18px;">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Stati Ricevuti</div>
+            <div class="stat-value" id="statesReceivedCount" style="font-size:18px;">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="btnAddTasks" class="success">➕ Aggiungi 10 Task Fake</button>
+        <button id="btnSendBroadcast" class="purple" disabled>📡 Invia Broadcast Stato</button>
+        <button id="btnForceHelp" class="orange" disabled>🤝 FORZA Offerta Aiuto</button>
+        <button id="btnClearTasks" class="secondary">🗑️ Svuota Task</button>
+      </div>
+
+      <div style="margin-top:16px;">
+        <h3 style="font-size:14px;margin-bottom:8px;">📝 Log Debug:</h3>
+        <div id="debugLog"></div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <h3 style="font-size:14px;margin-bottom:8px;">📊 Statistiche Test:</h3>
+        <div class="stats">
+          <div class="stat-box">
+            <div class="stat-label">Offerte Inviate</div>
+            <div class="stat-value" id="offersCount" style="color:#f59e0b;">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Aiuti Ricevuti</div>
+            <div class="stat-value" id="helpsCount" style="color:#7c3aed;">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Task Trasferiti</div>
+            <div class="stat-value" id="transfersCount">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">P2P Messaggi OK</div>
+            <div class="stat-value" id="p2pOkCount" style="color:#16a34a;">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>📝 Log Eventi 
+        <button id="btnClearLog" class="secondary" style="float:right;padding:4px 12px;font-size:12px;">🗑️</button>
+      </h2>
+      <div id="logOutput"></div>
+    </section>
+  </div>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    // ======== STATE ========
+    let socket = null;
+    let myPeerId = null;
+    let availablePeers = [];
+    let peerConnections = new Map();
+    let dataChannels = new Map();
+    let peerStates = new Map();
+    
+    let myState = 'IDLE';
+    let myTaskQueue = []; // Array di task fake per test
+    
+    // Contatori
+    let broadcastCount = 0;
+    let statesReceivedCount = 0;
+    let offersCount = 0;
+    let helpsCount = 0;
+    let transfersCount = 0;
+    let p2pOkCount = 0;
+
+    const rtcConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    };
+
+    // ======== LOGGING ========
+    function log(msg, type='info') {
+      const out = document.getElementById('logOutput');
+      const ts = new Date().toLocaleTimeString('it-IT');
+      const el = document.createElement('div');
+      el.className = `log-entry ${type}`;
+      el.textContent = `[${ts}] ${msg}`;
+      out.appendChild(el);
+      out.scrollTop = out.scrollHeight;
+    }
+
+    function dlog(msg) {
+      const out = document.getElementById('debugLog');
+      const ts = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 1 });
+      const line = document.createElement('div');
+      line.textContent = `[${ts}] ${msg}`;
+      line.style.color = '#f59e0b';
+      out.appendChild(line);
+      out.scrollTop = out.scrollHeight;
+      if (out.children.length > 30) out.removeChild(out.firstChild);
+    }
+
+    function updateUI() {
+      document.getElementById('myState').textContent = myState;
+      document.getElementById('myTaskCount').textContent = myTaskQueue.length;
+      document.getElementById('broadcastCount').textContent = broadcastCount;
+      document.getElementById('statesReceivedCount').textContent = statesReceivedCount;
+      document.getElementById('offersCount').textContent = offersCount;
+      document.getElementById('helpsCount').textContent = helpsCount;
+      document.getElementById('transfersCount').textContent = transfersCount;
+      document.getElementById('p2pOkCount').textContent = p2pOkCount;
+      
+      document.getElementById('btnSendBroadcast').disabled = dataChannels.size === 0;
+      document.getElementById('btnForceHelp').disabled = dataChannels.size === 0;
+      
+      // Aggiorna stato visivo
+      if (myTaskQueue.length > 0) {
+        myState = 'WORKING';
+        document.getElementById('myState').style.color = '#2b5cff';
+      } else {
+        myState = 'IDLE';
+        document.getElementById('myState').style.color = '#666';
+      }
+    }
+
+    function updatePeerList() {
+      const listEl = document.getElementById('peerList');
+      document.getElementById('peerCount').textContent = availablePeers.length;
+      document.getElementById('connectedCount').textContent = dataChannels.size;
+
+      if (availablePeers.length === 0) {
+        listEl.innerHTML = '<p style="color: #9ca3af; text-align: center;">Nessun peer disponibile</p>';
+        document.getElementById('btnConnectAll').disabled = true;
+        document.getElementById('btnTestP2P').disabled = true;
+        return;
+      }
+
+      document.getElementById('btnConnectAll').disabled = false;
+      document.getElementById('btnTestP2P').disabled = dataChannels.size === 0;
+
+      listEl.innerHTML = availablePeers
+        .filter(p => p !== myPeerId)
+        .map(peerId => {
+          const isConnected = dataChannels.has(peerId);
+          const state = peerStates.get(peerId);
+          
+          let stateBadge = '';
+          if (state) {
+            stateBadge = `<span class="peer-state-badge ${state.state.toLowerCase()}">${state.state}</span>`;
+          }
+
+          return `
+            <div class="peer-item ${isConnected ? 'connected' : ''}">
+              <div style="font-size:13px;font-weight:600;">
+                ${peerId.slice(0,12)}... 
+                ${stateBadge}
+              </div>
+              ${isConnected ? '<span style="color:#16a34a;font-size:11px;">● CONNESSO</span>' : ''}
+              ${state ? `<div style="color:#f59e0b;font-size:11px;margin-top:4px;">Task: ${state.workload}</div>` : ''}
+            </div>
+          `;
+        }).join('');
+    }
+
+    // ======== CONNECTION ========
+    function connect() {
+      const serverUrl = document.getElementById('serverUrl').value;
+      socket = io(serverUrl);
+
+      socket.on('connect', () => {
+        log('🔌 Connesso al server', 'success');
+        document.getElementById('serverStatus').textContent = 'connesso';
+        document.getElementById('serverStatus').style.color = '#16a34a';
+        document.getElementById('btnConnect').disabled = true;
+        document.getElementById('btnDisconnect').disabled = false;
+        myPeerId = socket.id;
+        document.getElementById('myPeerId').textContent = socket.id;
+        log(`✨ Il tuo Peer ID: ${socket.id}`, 'success');
+      });
+
+      socket.on('disconnect', () => {
+        document.getElementById('serverStatus').textContent = 'disconnesso';
+        document.getElementById('serverStatus').style.color = '#dc2626';
+        document.getElementById('btnConnect').disabled = false;
+        document.getElementById('btnDisconnect').disabled = true;
+      });
+
+      socket.on('peer-list', (peers) => {
+        availablePeers = peers;
+        updatePeerList();
+        log(`📋 ${peers.length} peer disponibili`, 'info');
+      });
+
+      socket.on('peer-joined', (peerId) => {
+        if (!availablePeers.includes(peerId)) {
+          availablePeers.push(peerId);
+          updatePeerList();
+          log(`👋 Nuovo peer: ${peerId.slice(0, 8)}...`, 'info');
+        }
+      });
+
+      socket.on('peer-left', (peerId) => {
+        availablePeers = availablePeers.filter(id => id !== peerId);
+        cleanupPeerConnection(peerId);
+        updatePeerList();
+        log(`👋 Peer disconnesso: ${peerId.slice(0, 8)}...`, 'warning');
+      });
+
+      socket.on('offer', async (data) => {
+        await handleOffer(data.offer, data.from);
+      });
+
+      socket.on('answer', async (data) => {
+        await handleAnswer(data.answer, data.from);
+      });
+
+      socket.on('ice-candidate', async (data) => {
+        const pc = peerConnections.get(data.from);
+        if (pc && data.candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      });
+    }
+
+    function disconnect() {
+      if (socket) {
+        peerConnections.forEach((pc) => { pc.close(); });
+        peerConnections.clear();
+        dataChannels.clear();
+        peerStates.clear();
+        socket.disconnect();
+        socket = null;
+        updatePeerList();
+        log('🔌 Disconnessione completata', 'info');
+      }
+    }
+
+    function cleanupPeerConnection(peerId) {
+      if (peerConnections.has(peerId)) {
+        peerConnections.get(peerId).close();
+        peerConnections.delete(peerId);
+      }
+      if (dataChannels.has(peerId)) {
+        dataChannels.delete(peerId);
+      }
+      peerStates.delete(peerId);
+    }
+
+    // ======== P2P CONNECTION ========
+    async function createPeerConnection(targetPeer, isInitiator) {
+      const pc = new RTCPeerConnection(rtcConfig);
+      peerConnections.set(targetPeer, pc);
+
+      pc.onicecandidate = (e) => {
+        if (e.candidate && socket) {
+          socket.emit('ice-candidate', { candidate: e.candidate, target: targetPeer });
+        }
+      };
+
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'connected') {
+          log(`✅ P2P connesso: ${targetPeer.slice(0, 8)}...`, 'success');
+          updatePeerList();
+          updateUI();
+        } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+          log(`❌ P2P disconnesso: ${targetPeer.slice(0, 8)}...`, 'error');
+          cleanupPeerConnection(targetPeer);
+          updatePeerList();
+        }
+      };
+
+      if (isInitiator) {
+        const dc = pc.createDataChannel('pawns');
+        setupDataChannel(dc, targetPeer);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('offer', { offer: pc.localDescription, target: targetPeer });
+      } else {
+        pc.ondatachannel = (e) => setupDataChannel(e.channel, targetPeer);
+      }
+    }
+
+    async function handleOffer(offer, from) {
+      await createPeerConnection(from, false);
+      const pc = peerConnections.get(from);
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      socket.emit('answer', { answer: pc.localDescription, target: from });
+    }
+
+    async function handleAnswer(answer, from) {
+      const pc = peerConnections.get(from);
+      if (pc) {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      }
+    }
+
+    function setupDataChannel(dc, peerId) {
+      dc.binaryType = 'arraybuffer';
+
+      dc.onopen = () => {
+        dataChannels.set(peerId, dc);
+        log(`🎉 DataChannel aperto: ${peerId.slice(0, 8)}...`, 'success');
+        updatePeerList();
+        updateUI();
+      };
+
+      dc.onclose = () => {
+        dataChannels.delete(peerId);
+        peerStates.delete(peerId);
+        updatePeerList();
+      };
+
+      dc.onmessage = (e) => handlePeerMessage(e, peerId);
+    }
+
+    // ======== MESSAGE HANDLING ========
+    function handlePeerMessage(event, peerId) {
+      if (event.data instanceof ArrayBuffer) return;
+
+      try {
+        const data = JSON.parse(event.data);
+        
+        // 🔍 LOG ESPLICITO DI OGNI MESSAGGIO
+        console.log('🔍 RAW MESSAGE:', data);
+        dlog(`📥 Ricevuto ${data.type} da ${peerId.slice(0,8)}`);
+
+        switch (data.type) {
+          case 'p2p-test':
+            dlog(`  → Gestisco p2p-test`);
+            handleP2PTest(peerId, data);
+            break;
+
+          case 'p2p-test-response':
+            dlog(`  → Gestisco p2p-test-response`);
+            handleP2PTestResponse(peerId, data);
+            break;
+
+          case 'state-broadcast':
+            dlog(`  → Gestisco state-broadcast`);
+            handleStateBroadcast(peerId, data);
+            break;
+
+          case 'help-offer':
+            dlog(`  → Gestisco help-offer`);
+            handleHelpOffer(peerId, data);
+            break;
+
+          case 'help-accept':
+            dlog(`  → Gestisco help-accept`);
+            handleHelpAccept(peerId, data);
+            break;
+
+          case 'help-decline':
+            dlog(`  → Ricevuto help-decline (${data.reason || 'no reason'})`);
+            break;
+
+          default:
+            dlog(`  ⚠️ TIPO SCONOSCIUTO: ${data.type}`);
+            console.warn('Messaggio con tipo sconosciuto:', data);
+            break;
+        }
+      } catch (err) {
+        console.error('Error handling message:', err);
+        dlog(`❌ Errore parsing messaggio: ${err.message}`);
+      }
+    }
+
+    function sendToPeer(peerId, message) {
+      const dc = dataChannels.get(peerId);
+      if (dc && dc.readyState === 'open') {
+        dc.send(JSON.stringify(message));
+        p2pOkCount++;
+        updateUI();
+        return true;
+      }
+      return false;
+    }
+
+    function broadcastToAll(message) {
+      dataChannels.forEach((dc, peerId) => {
+        sendToPeer(peerId, message);
+      });
+    }
+
+    // ======== P2P TEST ========
+    let p2pTestResults = new Map();
+
+    async function testP2PCommunication() {
+      log('🩺 Avvio test diagnostico P2P...', 'info');
+      dlog('🩺 TEST P2P: invio messaggi a tutti');
+      
+      p2pTestResults.clear();
+      const testId = Date.now();
+      
+      for (const peerId of dataChannels.keys()) {
+        sendToPeer(peerId, {
+          type: 'p2p-test',
+          testId,
+          from: myPeerId,
+          timestamp: Date.now()
+        });
+        dlog(`📤 Test inviato a ${peerId.slice(0,8)}`);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const connectedPeers = dataChannels.size;
+      const responsesReceived = p2pTestResults.size;
+      
+      log(`📊 Test P2P: ${responsesReceived}/${connectedPeers} risposte`, 
+          responsesReceived === connectedPeers ? 'success' : 'warning');
+      
+      if (responsesReceived === 0 && connectedPeers > 0) {
+        log('❌ PROBLEMA: Nessuna risposta P2P!', 'error');
+        dlog('❌ DataChannel aperto ma messaggi non arrivano');
+      } else if (responsesReceived === connectedPeers) {
+        log('✅ Comunicazione P2P funzionante!', 'success');
+      }
+      
+      for (const [peerId, rtt] of p2pTestResults) {
+        dlog(`  ${peerId.slice(0,8)}: RTT ${rtt}ms`);
+      }
+    }
+
+    function handleP2PTest(peerId, data) {
+      dlog(`📥 P2P-TEST da ${peerId.slice(0,8)}`);
+      sendToPeer(peerId, {
+        type: 'p2p-test-response',
+        testId: data.testId,
+        originalTimestamp: data.timestamp,
+        timestamp: Date.now()
+      });
+    }
+
+    function handleP2PTestResponse(peerId, data) {
+      const rtt = Date.now() - data.originalTimestamp;
+      p2pTestResults.set(peerId, rtt);
+      dlog(`✅ P2P-TEST OK da ${peerId.slice(0,8)}: RTT ${rtt}ms`);
+    }
+
+    // ======== STATE BROADCAST ========
+    function sendStateBroadcast() {
+      broadcastCount++;
+      updateUI();
+      
+      const message = {
+        type: 'state-broadcast',
+        peerId: myPeerId,
+        state: myState,
+        workload: myTaskQueue.length,
+        timestamp: Date.now()
+      };
+      
+      dlog(`📡 Broadcasting: ${myState}, workload=${myTaskQueue.length}`);
+      broadcastToAll(message);
+      log(`📡 Broadcast inviato a ${dataChannels.size} peer`, 'info');
+    }
+
+    function handleStateBroadcast(peerId, data) {
+      statesReceivedCount++;
+      dlog(`📥 Stato da ${peerId.slice(0,8)}: ${data.state}, workload=${data.workload}`);
+      
+      peerStates.set(peerId, {
+        state: data.state,
+        workload: data.workload,
+        lastUpdate: data.timestamp
+      });
+      
+      updatePeerList();
+      updateUI();
+    }
+
+    // ======== HELP SYSTEM ========
+    function forceHelp() {
+      log('⚡ FORZA offerta di aiuto...', 'warning');
+      dlog('⚡ FORCE HELP attivato manualmente');
+      
+      if (dataChannels.size === 0) {
+        log('❌ Nessun peer connesso!', 'error');
+        return;
+      }
+      
+      // Cerca il peer con più carico
+      const busyPeers = Array.from(peerStates.entries())
+        .filter(([id, state]) => dataChannels.has(id) && state.workload > 0)
+        .sort((a, b) => b[1].workload - a[1].workload);
+
+      if (busyPeers.length === 0) {
+        log('❌ Nessun peer con task da rubare', 'warning');
+        dlog('❌ Tutti i peer sono IDLE');
+        
+        // Prova comunque a inviare a tutti
+        log('🔄 Invio offerta a tutti i peer comunque...', 'info');
+        dataChannels.forEach((dc, peerId) => {
+          offersCount++;
+          dlog(`📤 HELP-OFFER a ${peerId.slice(0,8)}`);
+          sendToPeer(peerId, {
+            type: 'help-offer',
+            from: myPeerId
+          });
+        });
+        updateUI();
+        return;
+      }
+
+      const [targetId, targetState] = busyPeers[0];
+      offersCount++;
+      
+      log(`🤝 Offro aiuto a: ${targetId.slice(0,8)} (${targetState.workload} task)`, 'info');
+      dlog(`✅ HELP-OFFER a ${targetId.slice(0,8)}`);
+      
+      sendToPeer(targetId, {
+        type: 'help-offer',
+        from: myPeerId
+      });
+      
+      updateUI();
+      updatePeerList();
+    }
+
+    function handleHelpOffer(fromPeer, data) {
+      dlog(`📬 HELP-OFFER da ${fromPeer.slice(0,8)}, ho ${myTaskQueue.length} task`);
+      
+      if (myTaskQueue.length === 0) {
+        dlog(`❌ Rifiuto: non ho task`);
+        sendToPeer(fromPeer, {
+          type: 'help-decline',
+          reason: 'no_tasks'
+        });
+        log(`⚠️ Offerta rifiutata (nessun task)`, 'warning');
+        return;
+      }
+
+      const toTransfer = Math.max(1, Math.ceil(myTaskQueue.length / 2));
+      const tasksToGive = myTaskQueue.splice(0, toTransfer);
+      transfersCount++;
+
+      log(`🎁 Trasferisco ${toTransfer} task a ${fromPeer.slice(0,8)}`, 'success');
+      dlog(`✅ HELP-ACCEPT: ceduti ${toTransfer} task`);
+
+      sendToPeer(fromPeer, {
+        type: 'help-accept',
+        tasks: tasksToGive
+      });
+
+      updateUI();
+    }
+
+    function handleHelpAccept(fromPeer, data) {
+      if (!data.tasks || data.tasks.length === 0) {
+        dlog(`❌ HELP-ACCEPT vuota da ${fromPeer.slice(0,8)}`);
+        return;
+      }
+
+      myTaskQueue.push(...data.tasks);
+      helpsCount++;
+
+      log(`💪 Ricevuti ${data.tasks.length} task da ${fromPeer.slice(0,8)}!`, 'success');
+      dlog(`✅ HELP-ACCEPT: +${data.tasks.length} task, totale=${myTaskQueue.length}`);
+      
+      updateUI();
+    }
+
+    // ======== TEST FUNCTIONS ========
+    function addFakeTasks() {
+      for (let i = 0; i < 10; i++) {
+        myTaskQueue.push({ id: `fake_${Date.now()}_${i}`, data: Math.random() });
+      }
+      log(`➕ Aggiunti 10 task fake (totale: ${myTaskQueue.length})`, 'success');
+      dlog(`➕ Task aggiunti, nuovo totale: ${myTaskQueue.length}`);
+      updateUI();
+    }
+
+    function clearTasks() {
+      myTaskQueue = [];
+      log(`🗑️ Task svuotati`, 'info');
+      dlog(`🗑️ Queue task azzerata`);
+      updateUI();
+    }
+
+    // ======== EVENT LISTENERS ========
+    document.getElementById('btnConnect').addEventListener('click', connect);
+    document.getElementById('btnDisconnect').addEventListener('click', disconnect);
+
+    document.getElementById('btnConnectAll').addEventListener('click', async () => {
+      const toConnect = availablePeers.filter(p => !dataChannels.has(p) && p !== myPeerId);
+      log(`⚡ Connessione a ${toConnect.length} peer...`, 'info');
+      for (const peerId of toConnect) {
+        await createPeerConnection(peerId, true);
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    });
+
+    document.getElementById('btnTestP2P').addEventListener('click', testP2PCommunication);
+    document.getElementById('btnAddTasks').addEventListener('click', addFakeTasks);
+    document.getElementById('btnSendBroadcast').addEventListener('click', sendStateBroadcast);
+    document.getElementById('btnForceHelp').addEventListener('click', forceHelp);
+    document.getElementById('btnClearTasks').addEventListener('click', clearTasks);
+    document.getElementById('btnClearLog').addEventListener('click', () => {
+      document.getElementById('logOutput').innerHTML = '';
+    });
+
+    // ======== INIT ========
+    (function init() {
+      log('🌐 MACN v12.0 PAWNS - Force Test System', 'success');
+      log('═══════════════════════════════════════════', 'info');
+      log('✅ Test Manuale Work-Stealing', 'success');
+      log('✅ Task Fake per simulazione', 'success');
+      log('✅ Broadcast e Help forzati', 'success');
+      log('═══════════════════════════════════════════', 'info');
+      
+      const isHttp = (location.protocol === 'http:' || location.protocol === 'https:');
+      if (isHttp && location.host) {
+        const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const url = protocol + '//' + location.host;
+        document.getElementById('serverUrl').value = url;
+        log(`✨ Server URL: ${url}`, 'success');
+      }
+      
+      updateUI();
+      log('✨ Sistema pronto! Connettiti al server', 'success');
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MACN • PAWNS P2P (Kemos + Task Registry + Work-Stealing)</title>
+<style>
+  :root { color-scheme: dark; }
+  *{box-sizing:border-box}
+  body{margin:0;background:#0b0b10;color:#eaeaea;font:14px/1.55 system-ui,-apple-system,Segoe UI,Roboto}
+  .wrap{max-width:1280px;margin:0 auto;padding:20px}
+  h1{margin:0 0 8px;font-size:24px;font-weight:800;background:linear-gradient(90deg,#06b6d4,#a78bfa);
+      -webkit-background-clip:text;background-clip:text;color:transparent}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  .card{background:#12121a;border:1px solid #262633;border-radius:12px;padding:14px}
+  .badge{padding:2px 8px;border-radius:999px;background:#0f172a;border:1px solid #243042;font-size:11px}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  input,select{border:1px solid #273244;background:#0e1422;color:#eaeaea;border-radius:8px;padding:10px;font:inherit;width:100%}
+  button{border:0;border-radius:10px;padding:10px 14px;background:#334155;color:#fff;cursor:pointer;font-weight:700}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  .green{background:#16a34a}.blue{background:#2563eb}.amber{background:#d97706}.slate{background:#334155}
+  .rose{background:#dc2626}.violet{background:#7c3aed}.orange{background:#f59e0b}
+  .grid{display:grid;gap:10px}
+  .g4{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+  .log{max-height:220px;overflow:auto;border:1px solid #232332;background:#0d0d14;border-radius:8px;padding:8px;font-size:12px}
+  .peer{background:#0f0f18;border:1px solid #232332;border-radius:10px;padding:10px}
+  .peer.connected{border-color:#16a34a;background:rgba(22,163,74,.06)}
+  .bar{height:10px;border-radius:999px;background:#0e1522;overflow:hidden}
+  .bar>span{display:block;height:100%;background:linear-gradient(90deg,#06b6d4,#8b5cf6)}
+  canvas{max-width:100%;height:auto;border-radius:10px;border:1px solid #232332;background:#0d0d14}
+  .progress{height:32px;border-radius:8px;background:#0f1220;overflow:hidden;border:1px solid #22263a}
+  .progress>div{height:100%;display:flex;align-items:center;justify-content:center;font-weight:800}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;background:#0f172a;border:1px solid #1f2937;border-radius:999px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>MACN • Kemos + Task Registry (PAWNS P2P Work-Stealing)</h1>
+
+  <!-- Top bar -->
+  <div class="row" style="margin-bottom:10px">
+    <button id="btnConnect" class="green">✅ Connetti</button>
+    <button id="btnDisconnect" class="rose" disabled>❌ Disconnetti</button>
+    <button id="btnFullReset" class="slate">🔄 Reset completo</button>
+    <button id="btnForceSteal" class="violet" disabled>🧠 Force Work-Steal</button>
+    <span class="pill">Peer ID: <b id="myPeerId" class="mono">-</b></span>
+    <span class="pill">Server: <input id="serverUrl" style="width:260px" value="ws://localhost:3000"/></span>
+    <span class="pill">Stato: <b id="serverStatus">disconnesso</b></span>
+  </div>
+
+  <!-- Task registry -->
+  <div class="card">
+    <h3 style="margin:0 0 10px">Task Registry (split/compute/merge)</h3>
+    <div class="grid" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr">
+      <div>
+        <label>Task</label>
+        <select id="taskSelect"></select>
+      </div>
+      <div>
+        <label>Oversubscription (x)</label>
+        <input id="oversub" type="number" value="5" min="1"/>
+      </div>
+      <div>
+        <label>Peers simulati (include me)</label>
+        <input id="peersSim" type="number" value="8" min="1"/>
+      </div>
+      <div>
+        <label>Width</label>
+        <input id="paramA" type="number" value="1920"/>
+      </div>
+      <div>
+        <label>Height</label>
+        <input id="paramB" type="number" value="1080"/>
+      </div>
+      <div>
+        <label>Iter / Chunk</label>
+        <input id="paramC" type="number" value="256"/>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button id="btnRun" class="green" disabled>🚀 Start Job</button>
+      <button id="btnExportTask" class="slate" disabled>📤 Esporta Task corrente</button>
+      <button id="btnLoadTask" class="blue">📥 Carica Task da file</button>
+      <input id="fileInput" type="file" accept=".json" style="display:none"/>
+      <span class="badge">Peers: <b id="kPeers">0</b></span>
+      <span class="badge">Chunks: <b id="kChunks">0</b></span>
+      <span class="badge">Completati: <b id="kDone">0</b></span>
+      <span class="badge">Steals: <b id="kSteals">0</b></span>
+      <span class="badge">Helps: <b id="kHelps">0</b></span>
+      <span class="badge">ε medio: <b id="kEps">0.10</b></span>
+    </div>
+  </div>
+
+  <!-- PAWNS NET -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h3 style="margin:0">PAWNS Network</h3>
+      <div class="row">
+        <button id="btnConnectAll" class="orange" disabled>⚡ Connetti TUTTI</button>
+        <button id="btnBenchmarkAll" class="amber" disabled>🧪 Auto-Benchmark</button>
+        <button id="btnClusters" class="green" disabled>🔗 Form Proximity Clusters</button>
+        <span class="badge">Disponibili: <b id="peerCount">0</b></span>
+        <span class="badge">Connessi: <b id="connectedCount">0</b></span>
+      </div>
+    </div>
+    <div id="peerList" class="grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));margin-top:10px"></div>
+  </div>
+
+  <!-- Progress -->
+  <div class="card" id="jobPanel" style="display:none">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <b>Job in esecuzione…</b>
+      <span id="progressText" class="mono">0/0</span>
+    </div>
+    <div class="progress" style="margin:8px 0 10px">
+      <div id="progressFill" style="width:0%;background:linear-gradient(90deg,#16a34a,#10b981);color:#fff">0%</div>
+    </div>
+    <div class="grid g4">
+      <div class="card"><div>Time</div><div class="mono" id="kTime">0.0s</div></div>
+      <div class="card"><div>Queue Global</div><div class="mono" id="kQueue">0</div></div>
+      <div class="card"><div>Gen</div><div class="mono" id="kGen">0</div></div>
+      <div class="card"><div>Stato</div><div class="mono" id="kState">Running</div></div>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div class="card" id="resultPanel" style="display:none">
+    <h3 style="margin:0 0 8px">Risultato</h3>
+    <div id="resultContainer"></div>
+    <div class="row" style="margin-top:10px">
+      <button id="btnExportJSON" class="slate" disabled>📥 Export JSON</button>
+      <button id="btnClearResult" class="slate">🗑️ Pulisci</button>
+    </div>
+  </div>
+
+  <!-- Observer + Log -->
+  <div class="grid" style="grid-template-columns:2fr 1fr; gap:10px">
+    <div class="card">
+      <h3 style="margin:0 0 8px">Network Topology</h3>
+      <canvas id="topology" width="1000" height="220"></canvas>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 8px">Event Log</h3>
+      <div class="log mono" id="log"></div>
+      <div class="row" style="margin-top:6px">
+        <button id="btnClearLog" class="slate">Pulisci log</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+/* ================= STATE ================= */
+let socket=null, myPeerId=null;
+let availablePeers=[], peerConnections=new Map(), dataChannels=new Map();
+let peerPerformance=new Map(), peerRTT=new Map(), peerWorkload=new Map();
+let taskResults=new Map();
+let currentTask=null, pawnsActive=false;
+let taskPool=[], myCurrentTasks=[], mySpeed=1, workStealCount=0, helpCount=0;
+let completedTasksCount=0, totalTasksCount=0, jobStartTime=0;
+let broadcastInterval=null;
+
+/* =============== UI helpers ============== */
+const $=id=>document.getElementById(id);
+function log(msg,type='') {
+  const el=document.createElement('div');
+  const ts=new Date().toLocaleTimeString('it-IT');
+  el.textContent=`${ts} — ${msg}`;
+  if(type==='ok') el.style.color='#16a34a';
+  if(type==='warn') el.style.color='#f59e0b';
+  if(type==='err') el.style.color='#ef4444';
+  $('log').appendChild(el); $('log').scrollTop=$('log').scrollHeight;
+}
+function setProgress(done,total){
+  const p = total? Math.floor(done*100/total):0;
+  $('progressText').textContent=`${done}/${total}`;
+  $('progressFill').style.width=p+'%'; $('progressFill').textContent=p+'%';
+}
+
+/* ============== TASK REGISTRY ============= */
+const TaskRegistry={
+  tasks:new Map(),
+  register(t){ this.tasks.set(t.id,t); },
+  get(id){ return this.tasks.get(id); },
+  all(){ return Array.from(this.tasks.values()); }
+};
+
+// Mandelbrot
+TaskRegistry.register({
+  id:'mandelbrot', name:'Mandelbrot', ui:['width','height','maxIter'],
+  split(params, n){
+    const stripH=Math.ceil(params.height/n);
+    const tasks=[];
+    for(let i=0;i<n;i++){
+      const yStart=i*stripH, yEnd=Math.min(yStart+stripH, params.height);
+      tasks.push({id:`m_${i}`,yStart,yEnd,width:params.width,height:params.height,maxIter:params.maxIter});
+    }
+    return tasks;
+  },
+  compute(t){
+    const {yStart,yEnd,width,height,maxIter}=t;
+    const h=yEnd-yStart;
+    const buf=new Uint8ClampedArray(width*h*4);
+    for(let py=0;py<h;py++){
+      const y=yStart+py;
+      for(let px=0;px<width;px++){
+        const x0=(px/width)*3.5-2.5; const y0=(y/height)*2-1;
+        let x=0,y2=0,iter=0;
+        while(x*x+y2*y2<=4 && iter<maxIter){ const xt=x*x-y2*y2+x0; y2=2*x*y2+y0; x=xt; iter++; }
+        const idx=(py*width+px)*4;
+        const c=iter===maxIter?0:(iter/maxIter)*255;
+        buf[idx]=c; buf[idx+1]=c*0.4; buf[idx+2]=c*0.8; buf[idx+3]=255;
+      }
+    }
+    return { imageData:Array.from(buf), yStart, yEnd };
+  },
+  merge(results,params){
+    const canvas=document.createElement('canvas'); canvas.width=params.width; canvas.height=params.height;
+    const ctx=canvas.getContext('2d');
+    results.sort((a,b)=>a.yStart-b.yStart);
+    for(const r of results){
+      const h=r.yEnd-r.yStart;
+      const img=ctx.createImageData(params.width,h);
+      img.data.set(new Uint8ClampedArray(r.imageData)); ctx.putImageData(img,0,r.yStart);
+    }
+    return canvas;
+  }
+});
+
+// Primes
+TaskRegistry.register({
+  id:'primes', name:'Prime Numbers', ui:['start','end','chunks'],
+  split(p){
+    const range=p.end-p.start, chunk=Math.ceil(range/p.chunks), tasks=[];
+    for(let i=0;i<p.chunks;i++){
+      const s=p.start+i*chunk, e=Math.min(s+chunk,p.end);
+      tasks.push({id:`p_${i}`,start:s,end:e});
+    }
+    return tasks;
+  },
+  compute(t){
+    const out=[];
+    for(let n=t.start;n<=t.end;n++){
+      if(n<2) continue;
+      let prime=true; const lim=Math.floor(Math.sqrt(n));
+      for(let i=2;i<=lim;i++){ if(n%i===0){ prime=false;break;} }
+      if(prime) out.push(n);
+    }
+    return {primes:out,count:out.length};
+  },
+  merge(results){
+    const all=[]; for(const r of results) all.push(...r.primes);
+    all.sort((a,b)=>a-b);
+    const div=document.createElement('div');
+    div.innerHTML=`<p>Totale primi: <b>${all.length}</b></p><p>Primi 64: ${all.slice(0,64).join(', ')}</p>`;
+    return div;
+  }
+});
+
+// Matrix
+TaskRegistry.register({
+  id:'matrix', name:'Matrix Multiply', ui:['size','density','chunks'],
+  split(p){
+    const rowsPer=Math.ceil(p.size/p.chunks);
+    const A=[],B=[];
+    for(let i=0;i<p.size;i++){
+      A[i]=[], B[i]=[];
+      for(let j=0;j<p.size;j++){
+        A[i][j]=Math.random()<p.density?Math.random():0;
+        B[i][j]=Math.random()<p.density?Math.random():0;
+      }
+    }
+    const tasks=[];
+    for(let i=0;i<p.chunks;i++){
+      const r0=i*rowsPer, r1=Math.min(r0+rowsPer,p.size);
+      tasks.push({id:`mx_${i}`,startRow:r0,endRow:r1,size:p.size, A:A.slice(r0,r1), B});
+    }
+    return tasks;
+  },
+  compute(t){
+    const {A,B,size}=t; const out=[];
+    for(let i=0;i<A.length;i++){
+      out[i]=[];
+      for(let j=0;j<size;j++){
+        let s=0; for(let k=0;k<size;k++) s+=A[i][k]*B[k][j];
+        out[i][j]=s;
+      }
+    }
+    return {result:out,startRow:t.startRow,endRow:t.endRow};
+  },
+  merge(results,params){
+    results.sort((a,b)=>a.startRow-b.startRow);
+    const final=[]; for(const r of results) final.push(...r.result);
+    let sum=0; for(let i=0;i<final.length;i++) for(let j=0;j<final[i].length;j++) sum+=final[i][j];
+    const d=document.createElement('div');
+    d.innerHTML=`<p>Matrice ${params.size}×${params.size} moltiplicata.</p><p>Checksum: <b>${sum.toFixed(4)}</b></p>`;
+    return d;
+  }
+});
+
+/* ====== render task selector ====== */
+function renderTaskSelector(){
+  const sel=$('taskSelect'); sel.innerHTML='';
+  TaskRegistry.all().forEach(t=>{
+    const o=document.createElement('option'); o.value=t.id; o.textContent=t.name; sel.appendChild(o);
+  });
+  selectTask(sel.value||TaskRegistry.all()[0].id);
+}
+function selectTask(id){
+  currentTask=TaskRegistry.get(id);
+  // set default UI for params
+  if(id==='mandelbrot'){ $('paramA').value=1920; $('paramB').value=1080; $('paramC').value=256; }
+  if(id==='primes'){ $('paramA').value=1; $('paramB').value=100000; $('paramC').value=100; }
+  if(id==='matrix'){ $('paramA').value=512; $('paramB').value=0.1; $('paramC').value=64; }
+  $('btnExportTask').disabled=false;
+  log(`Task selezionato: ${currentTask.name}`,'ok');
+}
+
+/* ============== CONNECTIONS ============== */
+const rtcConfig={ iceServers:[
+  {urls:'stun:stun.l.google.com:19302'},
+  {urls:'stun:stun1.l.google.com:19302'}
+]};
+function connect(){
+  const url=$('serverUrl').value;
+  socket=io(url);
+  socket.on('connect',()=>{
+    $('serverStatus').textContent='connesso'; $('serverStatus').style.color='#16a34a';
+    $('btnConnect').disabled=true; $('btnDisconnect').disabled=false;
+    myPeerId=socket.id; $('myPeerId').textContent=myPeerId; log('Connesso al server','ok');
+  });
+  socket.on('disconnect',()=>{
+    $('serverStatus').textContent='disconnesso'; $('serverStatus').style.color='#ef4444';
+    $('btnConnect').disabled=false; $('btnDisconnect').disabled=true;
+    cleanupAll(); updatePeerList(); log('Disconnesso','warn');
+  });
+  socket.on('peer-list', (peers)=>{ availablePeers=peers; updatePeerList(); });
+  socket.on('peer-joined', (id)=>{ if(!availablePeers.includes(id)) availablePeers.push(id); updatePeerList(); });
+  socket.on('peer-left', (id)=>{ availablePeers=availablePeers.filter(p=>p!==id); cleanupPeer(id); updatePeerList(); });
+  socket.on('offer', async d=>handleOffer(d.offer,d.from));
+  socket.on('answer', async d=>handleAnswer(d.answer,d.from));
+  socket.on('ice-candidate', async d=>{
+    const pc=peerConnections.get(d.from); if(pc && d.candidate) await pc.addIceCandidate(new RTCIceCandidate(d.candidate));
+  });
+}
+function disconnect(){ if(socket){ socket.disconnect(); socket=null; } }
+function fullReset(){
+  disconnect(); cleanupAll(); resetUI();
+  log('Reset completo','ok');
+}
+function cleanupPeer(id){
+  if(peerConnections.has(id)){peerConnections.get(id).close(); peerConnections.delete(id);}
+  dataChannels.delete(id); peerPerformance.delete(id); peerRTT.delete(id); peerWorkload.delete(id);
+}
+function cleanupAll(){
+  Array.from(peerConnections.values()).forEach(pc=>pc.close());
+  peerConnections.clear(); dataChannels.clear(); peerPerformance.clear(); peerRTT.clear(); peerWorkload.clear();
+}
+async function createPeerConnection(target,initiator){
+  const pc=new RTCPeerConnection(rtcConfig); peerConnections.set(target,pc);
+  pc.onicecandidate=e=>{ if(e.candidate&&socket) socket.emit('ice-candidate',{candidate:e.candidate,target}); };
+  pc.onconnectionstatechange=()=>{
+    if(pc.connectionState==='connected'){ log(`P2P connesso: ${target.slice(0,8)}...`,'ok'); updatePeerList();}
+    if(['disconnected','failed','closed'].includes(pc.connectionState)){ cleanupPeer(target); updatePeerList(); }
+  };
+  if(initiator){
+    const dc=pc.createDataChannel('pawns'); setupDataChannel(dc,target);
+    const offer=await pc.createOffer(); await pc.setLocalDescription(offer);
+    socket.emit('offer',{offer:pc.localDescription,target});
+  } else {
+    pc.ondatachannel=e=>setupDataChannel(e.channel,target);
+  }
+}
+async function handleOffer(offer,from){
+  await createPeerConnection(from,false);
+  const pc=peerConnections.get(from); await pc.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer=await pc.createAnswer(); await pc.setLocalDescription(answer);
+  socket.emit('answer',{answer:pc.localDescription,target:from});
+}
+async function handleAnswer(answer,from){
+  const pc=peerConnections.get(from); if(pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+}
+function setupDataChannel(dc,peerId){
+  dc.binaryType='arraybuffer';
+  dc.onopen=()=>{ dataChannels.set(peerId,dc); updatePeerList(); $('btnRun').disabled=false; $('btnForceSteal').disabled=false; startStateBroadcast(); };
+  dc.onclose=()=>{ dataChannels.delete(peerId); updatePeerList(); };
+  dc.onmessage=e=>onPeerMessage(e,peerId);
+}
+
+/* ============== P2P Messaging ============== */
+function sendTo(peerId,msg){
+  const dc=dataChannels.get(peerId); if(dc && dc.readyState==='open'){ dc.send(JSON.stringify(msg)); return true; }
+  return false;
+}
+function broadcast(msg){
+  Array.from(dataChannels.keys()).forEach(id=>sendTo(id,msg));
+}
+function onPeerMessage(ev,peerId){
+  if(ev.data instanceof ArrayBuffer) return;
+  let d; try{ d=JSON.parse(ev.data);}catch{ return; }
+  switch(d.type){
+    case 'ping': sendTo(peerId,{type:'pong',ts:d.ts}); break;
+    case 'pong': peerRTT.set(peerId, Date.now()-d.ts); updatePeerList(); break;
+    case 'benchmark-request': handleBenchmarkRequest(d,peerId); break;
+    case 'benchmark-result': handleBenchmarkResult(d,peerId); break;
+    case 'compute-task': handleComputeTask(d,peerId); break;
+    case 'task-result': handleTaskResult(d,peerId); break;
+    case 'workload-update': peerWorkload.set(peerId,d.workload); break;
+    case 'steal-request': handleStealRequest(peerId,d); break;
+    case 'steal-response': handleStealResponse(peerId,d); break;
+    case 'help-request': handleHelpRequest(peerId); break;
+    case 'help-response': handleHelpResponse(peerId,d); break;
+  }
+}
+
+/* ============== Peer list UI ============== */
+function updatePeerList(){
+  $('peerCount').textContent=availablePeers.length;
+  $('connectedCount').textContent=dataChannels.size;
+  $('kPeers').textContent=dataChannels.size+1;
+  $('btnConnectAll').disabled=availablePeers.filter(p=>p!==myPeerId && !dataChannels.has(p)).length===0 || !socket;
+  $('btnBenchmarkAll').disabled=dataChannels.size===0;
+  $('btnClusters').disabled=dataChannels.size<2;
+
+  const box=$('peerList'); box.innerHTML='';
+  availablePeers.filter(p=>p!==myPeerId).forEach(id=>{
+    const isConn=dataChannels.has(id); const perf=peerPerformance.get(id); const rtt=peerRTT.get(id);
+    const div=document.createElement('div'); div.className='peer'+(isConn?' connected':'');
+    div.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <b class="mono">${id.slice(0,12)}…</b>
+        ${isConn?'<span class="badge" style="color:#16a34a">CONNESSO</span>':''}
+      </div>
+      ${perf?`<div class="row" style="gap:8px"><span class="badge">Speed: <b>${perf.speed.toFixed(2)}x</b></span>
+       <span class="badge">Dur: <b>${perf.duration.toFixed(0)}ms</b></span></div>`:''}
+      ${rtt?`<div class="row" style="gap:8px;margin-top:6px"><span class="badge">RTT: <b>${rtt}ms</b></span></div>`:''}
+    `;
+    box.appendChild(div);
+  });
+}
+
+/* ============== Benchmark/Clusters ============== */
+function benchmarkAll(){
+  log('Avvio auto-benchmark…');
+  dataChannels.forEach((dc,peerId)=>{
+    sendTo(peerId,{type:'benchmark-request', task:'mandelbrot', params:{width:512,height:512,maxIter:128}});
+  });
+}
+function handleBenchmarkRequest(d,peerId){
+  const task=TaskRegistry.get(d.task); const t0=performance.now();
+  task.compute({yStart:0,yEnd:256,width:512,height:512,maxIter:128});
+  const dur=performance.now()-t0;
+  sendTo(peerId,{type:'benchmark-result', duration:dur, ts:Date.now()});
+}
+function handleBenchmarkResult(d,peerId){
+  const speed=1000/d.duration;
+  peerPerformance.set(peerId,{speed,duration:d.duration});
+  updatePeerList();
+}
+function measureRTT(id){ sendTo(id,{type:'ping',ts:Date.now()}); }
+async function formClusters(){
+  log('Misuro RTT…'); for(const id of dataChannels.keys()){ measureRTT(id); await new Promise(r=>setTimeout(r,100)); }
+  setTimeout(()=>{ // solo stats
+    const vals=Array.from(peerRTT.values()); const avg=vals.length? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(0):'0';
+    log(`RTT medio: ${avg}ms`,'ok'); updatePeerList();
+  },800);
+}
+
+/* ============== PAWNS CORE ============== */
+function startStateBroadcast(){
+  if(broadcastInterval) return;
+  broadcastInterval=setInterval(()=>{
+    if(!pawnsActive) return;
+    broadcast({type:'workload-update', workload: myCurrentTasks.length, speed: mySpeed});
+  },3000);
+}
+function calcOptimalChunk(){ return Math.max(1, Math.floor(5*mySpeed)); }
+function pullFromPool(n){ return taskPool.splice(0,n); }
+
+async function findMoreWork(){
+  if(!pawnsActive) return;
+  const n=calcOptimalChunk(); const pulled=pullFromPool(n);
+  if(pulled.length>0){
+    myCurrentTasks.push(...pulled);
+    $('kQueue').textContent=taskPool.length;
+    processTasks(); return;
+  }
+  // pool vuoto → stealing
+  await attemptSteal();
+}
+
+async function processTasks(){
+  if(myCurrentTasks.length===0){ await findMoreWork(); return; }
+  const t=myCurrentTasks.shift(); const def=currentTask; const t0=performance.now();
+  const res=def.compute(t); const dur=performance.now()-t0;
+  mySpeed=1000/dur;
+  onTaskComplete(t.id,res,dur);
+  // cooperative help
+  cooperativeHelp();
+  if(myCurrentTasks.length>0) setTimeout(processTasks,8); else await findMoreWork();
+}
+
+function onTaskComplete(id,res,dur){
+  taskResults.set(id,res); completedTasksCount++; setProgress(completedTasksCount,totalTasksCount);
+  $('kDone').textContent=completedTasksCount;
+  if(completedTasksCount===totalTasksCount && taskPool.length===0 && myCurrentTasks.length===0) finalizeJob();
+}
+
+async function attemptSteal(){
+  const peers=Array.from(dataChannels.keys())
+    .map(id=>({id,work:peerWorkload.get(id)||0})).filter(p=>p.work>0).sort((a,b)=>b.work-a.work);
+  if(peers.length===0){ finalizeIfIdle(); return; }
+  const target=peers[0];
+  sendTo(target.id,{type:'steal-request', requesterId:myPeerId, mySpeed});
+}
+
+function handleStealRequest(fromId, msg){
+  if(myCurrentTasks.length<2){ sendTo(fromId,{type:'steal-response',accepted:false,reason:'insufficient'}); return; }
+  const theirSpeed=msg.mySpeed||1, ratio=theirSpeed/(mySpeed+theirSpeed);
+  const give=Math.max(1, Math.floor(myCurrentTasks.length*ratio));
+  const tasks=myCurrentTasks.splice(0,give);
+  sendTo(fromId,{type:'steal-response',accepted:true,tasks});
+  workStealCount+=tasks.length; $('kSteals').textContent=workStealCount;
+  log(`Dato ${tasks.length} task a ${fromId.slice(0,8)}…`,'warn');
+}
+function handleStealResponse(peerId, msg){
+  if(!msg.accepted){ setTimeout(attemptSteal,500); return; }
+  myCurrentTasks.push(...msg.tasks); processTasks();
+  workStealCount+=msg.tasks.length; $('kSteals').textContent=workStealCount;
+  log(`Rubati ${msg.tasks.length} task da ${peerId.slice(0,8)}…`,'ok');
+}
+
+/* Cooperative help */
+function cooperativeHelp(){
+  if(!pawnsActive) return;
+  const loads=Array.from(peerWorkload.entries()).filter(([id,_])=>dataChannels.has(id));
+  if(loads.length===0) return;
+  const slowest=loads.sort((a,b)=>b[1]-a[1])[0];
+  if(myCurrentTasks.length===0 && slowest && slowest[1]>2){
+    sendTo(slowest[0],{type:'help-request', from:myPeerId});
+  }
+}
+function handleHelpRequest(peerId){
+  if(myCurrentTasks.length<2) return;
+  const give=Math.floor(myCurrentTasks.length/2);
+  const tasks=myCurrentTasks.splice(0,give);
+  sendTo(peerId,{type:'help-response',tasks});
+  helpCount+=tasks.length; $('kHelps').textContent=helpCount;
+  log(`Help→ inviati ${give} task a ${peerId.slice(0,8)}`,'ok');
+}
+function handleHelpResponse(peerId,msg){
+  if(!msg.tasks?.length) return;
+  myCurrentTasks.push(...msg.tasks); processTasks();
+  helpCount+=msg.tasks.length; $('kHelps').textContent=helpCount;
+  log(`Help← ricevuti ${msg.tasks.length} da ${peerId.slice(0,8)}`,'ok');
+}
+
+/* Force Work-Steal (manuale) */
+function forceWorkSteal(){
+  const peers=Array.from(dataChannels.keys()).map(id=>({id,work:peerWorkload.get(id)||0})).sort((a,b)=>b.work-a.work);
+  if(peers.length===0){ log('Nessun peer da redistribuire','err'); return; }
+  const donor=peers[0];
+  const idle=peers.filter(p=>p.id!==donor.id && p.work===0).map(p=>p.id);
+  if(idle.length===0){ log('Nessun peer libero','warn'); return; }
+  // Chiedi al donor di cedere una quota ai liberi
+  sendTo(donor.id,{type:'steal-request', requesterId:myPeerId, mySpeed:10}); // peso elevato → concede quota
+  log(`Force Work-Steal avviato da ${donor.id.slice(0,8)}…`,'warn');
+}
+
+/* ============== JOB orchestration ============== */
+function collectParams(){
+  if(currentTask.id==='mandelbrot'){ return {
+    width:parseInt($('paramA').value), height:parseInt($('paramB').value), maxIter:parseInt($('paramC').value)
+  }; }
+  if(currentTask.id==='primes'){ return {
+    start:parseInt($('paramA').value), end:parseInt($('paramB').value), chunks:parseInt($('paramC').value)
+  }; }
+  if(currentTask.id==='matrix'){ return {
+    size:parseInt($('paramA').value), density:parseFloat($('paramB').value), chunks:parseInt($('paramC').value)
+  }; }
+  return {};
+}
+function runJob(){
+  if(!currentTask){ log('Seleziona un task','err'); return; }
+  if(dataChannels.size===0){ log('Nessun peer connesso','err'); return; }
+
+  // reset
+  taskPool=[]; myCurrentTasks=[]; taskResults.clear();
+  completedTasksCount=0; workStealCount=0; helpCount=0; pawnsActive=true;
+  $('kSteals').textContent='0'; $('kHelps').textContent='0'; $('kDone').textContent='0';
+  jobStartTime=performance.now();
+
+  // crea pool
+  const params=collectParams();
+  const nPeers=Math.max(1, dataChannels.size+1);
+  const overs=Math.max(1, parseInt($('oversub').value)||5);
+  const tasks=currentTask.split(params, nPeers*overs);
+  taskPool=tasks; totalTasksCount=tasks.length; $('kChunks').textContent=tasks.length;
+
+  // UI
+  $('jobPanel').style.display='block'; $('resultPanel').style.display='none';
+  setProgress(0,totalTasksCount); $('kQueue').textContent=taskPool.length; $('kState').textContent='Running';
+
+  // avvio
+  findMoreWork();
+  broadcast({type:'pawns-start', poolSize:taskPool.length});
+  log(`Job "${currentTask.name}" avviato con ${tasks.length} chunk`,'ok');
+}
+function finalizeIfIdle(){
+  if(taskPool.length===0 && myCurrentTasks.length===0 && completedTasksCount===totalTasksCount) finalizeJob();
+}
+function finalizeJob(){
+  if(!pawnsActive) return; pawnsActive=false;
+  const total=(performance.now()-jobStartTime)/1000;
+  $('kTime').textContent=total.toFixed(1)+'s';
+  $('kState').textContent='Done';
+  log('Job completato • merge in corso…','ok');
+
+  const res=Array.from(taskResults.values());
+  const params=collectParams();
+  const merged=currentTask.merge(res,params);
+  $('resultContainer').innerHTML='';
+  if(merged instanceof HTMLElement) $('resultContainer').appendChild(merged);
+  else if(typeof merged==='string'){ const d=document.createElement('div'); d.textContent=merged; $('resultContainer').appendChild(d); }
+  else if(merged && merged.toDataURL){ const img=document.createElement('img'); img.src=merged.toDataURL(); $('resultContainer').appendChild(img); }
+  $('resultPanel').style.display='block'; $('btnExportJSON').disabled=false;
+}
+
+/* ============== Compute proxy (remote peer) ============== */
+function handleComputeTask(d,peerId){
+  const def=currentTask; const t0=performance.now(); const res=def.compute(d.task);
+  const dur=performance.now()-t0;
+  sendTo(peerId,{type:'task-result', taskId:d.task.id, result:res, duration:dur});
+}
+function handleTaskResult(d,peerId){
+  onTaskComplete(d.taskId, d.result, d.duration);
+}
+
+/* ============== Misc / UI ============== */
+function drawTopology(){
+  const cv=$('topology'), ctx=cv.getContext('2d'); const w=cv.width,h=cv.height;
+  ctx.clearRect(0,0,w,h); ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,w,h);
+  const peers=[myPeerId,...Array.from(dataChannels.keys())].filter(Boolean);
+  const cols=8, gapX=w/(cols+1), gapY=90;
+  peers.forEach((id,i)=>{
+    const c=(i%cols)+1, r=Math.floor(i/cols)+1;
+    const x=gapX*c, y=50+gapY*(r-1);
+    const hue=(i%6)*60;
+    ctx.fillStyle=`hsl(${hue} 70% 60%)`;
+    ctx.beginPath(); ctx.arc(x,y,10,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#9aa3b2'; ctx.font='11px ui-monospace,monospace';
+    ctx.fillText(id? id.slice(0,4):'me', x-12, y+22);
+  });
+  requestAnimationFrame(drawTopology);
+}
+function resetUI(){
+  $('jobPanel').style.display='none'; $('resultPanel').style.display='none';
+  $('btnRun').disabled=dataChannels.size===0; $('btnExportTask').disabled=!currentTask;
+  $('btnForceSteal').disabled=dataChannels.size===0;
+}
+
+/* ============== Task load/save ============== */
+function exportCurrentTask(){
+  if(!currentTask) return;
+  const def={
+    id:currentTask.id, name:currentTask.name, ui:currentTask.ui,
+    splitCode:currentTask.split.toString(),
+    computeCode:currentTask.compute.toString(),
+    mergeCode:currentTask.merge.toString()
+  };
+  const blob=new Blob([JSON.stringify(def,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`task_${currentTask.id}.json`; a.click();
+  URL.revokeObjectURL(a.href);
+  log(`Task "${currentTask.name}" esportato`,'ok');
+}
+function loadTaskFromFile(){
+  $('fileInput').click();
+}
+function onTaskFile(e){
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=ev=>{
+    try{
+      const t=JSON.parse(ev.target.result);
+      const task={
+        id:t.id, name:t.name, ui:t.ui||[],
+        split:eval(`(${t.splitCode})`),
+        compute:eval(`(${t.computeCode})`),
+        merge:eval(`(${t.mergeCode})`)
+      };
+      if(TaskRegistry.get(task.id)){ let i=1; while(TaskRegistry.get(task.id+'_'+i)) i++; task.id=task.id+'_'+i; }
+      TaskRegistry.register(task); renderTaskSelector();
+      $('taskSelect').value=task.id; selectTask(task.id);
+      log(`Task "${task.name}" caricato`,'ok');
+    }catch(err){ log('Errore caricamento task: '+err.message,'err'); }
+  };
+  rd.readAsText(f); e.target.value='';
+}
+
+/* ============== Events ============== */
+$('btnConnect').onclick=connect;
+$('btnDisconnect').onclick=disconnect;
+$('btnFullReset').onclick=fullReset;
+$('btnConnectAll').onclick=async ()=>{
+  const to=availablePeers.filter(p=>p!==myPeerId && !dataChannels.has(p));
+  for(const id of to){ await createPeerConnection(id,true); await new Promise(r=>setTimeout(r,200)); }
+};
+$('btnBenchmarkAll').onclick=benchmarkAll;
+$('btnClusters').onclick=formClusters;
+$('btnRun').onclick=runJob;
+$('btnForceSteal').onclick=forceWorkSteal;
+$('btnExportJSON').onclick=()=>{
+  const out={
+    timestamp:new Date().toISOString(),
+    task: currentTask?.name, taskId: currentTask?.id,
+    peers: dataChannels.size+1, steals: workStealCount, helps: helpCount,
+    chunks: totalTasksCount, completed: completedTasksCount
+  };
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`macn_results_${Date.now()}.json`; a.click();
+  URL.revokeObjectURL(a.href);
+};
+$('btnClearResult').onclick=()=>{ $('resultPanel').style.display='none'; };
+$('btnClearLog').onclick=()=>{ $('log').innerHTML=''; };
+$('taskSelect').onchange=e=>selectTask(e.target.value);
+$('btnExportTask').onclick=exportCurrentTask;
+$('btnLoadTask').onclick=loadTaskFromFile;
+$('fileInput').addEventListener('change', onTaskFile);
+
+/* ============== Init ============== */
+(function init(){
+  renderTaskSelector(); resetUI(); drawTopology();
+  // URL dinamico se servito dietro tunnel
+  try{
+    const proto=location.protocol==='https:'?'wss:':'ws:';
+    const dyn=proto+'//'+location.host; if(location.host) $('serverUrl').value=dyn;
+  }catch{}
+})();
+</script>
+</body>
+</html>
