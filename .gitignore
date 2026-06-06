@@ -5,3 +5,16 @@ __pycache__/
 .env
 .DS_Store
 Thumbs.db
+
+# Node
+node_modules/
+
+# Secrets / local tunnels
+*.env
+*token*.txt
+tunnel-temp.txt
+ngrok.exe
+
+# Backups and local copies
+BACKUP/
+venv/
