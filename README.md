@@ -1,103 +1,108 @@
 <p align="center">
   <img src="MACN_poster.png" width="100%">
 </p>
+
 # MACN - Mesh Autonomous Compute Network
 
-MACN è un progetto sperimentale per creare una rete distribuita di calcolo tra dispositivi comuni.
+MACN is an experimental project exploring distributed computing across everyday devices.
 
-L'obiettivo è permettere a più dispositivi — PC, smartphone e tablet — di collaborare per eseguire compiti pesanti come AI, rendering, encoding video, simulazioni ed elaborazioni scientifiche.
+Its goal is to enable PCs, smartphones, and tablets to collaborate in executing computationally intensive tasks such as AI workloads, rendering, video encoding, scientific simulations, and large-scale data processing.
 
-## Idea centrale
+## Core Idea
 
-Chi richiede potenza per un determinato compito diventa il coordinatore di quel job.
+The device requesting computing power becomes the **Job Coordinator**.
 
-Gli altri dispositivi partecipano come worker volontari.
+Other available devices join the network as **Volunteer Workers**.
 
-MACN non nasce come data center centralizzato, ma come rete distribuita, dinamica e potenzialmente peer-to-peer.
+MACN is not designed as a centralized data center, but as a dynamic, distributed, and potentially peer-to-peer computing network.
 
-## Primo esperimento
+## First Experiment
 
-In una prima prova sono stati collegati contemporaneamente 7 dispositivi tramite WebRTC:
+A first real-world experiment successfully connected **7 devices** simultaneously using WebRTC:
 
-- 3 PC
-- 3 smartphone
-- 1 tablet
+- 3 PCs
+- 3 Smartphones
+- 1 Tablet
 
-L'obiettivo era verificare la comunicazione tra dispositivi diversi all'interno di una rete distribuita.
+The objective was to validate communication between heterogeneous devices within a distributed network.
 
-## Possibili applicazioni
+## Potential Applications
 
-- addestramento o fine-tuning di modelli AI
-- rendering video distribuito
-- encoding video
-- simulazioni
-- elaborazioni scientifiche
-- condivisione volontaria di potenza computazionale
+- AI training and fine-tuning
+- Distributed rendering
+- Video encoding
+- Scientific simulations
+- Scientific computing
+- Volunteer distributed computing
 
-## Visione
+## Vision
 
-MACN vuole esplorare un modello simile allo spirito di SETI@home, ma più flessibile e adatto ai bisogni moderni.
+MACN explores a distributed computing model inspired by the spirit of SETI@home, while adapting it to modern computing needs.
 
-L'idea è usare hardware già esistente invece di installare nuovi mini data center dedicati.
+The idea is to leverage existing hardware instead of continuously building new dedicated data centers.
 
-## Stato del progetto
+## Project Status
 
-Il progetto è in fase iniziale/sperimentale.
+MACN is currently in the experimental research phase.
 
-Questo repository nasce per documentare l'idea, gli esperimenti e le future implementazioni.
+This repository documents the project's vision, experiments, prototypes, and future development.
 
-## Milestone 0 - Seven Device Test
+## Milestone 0 – Seven Device Test
 
-MACN ha già avuto una prima prova sperimentale reale.
+MACN has already completed its first successful real-world prototype.
 
-Sono stati collegati contemporaneamente 7 dispositivi tramite WebRTC:
+Seven devices were connected simultaneously through WebRTC:
 
-- 3 PC
-- 3 smartphone
-- 1 tablet
+- 3 PCs
+- 3 Smartphones
+- 1 Tablet
 
-Questa prova ha dimostrato la possibilità di creare una comunicazione distribuita tra dispositivi eterogenei.
+This experiment demonstrated the feasibility of establishing a distributed communication network across heterogeneous devices.
 
-## Roadmap iniziale
+## Initial Roadmap
 
-### v0.1 - Network test
-- Comunicazione WebRTC tra più dispositivi
-- Identificazione dei nodi
-- Stato online/offline
-- Test con dispositivi diversi
+### v0.1 – Network Test
 
-### v0.2 - Distributed task test
-- Invio di piccoli task computazionali
-- Esecuzione locale sui worker
-- Restituzione del risultato al coordinatore
-- Misurazione dei tempi
+- Multi-device WebRTC communication
+- Node discovery and identification
+- Online/offline status management
+- Cross-device compatibility testing
 
-### v0.3 - Benchmark distribuito
-- Divisione del lavoro tra nodi
-- Calcolo del contributo di ogni dispositivo
-- Gestione dei nodi lenti o disconnessi
+### v0.2 – Distributed Task Execution
 
-### v0.4 - AI / rendering experiments
-- Test con micro-task AI
-- Test con rendering o encoding distribuito
-- Studio di modelli di contributo volontario
+- Distribution of small computational tasks
+- Local execution by volunteer workers
+- Result aggregation by the coordinator
+- Performance measurement
+
+### v0.3 – Distributed Benchmarking
+
+- Workload partitioning across devices
+- Contribution measurement for each node
+- Handling slow or disconnected workers
+
+### v0.4 – AI & Rendering Experiments
+
+- AI micro-task execution
+- Distributed rendering and video encoding
+- Volunteer computing model evaluation
 
 ## Historic Prototype v11
 
-Durante la fase sperimentale di ottobre è stata sviluppata una versione avanzata del prototipo MACN:
+During the early experimental phase, an advanced prototype of MACN was developed:
 
-**MACN v11.0 - Asymmetric Distribution for Active Work-Stealing**
+**MACN v11.0 – Asymmetric Distribution for Active Work-Stealing**
 
-Questa versione includeva già:
+This prototype already included:
 
-- comunicazione WebRTC tra peer
-- distribuzione di task computazionali
-- benchmark Mandelbrot
-- stato dei peer in tempo reale
-- help-offer / help-accept / help-decline
-- cooperative work-stealing
-- distribuzione asimmetrica del carico
+- Peer-to-peer WebRTC communication
+- Distributed computational task execution
+- Mandelbrot benchmark
+- Real-time peer status monitoring
+- Help-offer / Help-accept / Help-decline protocol
+- Cooperative work-stealing
+- Asymmetric workload distribution
 
-La versione storica è conservata in:
+The historical prototype is preserved in:
 
 `historic-prototypes/v11/`
