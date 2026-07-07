@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="MACN_poster.png" width="100">
+  <img src="MACN_poster.png" width="100%">
 </p>
 # MACN - Mesh Autonomous Compute Network
 
