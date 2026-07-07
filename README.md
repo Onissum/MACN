@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="MACN_poster.png" width="100">
+</p>
 # MACN - Mesh Autonomous Compute Network
 
 MACN è un progetto sperimentale per creare una rete distribuita di calcolo tra dispositivi comuni.
