@@ -64,6 +64,10 @@ This milestone includes:
 
 The experiment is preserved as a separate continuation in [`macn-computertc-v0.5.2/`](macn-computertc-v0.5.2/).
 
+### Try the browser demo
+
+Open the [ComputeRTC live demo](https://onissum.github.io/MACN/macn-computertc-v0.5.2/demo.html) and press **Avvia demo** to watch two real WebRTC peers distribute 40 Mandelbrot tasks, exchange Help/work-stealing messages, and aggregate all results at the coordinator. No signaling server is required for this local two-peer demonstration. The standalone source is available in [`demo.html`](macn-computertc-v0.5.2/demo.html).
+
 ## Milestone 0 – Seven Device Test
 
 MACN has already completed its first successful real-world prototype.
