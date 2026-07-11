@@ -47,6 +47,27 @@ MACN is currently in the experimental research phase.
 
 This repository documents the project's vision, experiments, prototypes, and future development.
 
+## Experimental Milestone – ComputeRTC v0.5.2
+
+**ComputeRTC v0.5.2** is an experimental compute-oriented transport layer built on top of standard WebRTC DataChannels. It does not replace WebRTC: it adds transport semantics tailored to distributed computation while keeping signaling and peer-to-peer connectivity on WebRTC.
+
+The validated two-peer experiment completed a distributed Mandelbrot workload and centralized **40/40 unique task results** at the Job Coordinator. The run produced the expected `COMPLETED` and `JOB COMPLETE` messages.
+
+This milestone includes:
+
+- separate `CONTROL` and `DATA` DataChannels;
+- four logical lanes for heartbeat, critical control, checkpoints, and task data;
+- prioritized control traffic, bounded queues, and backpressure;
+- cooperative work-stealing and duplicate-safe Help requests;
+- workload updates approximately 30 ms after a change;
+- centralized task-result collection and final `JOB_COMPLETE` broadcast.
+
+The experiment is preserved as a separate continuation in [`macn-computertc-v0.5.2/`](macn-computertc-v0.5.2/).
+
+### Replay the recorded browser demo
+
+Open the [ComputeRTC recorded-session replay](https://onissum.github.io/MACN/macn-computertc-v0.5.2/demo.html) to reconstruct the real two-peer test from July 10, 2026: 40 tasks, initial 28/12 allocation, two work-stealing operations transferring four tasks to the Coordinator, final 32/8 processing split, centralized 40/40 collection, and the recorded 9.15-second completion time. The animation is accelerated; its final values match the recorded session. The standalone source is available in [`demo.html`](macn-computertc-v0.5.2/demo.html).
+
 ## Milestone 0 – Seven Device Test
 
 MACN has already completed its first successful real-world prototype.
