@@ -64,9 +64,9 @@ This milestone includes:
 
 The experiment is preserved as a separate continuation in [`macn-computertc-v0.5.2/`](macn-computertc-v0.5.2/).
 
-### Try the browser demo
+### Replay the recorded browser demo
 
-Open the [ComputeRTC live demo](https://onissum.github.io/MACN/macn-computertc-v0.5.2/demo.html) and press **Avvia demo** to watch two real WebRTC peers distribute 40 Mandelbrot tasks, exchange Help/work-stealing messages, and aggregate all results at the coordinator. No signaling server is required for this local two-peer demonstration. The standalone source is available in [`demo.html`](macn-computertc-v0.5.2/demo.html).
+Open the [ComputeRTC recorded-session replay](https://onissum.github.io/MACN/macn-computertc-v0.5.2/demo.html) to reconstruct the real two-peer test from July 10, 2026: 40 tasks, initial 28/12 allocation, two work-stealing operations transferring four tasks to the Coordinator, final 32/8 processing split, centralized 40/40 collection, and the recorded 9.15-second completion time. The animation is accelerated; its final values match the recorded session. The standalone source is available in [`demo.html`](macn-computertc-v0.5.2/demo.html).
 
 ## Milestone 0 – Seven Device Test
 

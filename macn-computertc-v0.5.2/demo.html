@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Demo interattiva di MACN ComputeRTC v0.5.2 con due peer WebRTC nello stesso browser.">
-  <title>MACN ComputeRTC v0.5.2 — Live Demo</title>
+  <meta name="description" content="Ricostruzione interattiva del test reale MACN ComputeRTC v0.5.2 del 10 luglio 2026.">
+  <title>MACN ComputeRTC v0.5.2 — Test reale ricostruito</title>
   <style>
     :root {
       color-scheme: dark;
@@ -35,26 +35,13 @@
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    button, input { font: inherit; }
-
-    button:focus-visible, input:focus-visible {
-      outline: 3px solid rgba(84, 226, 242, 0.55);
-      outline-offset: 3px;
-    }
+    button { font: inherit; }
+    button:focus-visible { outline: 3px solid rgba(84, 226, 242, 0.55); outline-offset: 3px; }
 
     .shell {
       width: min(1180px, calc(100% - 32px));
       margin: 0 auto;
       padding: 42px 0 54px;
-    }
-
-    .eyebrow {
-      margin: 0 0 10px;
-      color: var(--cyan);
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 0.78rem;
-      letter-spacing: 0.13em;
-      text-transform: uppercase;
     }
 
     .hero {
@@ -65,6 +52,16 @@
       margin-bottom: 28px;
     }
 
+    .eyebrow, .metric-label, .peer-label, .mini-label {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow { margin: 0 0 10px; color: var(--cyan); letter-spacing: 0.13em; }
+
     h1 {
       max-width: 820px;
       margin: 0;
@@ -74,7 +71,7 @@
     }
 
     .subtitle {
-      max-width: 760px;
+      max-width: 780px;
       margin: 18px 0 0;
       color: var(--muted);
       font-size: clamp(1rem, 2vw, 1.15rem);
@@ -82,7 +79,7 @@
     }
 
     .start-button {
-      min-width: 170px;
+      min-width: 180px;
       border: 0;
       border-radius: 12px;
       padding: 14px 20px;
@@ -93,11 +90,7 @@
       box-shadow: 0 14px 40px rgba(84, 226, 242, 0.18);
     }
 
-    .start-button:disabled {
-      cursor: wait;
-      filter: saturate(0.4);
-      opacity: 0.65;
-    }
+    .start-button:disabled { cursor: wait; filter: saturate(0.4); opacity: 0.65; }
 
     .summary {
       display: grid;
@@ -112,19 +105,7 @@
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     }
 
-    .metric {
-      min-height: 94px;
-      border-radius: 14px;
-      padding: 16px 18px;
-    }
-
-    .metric-label, .peer-label, .mini-label {
-      color: var(--muted);
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
+    .metric { min-height: 94px; border-radius: 14px; padding: 16px 18px; }
 
     .metric-value {
       display: block;
@@ -147,23 +128,22 @@
       color: var(--muted);
     }
 
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      flex: 0 0 auto;
-      border-radius: 50%;
-      background: var(--amber);
-      box-shadow: 0 0 16px currentColor;
-    }
-
-    .status-strip.success {
-      border-color: rgba(85, 230, 138, 0.5);
-      color: var(--green);
-    }
-
+    .status-dot { width: 10px; height: 10px; flex: 0 0 auto; border-radius: 50%; background: var(--amber); box-shadow: 0 0 16px currentColor; }
+    .status-strip.success { border-color: rgba(85, 230, 138, 0.5); color: var(--green); }
     .status-strip.success .status-dot { background: var(--green); }
     .status-strip.error { color: var(--danger); }
     .status-strip.error .status-dot { background: var(--danger); }
+
+    .record-note {
+      margin: 0 0 14px;
+      border-left: 3px solid var(--amber);
+      border-radius: 0 10px 10px 0;
+      padding: 11px 14px;
+      background: rgba(255, 200, 87, 0.08);
+      color: #f8ddb0;
+      font-size: 0.86rem;
+      line-height: 1.55;
+    }
 
     .network {
       display: grid;
@@ -173,36 +153,11 @@
       margin-bottom: 14px;
     }
 
-    .peer {
-      position: relative;
-      overflow: hidden;
-      border-radius: 18px;
-      padding: 20px;
-    }
-
-    .peer::before {
-      content: "";
-      position: absolute;
-      inset: 0 auto auto 0;
-      width: 100%;
-      height: 3px;
-      background: var(--blue);
-    }
-
+    .peer { position: relative; overflow: hidden; border-radius: 18px; padding: 20px; }
+    .peer::before { content: ""; position: absolute; inset: 0 auto auto 0; width: 100%; height: 3px; background: var(--blue); }
     .peer.worker::before { background: var(--green); }
-
-    .peer-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: start;
-      margin-bottom: 24px;
-    }
-
-    .peer h2 {
-      margin: 5px 0 0;
-      font-size: 1.35rem;
-    }
+    .peer-head { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 24px; }
+    .peer h2 { margin: 5px 0 0; font-size: 1.35rem; }
 
     .peer-state {
       border: 1px solid var(--border);
@@ -211,79 +166,23 @@
       color: var(--muted);
       font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
       font-size: 0.7rem;
+      white-space: nowrap;
     }
 
     .peer-state.working { border-color: rgba(70, 165, 255, 0.6); color: var(--blue); }
     .peer-state.helping { border-color: rgba(255, 200, 87, 0.6); color: var(--amber); }
     .peer-state.finished { border-color: rgba(85, 230, 138, 0.6); color: var(--green); }
-
-    .peer-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
-    .peer-number {
-      display: block;
-      margin-top: 3px;
-      font-size: 1.45rem;
-      font-weight: 750;
-    }
-
-    .progress-track {
-      height: 9px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: #07101c;
-      box-shadow: inset 0 0 0 1px rgba(145, 164, 190, 0.16);
-    }
-
-    .progress-fill {
-      width: 0;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, var(--blue), var(--cyan));
-      transition: width 180ms ease;
-    }
-
+    .peer-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+    .peer-number { display: block; margin-top: 3px; font-size: 1.35rem; font-weight: 750; }
+    .progress-track { height: 9px; overflow: hidden; border-radius: 999px; background: #07101c; box-shadow: inset 0 0 0 1px rgba(145, 164, 190, 0.16); }
+    .progress-fill { width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--blue), var(--cyan)); transition: width 180ms ease; }
     .worker .progress-fill { background: linear-gradient(90deg, var(--green), var(--cyan)); }
 
-    .lanes {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 20px;
-      min-height: 270px;
-      padding: 18px 6px;
-    }
-
-    .lane-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 8px;
-      color: var(--muted);
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 0.72rem;
-    }
-
-    .lane-name {
-      display: flex;
-      gap: 7px;
-      align-items: center;
-      color: var(--text);
-      font-weight: 700;
-    }
-
-    .lane-swatch {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--pink);
-    }
-
+    .lanes { display: flex; flex-direction: column; justify-content: center; gap: 20px; min-height: 270px; padding: 18px 6px; }
+    .lane-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.72rem; }
+    .lane-name { display: flex; gap: 7px; align-items: center; color: var(--text); font-weight: 700; }
+    .lane-status.active { color: var(--green); }
+    .lane-swatch { width: 8px; height: 8px; border-radius: 50%; background: var(--pink); }
     .data-lane .lane-swatch { background: var(--cyan); }
 
     .lane-track {
@@ -294,22 +193,8 @@
       background: linear-gradient(90deg, rgba(255, 111, 174, 0.03), rgba(255, 111, 174, 0.12), rgba(255, 111, 174, 0.03));
     }
 
-    .data-lane .lane-track {
-      border-color: rgba(84, 226, 242, 0.44);
-      background: linear-gradient(90deg, rgba(84, 226, 242, 0.03), rgba(84, 226, 242, 0.12), rgba(84, 226, 242, 0.03));
-    }
-
-    .lane-track::before, .lane-track::after {
-      content: "";
-      position: absolute;
-      top: 13px;
-      width: 7px;
-      height: 7px;
-      border-top: 2px solid currentColor;
-      border-right: 2px solid currentColor;
-      color: var(--muted);
-    }
-
+    .data-lane .lane-track { border-color: rgba(84, 226, 242, 0.44); background: linear-gradient(90deg, rgba(84, 226, 242, 0.03), rgba(84, 226, 242, 0.12), rgba(84, 226, 242, 0.03)); }
+    .lane-track::before, .lane-track::after { content: ""; position: absolute; top: 13px; width: 7px; height: 7px; border-top: 2px solid currentColor; border-right: 2px solid currentColor; color: var(--muted); }
     .lane-track::before { left: 3px; transform: rotate(-135deg); }
     .lane-track::after { right: 3px; transform: rotate(45deg); }
 
@@ -329,117 +214,33 @@
       font-weight: 800;
       text-overflow: ellipsis;
       white-space: nowrap;
-      animation: packet-flight 820ms ease-in-out forwards;
+      animation: packet-flight 760ms ease-in-out forwards;
     }
 
     .data-lane .packet { background: var(--cyan); color: #02161a; }
+    @keyframes packet-flight { from { left: var(--start); transform: scale(0.84); opacity: 0; } 15%, 85% { opacity: 1; } to { left: var(--end); transform: scale(1); opacity: 0; } }
 
-    @keyframes packet-flight {
-      from { left: var(--start); transform: scale(0.84); opacity: 0; }
-      15% { opacity: 1; }
-      85% { opacity: 1; }
-      to { left: var(--end); transform: scale(1); opacity: 0; }
-    }
-
-    .lower {
-      display: grid;
-      grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
-      gap: 14px;
-    }
-
-    .result-panel, .activity {
-      min-width: 0;
-      border-radius: 18px;
-      padding: 18px;
-    }
-
-    .panel-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-      margin-bottom: 14px;
-    }
-
+    .lower { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr); gap: 14px; }
+    .result-panel, .activity { min-width: 0; border-radius: 18px; padding: 18px; }
+    .panel-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
     .panel-head h2 { margin: 0; font-size: 1rem; }
-
-    .legend {
-      display: flex;
-      gap: 12px;
-      color: var(--muted);
-      font-size: 0.76rem;
-    }
-
+    .legend { display: flex; gap: 12px; color: var(--muted); font-size: 0.76rem; }
     .legend span { display: flex; gap: 5px; align-items: center; }
-
-    .legend i {
-      width: 8px;
-      height: 8px;
-      border-radius: 2px;
-      background: var(--blue);
-    }
-
+    .legend i { width: 8px; height: 8px; border-radius: 2px; background: var(--blue); }
     .legend .worker-key i { background: var(--green); }
 
-    .result-grid {
-      display: grid;
-      grid-template-columns: repeat(10, minmax(18px, 1fr));
-      gap: 6px;
-    }
+    .result-grid { display: grid; grid-template-columns: repeat(10, minmax(18px, 1fr)); gap: 6px; }
+    .result-cell { display: grid; min-height: 30px; place-items: center; border: 1px solid var(--border); border-radius: 6px; background: #08111e; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.66rem; transition: transform 160ms ease, background 160ms ease, color 160ms ease; }
+    .result-cell.done { transform: translateY(-2px); color: var(--text); }
+    .result-cell.worker-result { border-color: rgba(85, 230, 138, 0.7); background: rgba(85, 230, 138, 0.34); }
+    .result-cell.coordinator-result { border-color: rgba(70, 165, 255, 0.7); background: rgba(70, 165, 255, 0.34); }
 
-    .result-cell {
-      display: grid;
-      min-height: 30px;
-      place-items: center;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: #08111e;
-      color: var(--muted);
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 0.66rem;
-      transition: transform 160ms ease, background 160ms ease, color 160ms ease;
-    }
-
-    .result-cell.done {
-      transform: translateY(-2px);
-      background: color-mix(in srgb, var(--task-color) 60%, #07101c);
-      color: var(--text);
-    }
-
-    .result-cell.worker-result { border-color: rgba(85, 230, 138, 0.55); }
-    .result-cell.coordinator-result { border-color: rgba(70, 165, 255, 0.55); }
-
-    .log {
-      height: 260px;
-      overflow: auto;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      scrollbar-color: var(--border) transparent;
-    }
-
-    .log li {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 9px;
-      border-bottom: 1px solid rgba(36, 52, 77, 0.65);
-      padding: 7px 0;
-      color: var(--muted);
-      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-      font-size: 0.7rem;
-      line-height: 1.45;
-    }
-
+    .log { height: 260px; overflow: auto; margin: 0; padding: 0; list-style: none; scrollbar-color: var(--border) transparent; }
+    .log li { display: grid; grid-template-columns: auto 1fr; gap: 9px; border-bottom: 1px solid rgba(36, 52, 77, 0.65); padding: 7px 0; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.7rem; line-height: 1.45; }
     .log time { color: var(--cyan); }
     .log li.important { color: var(--green); }
     .log li.help { color: var(--amber); }
-
-    .fine-print {
-      margin: 18px 0 0;
-      color: var(--muted);
-      font-size: 0.8rem;
-      line-height: 1.55;
-    }
+    .fine-print { margin: 18px 0 0; color: var(--muted); font-size: 0.8rem; line-height: 1.55; }
 
     @media (max-width: 820px) {
       .hero { grid-template-columns: 1fr; align-items: start; }
@@ -458,11 +259,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        scroll-behavior: auto !important;
-        animation-duration: 1ms !important;
-        transition-duration: 1ms !important;
-      }
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 1ms !important; transition-duration: 1ms !important; }
     }
   </style>
 </head>
@@ -470,95 +267,69 @@
   <main class="shell">
     <header class="hero">
       <div>
-        <p class="eyebrow">MACN / ComputeRTC v0.5.2 / Browser Lab</p>
+        <p class="eyebrow">MACN / ComputeRTC v0.5.2 / Test reale</p>
         <h1>Quaranta task.<br>Due peer. Un solo job.</h1>
-        <p class="subtitle">Una connessione WebRTC reale collega Coordinator e Worker nella stessa pagina. Osserva CONTROL e DATA viaggiare separati, il carico cambiare, il Worker offrirsi di aiutare e acquisire lavoro fino alla raccolta centralizzata 40/40.</p>
+        <p class="subtitle">Ricostruzione della sessione reale a due peer: 40 task, assegnazione iniziale 28/12, due operazioni di work-stealing e raccolta centralizzata 40/40 attraverso CONTROL e DATA separati.</p>
       </div>
-      <button id="startDemo" class="start-button" type="button">Avvia demo</button>
+      <button id="startDemo" class="start-button" type="button">Avvia ricostruzione</button>
     </header>
 
-    <section class="summary" aria-label="Metriche principali">
+    <section class="summary" aria-label="Risultati registrati">
       <div class="metric">
-        <span class="metric-label">Risultati raccolti</span>
+        <span class="metric-label">Risultati registrati</span>
         <strong id="resultCount" class="metric-value">0 / 40</strong>
       </div>
       <div class="metric">
-        <span class="metric-label">Task rubati</span>
-        <strong id="stolenCount" class="metric-value">0</strong>
+        <span class="metric-label">Work-stealing registrato</span>
+        <strong id="stolenCount" class="metric-value">0 / 4</strong>
       </div>
       <div class="metric">
-        <span class="metric-label">Tempo job</span>
-        <strong id="elapsedTime" class="metric-value">0.00 s</strong>
+        <span class="metric-label">Tempo totale registrato</span>
+        <strong id="recordedTime" class="metric-value">9,15 s</strong>
       </div>
     </section>
 
     <div id="statusStrip" class="status-strip" role="status" aria-live="polite">
       <span class="status-dot" aria-hidden="true"></span>
-      <span id="statusText">Pronto. Premi “Avvia demo” per creare i due peer WebRTC.</span>
+      <span id="statusText">Pronto. Premi “Avvia ricostruzione” per ripercorrere la sessione registrata.</span>
     </div>
+
+    <p class="record-note"><strong>Ricostruzione interattiva basata sul test reale ComputeRTC v0.5.2 del 10 luglio 2026.</strong> La temporizzazione dell’animazione è accelerata; i risultati finali corrispondono alla sessione registrata.</p>
 
     <section class="network" aria-label="Rete ComputeRTC a due peer">
       <article class="peer coordinator">
         <div class="peer-head">
-          <div>
-            <span class="peer-label">Peer A</span>
-            <h2>Job Coordinator</h2>
-          </div>
+          <div><span class="peer-label">Peer A</span><h2>Job Coordinator</h2></div>
           <span id="coordinatorState" class="peer-state">IDLE</span>
         </div>
         <div class="peer-stats">
-          <div>
-            <span class="mini-label">Coda</span>
-            <strong id="coordinatorQueue" class="peer-number">0</strong>
-          </div>
-          <div>
-            <span class="mini-label">Completati</span>
-            <strong id="coordinatorDone" class="peer-number">0</strong>
-          </div>
+          <div><span class="mini-label">Coda</span><strong id="coordinatorQueue" class="peer-number">0</strong></div>
+          <div><span class="mini-label">Elaborati / finali</span><strong id="coordinatorDone" class="peer-number">0 / 32</strong></div>
         </div>
-        <div class="progress-track" aria-label="Progresso Coordinator">
-          <div id="coordinatorProgress" class="progress-fill"></div>
-        </div>
+        <div class="progress-track" aria-label="Progresso Coordinator verso 32 task"><div id="coordinatorProgress" class="progress-fill"></div></div>
       </article>
 
       <div class="lanes" aria-label="Canali WebRTC ComputeRTC">
         <div class="lane control-lane">
-          <div class="lane-head">
-            <span class="lane-name"><i class="lane-swatch"></i>CONTROL</span>
-            <span id="controlFrames">0 frame</span>
-          </div>
-          <div id="controlTrack" class="lane-track" aria-label="Traffico CONTROL"></div>
+          <div class="lane-head"><span class="lane-name"><i class="lane-swatch"></i>CONTROL</span><span id="controlStatus" class="lane-status">in attesa</span></div>
+          <div id="controlTrack" class="lane-track" aria-label="Traffico CONTROL animato, non misurato"></div>
         </div>
         <div class="lane data-lane">
-          <div class="lane-head">
-            <span class="lane-name"><i class="lane-swatch"></i>DATA</span>
-            <span id="dataFrames">0 frame</span>
-          </div>
-          <div id="dataTrack" class="lane-track" aria-label="Traffico DATA"></div>
+          <div class="lane-head"><span class="lane-name"><i class="lane-swatch"></i>DATA</span><span id="dataStatus" class="lane-status">in attesa</span></div>
+          <div id="dataTrack" class="lane-track" aria-label="Traffico DATA animato, non misurato"></div>
         </div>
       </div>
 
       <article class="peer worker">
         <div class="peer-head">
-          <div>
-            <span class="peer-label">Peer B</span>
-            <h2>Volunteer Worker</h2>
-          </div>
+          <div><span class="peer-label">Peer B</span><h2>Volunteer Worker</h2></div>
           <span id="workerState" class="peer-state">IDLE</span>
         </div>
         <div class="peer-stats">
-          <div>
-            <span class="mini-label">Coda</span>
-            <strong id="workerQueue" class="peer-number">0</strong>
-          </div>
-          <div>
-            <span class="mini-label">Completati</span>
-            <strong id="workerDone" class="peer-number">0</strong>
-          </div>
+          <div><span class="mini-label">Coda</span><strong id="workerQueue" class="peer-number">0</strong></div>
+          <div><span class="mini-label">Elaborati / finali</span><strong id="workerDone" class="peer-number">0 / 8</strong></div>
         </div>
-        <div class="progress-track" aria-label="Progresso Worker">
-          <div id="workerProgress" class="progress-fill"></div>
-        </div>
+        <div class="progress-track" aria-label="Progresso Worker verso 8 task"><div id="workerProgress" class="progress-fill"></div></div>
       </article>
     </section>
 
@@ -566,24 +337,18 @@
       <div class="result-panel">
         <div class="panel-head">
           <h2>Raccolta centralizzata</h2>
-          <div class="legend" aria-label="Legenda risultati">
-            <span><i></i> Coordinator</span>
-            <span class="worker-key"><i></i> Worker</span>
-          </div>
+          <div class="legend" aria-label="Legenda risultati"><span><i></i> Coordinator: 32</span><span class="worker-key"><i></i> Worker: 8</span></div>
         </div>
-        <div id="resultGrid" class="result-grid" aria-label="Quaranta task del job"></div>
+        <div id="resultGrid" class="result-grid" aria-label="Quaranta risultati del job"></div>
       </div>
 
       <aside class="activity">
-        <div class="panel-head">
-          <h2>Protocol trace</h2>
-          <span id="duplicateBadge" class="peer-state">anti-dup 0</span>
-        </div>
+        <div class="panel-head"><h2>Protocol trace</h2><span id="helpFlightBadge" class="peer-state">Help in volo: 0 / 1</span></div>
         <ol id="eventLog" class="log" aria-live="polite"></ol>
       </aside>
     </section>
 
-    <p class="fine-print">Questa è una demo locale: i due peer vivono nella stessa pagina, ma comunicano attraverso due veri WebRTC DataChannel e il trasporto ComputeRTC originale. Per il test tra dispositivi diversi usa <code>client.html</code> con il server di signaling incluso.</p>
+    <p class="fine-print">I due peer vivono nella stessa pagina ma comunicano attraverso veri WebRTC DataChannel e il trasporto ComputeRTC originale. I pacchetti animati illustrano la sequenza e non sono misurazioni del traffico. Tutti i valori numerici finali mostrati provengono dalla sessione registrata.</p>
   </main>
 
   <script src="computertc-transport.js"></script>
@@ -591,54 +356,73 @@
     (() => {
       'use strict';
 
-      const TOTAL_TASKS = 40;
-      const INITIAL_WORKER_TASKS = 10;
+      const RECORDED = Object.freeze({
+        totalTasks: 40,
+        initialCoordinator: 28,
+        initialWorker: 12,
+        finalCoordinator: 32,
+        finalWorker: 8,
+        stolenTasks: 4,
+        recordedSeconds: 9.15,
+        stealPlans: Object.freeze([Object.freeze([36, 37]), Object.freeze([38, 39])])
+      });
+
       const ui = Object.fromEntries([
-        'startDemo', 'resultCount', 'stolenCount', 'elapsedTime', 'statusStrip', 'statusText',
+        'startDemo', 'resultCount', 'stolenCount', 'recordedTime', 'statusStrip', 'statusText',
         'coordinatorState', 'workerState', 'coordinatorQueue', 'workerQueue',
         'coordinatorDone', 'workerDone', 'coordinatorProgress', 'workerProgress',
-        'controlFrames', 'dataFrames', 'controlTrack', 'dataTrack', 'resultGrid',
-        'eventLog', 'duplicateBadge'
+        'controlStatus', 'dataStatus', 'controlTrack', 'dataTrack', 'resultGrid',
+        'eventLog', 'helpFlightBadge'
       ].map(id => [id, document.getElementById(id)]));
 
+      const query = new URLSearchParams(globalThis.location.search);
+      const requestedRuns = Math.max(1, Math.min(2, Number.parseInt(query.get('runs') || '1', 10) || 1));
       let session = null;
-      let timer = null;
+      let traceSequence = 0;
+      let completedRuns = 0;
 
-      function createEmptyState() {
+      function createSession() {
         return {
+          generation: Date.now() + Math.random(),
           pcCoordinator: null,
           pcWorker: null,
           coordinatorTransport: null,
           workerTransport: null,
           coordinatorQueue: [],
           workerQueue: [],
-          coordinatorProcessing: false,
-          workerProcessing: false,
           coordinatorDone: 0,
           workerDone: 0,
-          results: new Map(),
-          workerHelpPending: null,
-          helpTimer: null,
-          duplicateBlocked: 0,
           stolen: 0,
-          controlFrames: 0,
-          dataFrames: 0,
-          startedAt: 0,
+          helpOperations: 0,
+          pendingHelp: null,
+          results: new Map(),
+          timers: new Set(),
+          finalizing: false,
           completed: false,
-          generation: Date.now()
+          error: null
         };
       }
 
-      function buildResultGrid() {
-        ui.resultGrid.replaceChildren();
-        for (let i = 0; i < TOTAL_TASKS; i++) {
-          const cell = document.createElement('span');
-          cell.className = 'result-cell';
-          cell.id = `task-${i}`;
-          cell.textContent = String(i + 1).padStart(2, '0');
-          cell.setAttribute('aria-label', `Task ${i + 1}: in attesa`);
-          ui.resultGrid.appendChild(cell);
-        }
+      function later(delay, callback) {
+        if (!session) return null;
+        const generation = session.generation;
+        const timer = setTimeout(() => {
+          session?.timers.delete(timer);
+          if (!session || session.generation !== generation || session.completed) return;
+          callback();
+        }, delay);
+        session.timers.add(timer);
+        return timer;
+      }
+
+      function closeSession() {
+        if (!session) return;
+        for (const timer of session.timers) clearTimeout(timer);
+        try { session.coordinatorTransport?.close(); } catch (_) {}
+        try { session.workerTransport?.close(); } catch (_) {}
+        try { session.pcCoordinator?.close(); } catch (_) {}
+        try { session.pcWorker?.close(); } catch (_) {}
+        session = null;
       }
 
       function setStatus(message, kind = '') {
@@ -653,85 +437,85 @@
       }
 
       function log(message, kind = '') {
+        traceSequence++;
         const item = document.createElement('li');
         if (kind) item.className = kind;
-        const time = document.createElement('time');
-        time.textContent = new Date().toLocaleTimeString('it-IT', { hour12: false });
+        const index = document.createElement('time');
+        index.textContent = String(traceSequence).padStart(2, '0');
         const text = document.createElement('span');
         text.textContent = message;
-        item.append(time, text);
+        item.append(index, text);
         ui.eventLog.appendChild(item);
         while (ui.eventLog.children.length > 28) ui.eventLog.firstChild.remove();
         ui.eventLog.scrollTop = ui.eventLog.scrollHeight;
       }
 
-      function resetUi() {
-        clearInterval(timer);
-        timer = null;
-        buildResultGrid();
-        ui.eventLog.replaceChildren();
-        ui.resultCount.textContent = `0 / ${TOTAL_TASKS}`;
-        ui.stolenCount.textContent = '0';
-        ui.elapsedTime.textContent = '0.00 s';
-        ui.coordinatorQueue.textContent = '0';
-        ui.workerQueue.textContent = '0';
-        ui.coordinatorDone.textContent = '0';
-        ui.workerDone.textContent = '0';
-        ui.coordinatorProgress.style.width = '0%';
-        ui.workerProgress.style.width = '0%';
-        ui.controlFrames.textContent = '0 frame';
-        ui.dataFrames.textContent = '0 frame';
-        ui.duplicateBadge.textContent = 'anti-dup 0';
-        setPeerState('coordinator', 'IDLE');
-        setPeerState('worker', 'IDLE');
-        setStatus('Creazione dei peer WebRTC…');
+      function buildGrid() {
+        ui.resultGrid.replaceChildren();
+        for (let i = 0; i < RECORDED.totalTasks; i++) {
+          const cell = document.createElement('span');
+          cell.className = 'result-cell';
+          cell.id = `task-${i}`;
+          cell.textContent = String(i + 1).padStart(2, '0');
+          cell.setAttribute('aria-label', `Task ${i + 1}: in attesa`);
+          ui.resultGrid.appendChild(cell);
+        }
       }
 
-      function closeSession() {
-        if (!session) return;
-        clearTimeout(session.helpTimer);
-        try { session.coordinatorTransport?.close(); } catch (_) {}
-        try { session.workerTransport?.close(); } catch (_) {}
-        try { session.pcCoordinator?.close(); } catch (_) {}
-        try { session.pcWorker?.close(); } catch (_) {}
-        session = null;
+      function resetUi() {
+        traceSequence = 0;
+        buildGrid();
+        ui.eventLog.replaceChildren();
+        ui.resultCount.textContent = `0 / ${RECORDED.totalTasks}`;
+        ui.stolenCount.textContent = `0 / ${RECORDED.stolenTasks}`;
+        ui.recordedTime.textContent = '9,15 s';
+        ui.coordinatorQueue.textContent = '0';
+        ui.workerQueue.textContent = '0';
+        ui.coordinatorDone.textContent = `0 / ${RECORDED.finalCoordinator}`;
+        ui.workerDone.textContent = `0 / ${RECORDED.finalWorker}`;
+        ui.coordinatorProgress.style.width = '0%';
+        ui.workerProgress.style.width = '0%';
+        ui.controlStatus.textContent = 'in attesa';
+        ui.dataStatus.textContent = 'in attesa';
+        ui.controlStatus.className = 'lane-status';
+        ui.dataStatus.className = 'lane-status';
+        ui.controlTrack.replaceChildren();
+        ui.dataTrack.replaceChildren();
+        ui.helpFlightBadge.textContent = 'Help in volo: 0 / 1';
+        setPeerState('coordinator', 'IDLE');
+        setPeerState('worker', 'IDLE');
+        setStatus('Connessione P2P in preparazione…');
       }
 
       function updateUi() {
         if (!session) return;
-        ui.resultCount.textContent = `${session.results.size} / ${TOTAL_TASKS}`;
-        ui.stolenCount.textContent = String(session.stolen);
+        ui.resultCount.textContent = `${session.results.size} / ${RECORDED.totalTasks}`;
+        ui.stolenCount.textContent = `${session.stolen} / ${RECORDED.stolenTasks}`;
         ui.coordinatorQueue.textContent = String(session.coordinatorQueue.length);
         ui.workerQueue.textContent = String(session.workerQueue.length);
-        ui.coordinatorDone.textContent = String(session.coordinatorDone);
-        ui.workerDone.textContent = String(session.workerDone);
-        ui.coordinatorProgress.style.width = `${Math.min(100, session.coordinatorDone / TOTAL_TASKS * 100)}%`;
-        ui.workerProgress.style.width = `${Math.min(100, session.workerDone / TOTAL_TASKS * 100)}%`;
-        ui.controlFrames.textContent = `${session.controlFrames} frame`;
-        ui.dataFrames.textContent = `${session.dataFrames} frame`;
-        ui.duplicateBadge.textContent = `anti-dup ${session.duplicateBlocked}`;
+        ui.coordinatorDone.textContent = `${session.coordinatorDone} / ${RECORDED.finalCoordinator}`;
+        ui.workerDone.textContent = `${session.workerDone} / ${RECORDED.finalWorker}`;
+        ui.coordinatorProgress.style.width = `${Math.min(100, session.coordinatorDone / RECORDED.finalCoordinator * 100)}%`;
+        ui.workerProgress.style.width = `${Math.min(100, session.workerDone / RECORDED.finalWorker * 100)}%`;
+        ui.helpFlightBadge.textContent = `Help in volo: ${session.pendingHelp ? 1 : 0} / 1`;
       }
 
       function animatePacket(lane, direction, label) {
-        const dataLane = lane === ComputeRTC.Lane.TASK_DATA || lane === ComputeRTC.Lane.CHECKPOINT;
-        const track = dataLane ? ui.dataTrack : ui.controlTrack;
+        const isData = lane === ComputeRTC.Lane.TASK_DATA || lane === ComputeRTC.Lane.CHECKPOINT;
+        const track = isData ? ui.dataTrack : ui.controlTrack;
         const packet = document.createElement('span');
         packet.className = 'packet';
         packet.textContent = label;
         packet.style.setProperty('--start', direction === 'right' ? '3%' : '76%');
         packet.style.setProperty('--end', direction === 'right' ? '76%' : '3%');
         track.appendChild(packet);
-        setTimeout(() => packet.remove(), 900);
+        setTimeout(() => packet.remove(), 820);
       }
 
-      function send(from, lane, message) {
+      function send(from, lane, message, label = message.type.toUpperCase().replaceAll('-', '_')) {
         const transport = from === 'coordinator' ? session.coordinatorTransport : session.workerTransport;
-        const direction = from === 'coordinator' ? 'right' : 'left';
         const result = transport.trySend(lane, message);
-        if (lane === ComputeRTC.Lane.TASK_DATA || lane === ComputeRTC.Lane.CHECKPOINT) session.dataFrames++;
-        else session.controlFrames++;
-        animatePacket(lane, direction, message.type.toUpperCase().replaceAll('-', '_'));
-        updateUi();
+        animatePacket(lane, from === 'coordinator' ? 'right' : 'left', label);
         if (![ComputeRTC.SendResult.SENT, ComputeRTC.SendResult.QUEUED].includes(result)) {
           throw new Error(`Invio ${message.type} fallito: ${result}`);
         }
@@ -741,163 +525,92 @@
         return typeof payload === 'string' ? JSON.parse(payload) : payload;
       }
 
-      function computeMandelbrotTask(taskId) {
-        const width = 84;
-        const rows = 5;
-        const maxIter = 72;
-        let checksum = 0;
-        for (let localY = 0; localY < rows; localY++) {
-          const py = taskId * rows + localY;
-          const y0 = (py / (TOTAL_TASKS * rows)) * 2.4 - 1.2;
-          for (let px = 0; px < width; px++) {
-            const x0 = (px / width) * 3.5 - 2.5;
-            let x = 0;
-            let y = 0;
-            let iter = 0;
-            while (x * x + y * y <= 4 && iter < maxIter) {
-              const nextX = x * x - y * y + x0;
-              y = 2 * x * y + y0;
-              x = nextX;
-              iter++;
-            }
-            checksum = (checksum + iter * (px + 1)) % 65521;
-          }
-        }
-        return checksum;
+      function removeTask(queue, taskId) {
+        const index = queue.indexOf(taskId);
+        if (index === -1) throw new Error(`Task ${taskId} non presente nella coda`);
+        queue.splice(index, 1);
       }
 
-      function scheduleState(peer) {
-        const generation = session.generation;
-        setTimeout(() => {
-          if (!session || session.generation !== generation || session.completed) return;
+      function scheduleLoadUpdate(peer, traceMessage = '') {
+        later(30, () => {
           const queue = peer === 'coordinator' ? session.coordinatorQueue : session.workerQueue;
           send(peer, ComputeRTC.Lane.HEARTBEAT, {
             type: 'state-broadcast',
             state: queue.length ? 'WORKING' : 'IDLE',
             workload: queue.length,
             timestamp: Date.now()
-          });
-        }, 30);
+          }, 'LOAD ~30ms');
+          if (traceMessage) log(traceMessage);
+        });
       }
 
-      function markResult(taskId, result, worker) {
-        if (session.results.has(taskId)) return;
-        session.results.set(taskId, { result, worker });
+      function markResult(taskId, owner) {
+        if (session.results.has(taskId)) throw new Error(`Risultato duplicato per task ${taskId}`);
+        session.results.set(taskId, owner);
         const cell = document.getElementById(`task-${taskId}`);
-        const hue = Math.round((result % 360 + taskId * 7) % 360);
-        cell.style.setProperty('--task-color', `hsl(${hue} 72% 46%)`);
-        cell.classList.add('done', worker === 'worker' ? 'worker-result' : 'coordinator-result');
-        cell.setAttribute('aria-label', `Task ${taskId + 1}: completato dal ${worker}`);
+        cell.classList.add('done', owner === 'coordinator' ? 'coordinator-result' : 'worker-result');
+        cell.setAttribute('aria-label', `Task ${taskId + 1}: elaborato dal ${owner}`);
+        if (session.results.size % 8 === 0 && session.results.size < RECORDED.totalTasks) {
+          log(`TASK_RESULT raccolti: ${session.results.size}/${RECORDED.totalTasks}`);
+        }
         updateUi();
-
-        if (session.results.size === TOTAL_TASKS) finalizeJob();
+        if (session.results.size === RECORDED.totalTasks) finalizeJob();
       }
 
-      function completeLocalTask(peer, taskId) {
-        const result = computeMandelbrotTask(taskId);
+      function completeTask(peer, taskId) {
         if (peer === 'coordinator') {
+          removeTask(session.coordinatorQueue, taskId);
           session.coordinatorDone++;
-          markResult(taskId, result, 'coordinator');
+          markResult(taskId, 'coordinator');
         } else {
+          removeTask(session.workerQueue, taskId);
           session.workerDone++;
           send('worker', ComputeRTC.Lane.TASK_DATA, {
             type: 'task-result',
             taskId,
-            result,
+            result: { status: 'completed' },
             workerId: 'peer-b'
-          });
-        }
-        scheduleState(peer);
-        updateUi();
-      }
-
-      function processCoordinator() {
-        if (!session || session.completed || session.coordinatorProcessing) return;
-        const taskId = session.coordinatorQueue.shift();
-        if (taskId === undefined) {
-          setPeerState('coordinator', 'IDLE');
-          return;
-        }
-        session.coordinatorProcessing = true;
-        setPeerState('coordinator', 'WORKING');
-        scheduleState('coordinator');
-        updateUi();
-        setTimeout(() => {
-          if (!session || session.completed) return;
-          completeLocalTask('coordinator', taskId);
-          session.coordinatorProcessing = false;
-          processCoordinator();
-        }, 190);
-      }
-
-      function processWorker() {
-        if (!session || session.completed || session.workerProcessing) return;
-        const taskId = session.workerQueue.shift();
-        if (taskId === undefined) {
-          setPeerState('worker', 'IDLE');
-          requestHelp();
-          return;
-        }
-        session.workerProcessing = true;
-        setPeerState('worker', 'WORKING');
-        scheduleState('worker');
-        updateUi();
-        setTimeout(() => {
-          if (!session || session.completed) return;
-          completeLocalTask('worker', taskId);
-          session.workerProcessing = false;
-          processWorker();
-        }, 105);
-      }
-
-      function requestHelp() {
-        if (!session || session.completed || session.results.size === TOTAL_TASKS) return;
-        if (session.workerHelpPending) {
-          session.duplicateBlocked++;
+          }, 'TASK_RESULT');
+          if (session.workerDone === 1) log('TASK_RESULT: Worker → Coordinator');
           updateUi();
-          return;
         }
-        const requestId = globalThis.crypto?.randomUUID?.() || `help-${Date.now()}`;
-        session.workerHelpPending = requestId;
-        setPeerState('worker', 'HELPING');
-        log('HELP_OFFER → Coordinator (richiesta unica in volo)', 'help');
-        send('worker', ComputeRTC.Lane.CONTROL_CRITICAL, { type: 'help-offer', requestId });
-        requestHelp();
-        clearTimeout(session.helpTimer);
-        session.helpTimer = setTimeout(() => {
-          if (!session || session.completed || session.workerHelpPending !== requestId) return;
-          session.workerHelpPending = null;
-          setPeerState('worker', 'IDLE');
-          requestHelp();
-        }, 1200);
+      }
+
+      function requestSteal(operation) {
+        if (session.pendingHelp) throw new Error('Più di una richiesta Help contemporaneamente in volo');
+        const requestId = `help-${operation}`;
+        session.pendingHelp = { requestId, operation };
+        setPeerState('coordinator', 'HELPING');
+        updateUi();
+        log(`HELP_REQUEST #${operation}: Coordinator → Worker`, 'help');
+        send('coordinator', ComputeRTC.Lane.CONTROL_CRITICAL, {
+          type: 'help-offer',
+          requestId,
+          operation
+        }, `HELP #${operation}`);
       }
 
       function handleCoordinatorMessage(lane, payload) {
         const message = parseMessage(payload);
         switch (message.type) {
           case 'task-result':
-            markResult(message.taskId, message.result, 'worker');
+            markResult(message.taskId, 'worker');
             break;
-          case 'help-offer': {
-            const count = Math.max(1, Math.floor(session.coordinatorQueue.length / 2));
-            const tasks = session.coordinatorQueue.splice(0, count);
-            if (tasks.length) {
-              log(`HELP_ACCEPT: donati ${tasks.length} task al Worker`, 'help');
-              send('coordinator', ComputeRTC.Lane.TASK_DATA, {
-                type: 'help-accept',
-                requestId: message.requestId,
-                tasks,
-                remainingWorkload: session.coordinatorQueue.length
-              });
-              scheduleState('coordinator');
-            } else {
-              send('coordinator', ComputeRTC.Lane.CONTROL_CRITICAL, {
-                type: 'help-decline',
-                requestId: message.requestId,
-                reason: 'empty_queue'
-              });
+          case 'help-accept': {
+            if (!session.pendingHelp || message.requestId !== session.pendingHelp.requestId) {
+              throw new Error('Risposta Help non associata alla richiesta in volo');
             }
+            const operation = session.pendingHelp.operation;
+            session.pendingHelp = null;
+            session.helpOperations++;
+            session.stolen += message.tasks.length;
+            session.coordinatorQueue.push(...message.tasks);
+            log(`WORK_STEAL #${operation}: acquisiti ${message.tasks.length} task`, 'help');
+            scheduleLoadUpdate('coordinator', 'LOAD_UPDATE Coordinator: circa 30 ms dopo lo steal');
             updateUi();
+            message.tasks.forEach((taskId, index) => later(180 + index * 120, () => completeTask('coordinator', taskId)));
+            if (operation === 1) later(420, () => requestSteal(2));
+            else setPeerState('coordinator', 'WORKING');
             break;
           }
           case 'state-broadcast':
@@ -909,106 +622,101 @@
         const message = parseMessage(payload);
         switch (message.type) {
           case 'job-start':
-            log(`JOB_START: ${message.totalTasks} task Mandelbrot`, 'important');
-            break;
           case 'initial-tasks':
-            session.workerQueue.push(...message.tasks);
-            log(`DATA: ricevuti ${message.tasks.length} task iniziali`);
-            scheduleState('worker');
-            updateUi();
-            processWorker();
+          case 'state-broadcast':
             break;
-          case 'help-accept':
-            if (message.requestId !== session.workerHelpPending) return;
-            clearTimeout(session.helpTimer);
-            session.workerHelpPending = null;
-            session.stolen += message.tasks.length;
-            session.workerQueue.push(...message.tasks);
-            log(`WORK_STEAL: acquisiti ${message.tasks.length} task`, 'help');
-            scheduleState('worker');
-            updateUi();
-            processWorker();
+          case 'help-offer': {
+            const tasks = [...RECORDED.stealPlans[message.operation - 1]];
+            later(150, () => {
+              tasks.forEach(taskId => removeTask(session.workerQueue, taskId));
+              send('worker', ComputeRTC.Lane.TASK_DATA, {
+                type: 'help-accept',
+                requestId: message.requestId,
+                operation: message.operation,
+                tasks,
+                remainingWorkload: session.workerQueue.length
+              }, `STEAL +${tasks.length}`);
+              scheduleLoadUpdate('worker');
+              updateUi();
+            });
             break;
-          case 'help-decline':
-            if (message.requestId !== session.workerHelpPending) return;
-            session.workerHelpPending = null;
-            setPeerState('worker', 'IDLE');
-            break;
+          }
           case 'job-complete':
             log(`JOB COMPLETE ${message.completedTasks}/${message.totalTasks}`, 'important');
             setPeerState('worker', 'FINISHED');
             break;
-          case 'state-broadcast':
-            break;
         }
       }
 
+      function validateFinalState() {
+        const checks = [
+          [session.results.size, RECORDED.totalTasks, 'risultati'],
+          [session.coordinatorDone, RECORDED.finalCoordinator, 'task Coordinator'],
+          [session.workerDone, RECORDED.finalWorker, 'task Worker'],
+          [session.stolen, RECORDED.stolenTasks, 'task rubati'],
+          [session.helpOperations, 2, 'operazioni di work-stealing'],
+          [session.coordinatorQueue.length, 0, 'coda Coordinator'],
+          [session.workerQueue.length, 0, 'coda Worker']
+        ];
+        for (const [actual, expected, label] of checks) {
+          if (actual !== expected) throw new Error(`${label}: atteso ${expected}, trovato ${actual}`);
+        }
+        if (session.pendingHelp) throw new Error('Richiesta Help ancora in volo al completamento');
+      }
+
       function finalizeJob() {
-        if (session.completed) return;
-        session.completed = true;
-        clearTimeout(session.helpTimer);
-        setPeerState('coordinator', 'FINISHED');
-        setPeerState('worker', 'FINISHED');
-        send('coordinator', ComputeRTC.Lane.CONTROL_CRITICAL, {
-          type: 'job-complete',
-          completedTasks: session.results.size,
-          totalTasks: TOTAL_TASKS
-        });
-        const elapsed = (performance.now() - session.startedAt) / 1000;
-        ui.elapsedTime.textContent = `${elapsed.toFixed(2)} s`;
-        setStatus(`COMPLETED ${session.results.size}/${TOTAL_TASKS} — JOB COMPLETE`, 'success');
-        log(`COMPLETED ${session.results.size}/${TOTAL_TASKS}`, 'important');
-        updateUi();
-        clearInterval(timer);
-        timer = null;
-        ui.startDemo.disabled = false;
-        ui.startDemo.textContent = 'Ripeti demo';
+        if (session.finalizing) return;
+        session.finalizing = true;
+        try {
+          validateFinalState();
+          log(`COMPLETED ${RECORDED.totalTasks}/${RECORDED.totalTasks}`, 'important');
+          send('coordinator', ComputeRTC.Lane.CONTROL_CRITICAL, {
+            type: 'job-complete',
+            completedTasks: RECORDED.totalTasks,
+            totalTasks: RECORDED.totalTasks
+          }, 'JOB COMPLETE');
+          session.completed = true;
+          completedRuns++;
+          document.documentElement.dataset.completedRuns = String(completedRuns);
+          setPeerState('coordinator', 'FINISHED');
+          setStatus(`COMPLETED 40/40 — JOB COMPLETE 40/40 — tempo registrato 9,15 s`, 'success');
+          updateUi();
+          ui.startDemo.disabled = false;
+          ui.startDemo.textContent = 'Ripeti ricostruzione';
+          if (completedRuns < requestedRuns) setTimeout(runDemo, 450);
+        } catch (error) {
+          handleFatalError(error);
+        }
       }
 
       function waitForOpen() {
         return new Promise((resolve, reject) => {
-          const timeout = setTimeout(() => reject(new Error('Timeout apertura DataChannel')), 8000);
+          const started = Date.now();
           const check = () => {
-            if (!session) return;
-            if (
+            if (!session) return reject(new Error('Sessione interrotta'));
+            const open =
               session.coordinatorTransport.getState() === ComputeRTC.TransportState.OPEN &&
-              session.workerTransport.getState() === ComputeRTC.TransportState.OPEN
-            ) {
-              clearTimeout(timeout);
-              resolve();
-            } else {
-              setTimeout(check, 30);
-            }
+              session.workerTransport.getState() === ComputeRTC.TransportState.OPEN;
+            if (open) return resolve();
+            if (Date.now() - started > 8000) return reject(new Error('Timeout apertura DataChannel'));
+            setTimeout(check, 30);
           };
           check();
         });
       }
 
       async function connectPeers() {
-        const rtcConfig = { iceServers: [] };
-        const coordinator = new RTCPeerConnection(rtcConfig);
-        const worker = new RTCPeerConnection(rtcConfig);
+        const coordinator = new RTCPeerConnection({ iceServers: [] });
+        const worker = new RTCPeerConnection({ iceServers: [] });
         session.pcCoordinator = coordinator;
         session.pcWorker = worker;
-
-        coordinator.onicecandidate = event => {
-          if (event.candidate) worker.addIceCandidate(event.candidate).catch(handleFatalError);
-        };
-        worker.onicecandidate = event => {
-          if (event.candidate) coordinator.addIceCandidate(event.candidate).catch(handleFatalError);
-        };
-
-        session.coordinatorTransport = new ComputeRTC.ComputeRTCTransport('peer-b', {
-          onMessage: handleCoordinatorMessage
-        });
-        session.workerTransport = new ComputeRTC.ComputeRTCTransport('peer-a', {
-          onMessage: handleWorkerMessage
-        });
-
+        coordinator.onicecandidate = event => event.candidate && worker.addIceCandidate(event.candidate).catch(handleFatalError);
+        worker.onicecandidate = event => event.candidate && coordinator.addIceCandidate(event.candidate).catch(handleFatalError);
+        session.coordinatorTransport = new ComputeRTC.ComputeRTCTransport('peer-b', { onMessage: handleCoordinatorMessage });
+        session.workerTransport = new ComputeRTC.ComputeRTCTransport('peer-a', { onMessage: handleWorkerMessage });
         worker.ondatachannel = event => session.workerTransport.registerChannel(event.channel);
         session.coordinatorTransport.registerChannel(coordinator.createDataChannel('computertc-control', { ordered: true }));
         session.coordinatorTransport.registerChannel(coordinator.createDataChannel('computertc-data', { ordered: true }));
-
         const offer = await coordinator.createOffer();
         await coordinator.setLocalDescription(offer);
         await worker.setRemoteDescription(offer);
@@ -1018,35 +726,42 @@
         await waitForOpen();
       }
 
-      function startJob() {
-        session.coordinatorQueue = Array.from({ length: TOTAL_TASKS - INITIAL_WORKER_TASKS }, (_, index) => index + INITIAL_WORKER_TASKS);
-        const workerTasks = Array.from({ length: INITIAL_WORKER_TASKS }, (_, index) => index);
-        session.startedAt = performance.now();
-        setStatus('CONTROL + DATA aperti — calcolo distribuito in corso');
-        log('WebRTC connected: CONTROL + DATA', 'important');
-        send('coordinator', ComputeRTC.Lane.CONTROL_CRITICAL, {
-          type: 'job-start',
-          totalTasks: TOTAL_TASKS
-        });
+      function startReconstruction() {
+        session.coordinatorQueue = Array.from({ length: RECORDED.initialCoordinator }, (_, index) => index);
+        session.workerQueue = Array.from({ length: RECORDED.initialWorker }, (_, index) => index + RECORDED.initialCoordinator);
+        ui.controlStatus.textContent = 'canale attivo';
+        ui.dataStatus.textContent = 'canale attivo';
+        ui.controlStatus.className = 'lane-status active';
+        ui.dataStatus.className = 'lane-status active';
+        log('P2P_CONNECTED: Job Coordinator ↔ Volunteer Worker', 'important');
+        log('COMPUTERTC_OPEN: CONTROL + DATA separati', 'important');
+        log('CREATE_TASKS: 40 task complessivi');
+        send('coordinator', ComputeRTC.Lane.CONTROL_CRITICAL, { type: 'job-start', totalTasks: RECORDED.totalTasks }, 'JOB START');
         send('coordinator', ComputeRTC.Lane.TASK_DATA, {
           type: 'initial-tasks',
-          tasks: workerTasks
-        });
-        scheduleState('coordinator');
-        processCoordinator();
-        timer = setInterval(() => {
-          if (!session || session.completed) return;
-          const elapsed = (performance.now() - session.startedAt) / 1000;
-          ui.elapsedTime.textContent = `${elapsed.toFixed(2)} s`;
-        }, 80);
+          coordinatorTasks: RECORDED.initialCoordinator,
+          workerTasks: RECORDED.initialWorker
+        }, 'ASSIGN 28/12');
+        log('ASSIGN_INITIAL: Coordinator 28 / Worker 12');
+        log('PARALLEL_EXECUTION: avvio elaborazione sui due peer');
+        setPeerState('coordinator', 'WORKING');
+        setPeerState('worker', 'WORKING');
+        setStatus('CONTROL e DATA attivi — ricostruzione accelerata in corso');
+        scheduleLoadUpdate('coordinator', 'LOAD_UPDATE: carico aggiornato in circa 30 ms');
+        scheduleLoadUpdate('worker');
+        updateUi();
+
+        Array.from({ length: RECORDED.initialCoordinator }, (_, index) => index)
+          .forEach((taskId, index) => later(650 + index * 75, () => completeTask('coordinator', taskId)));
+        Array.from({ length: RECORDED.finalWorker }, (_, index) => index + RECORDED.initialCoordinator)
+          .forEach((taskId, index) => later(820 + index * 270, () => completeTask('worker', taskId)));
+        later(2850, () => requestSteal(1));
       }
 
       function handleFatalError(error) {
         console.error(error);
-        setStatus(`Errore: ${error.message}`, 'error');
-        log(`ERROR: ${error.message}`);
-        clearInterval(timer);
-        timer = null;
+        if (session) session.error = error.message;
+        setStatus(`Errore di coerenza: ${error.message}`, 'error');
         ui.startDemo.disabled = false;
         ui.startDemo.textContent = 'Riprova';
       }
@@ -1056,19 +771,36 @@
         ui.startDemo.textContent = 'Connessione…';
         closeSession();
         resetUi();
-        session = createEmptyState();
+        session = createSession();
         try {
           if (!('RTCPeerConnection' in globalThis)) throw new Error('WebRTC non supportato da questo browser');
           await connectPeers();
-          ui.startDemo.textContent = 'Demo in corso…';
-          startJob();
+          ui.startDemo.textContent = 'Ricostruzione in corso…';
+          startReconstruction();
         } catch (error) {
           handleFatalError(error);
         }
       }
 
+      globalThis.__computeRTCDemoState = () => ({
+        completed: Boolean(session?.completed),
+        error: session?.error || null,
+        results: session?.results.size || 0,
+        coordinatorDone: session?.coordinatorDone || 0,
+        workerDone: session?.workerDone || 0,
+        stolen: session?.stolen || 0,
+        helpOperations: session?.helpOperations || 0,
+        helpInFlight: session?.pendingHelp ? 1 : 0,
+        recordedSeconds: RECORDED.recordedSeconds,
+        completedRuns,
+        control: ui.controlStatus.textContent,
+        data: ui.dataStatus.textContent,
+        status: ui.statusText.textContent
+      });
+
       ui.startDemo.addEventListener('click', runDemo);
-      buildResultGrid();
+      buildGrid();
+      if (query.get('autostart') === '1') setTimeout(runDemo, 0);
     })();
   </script>
 </body>

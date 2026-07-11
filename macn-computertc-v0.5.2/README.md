@@ -25,18 +25,20 @@ La versione è stata collaudata con due peer su un job Mandelbrot distribuito. I
 
 Solo quando entrambi i canali `CONTROL` e `DATA` sono aperti un peer viene considerato pronto per il calcolo.
 
-## Demo immediata nel browser
+## Ricostruzione interattiva nel browser
 
-Apri la [demo ComputeRTC su GitHub Pages](https://onissum.github.io/MACN/macn-computertc-v0.5.2/demo.html) e premi **Avvia demo**. Il sorgente autonomo è disponibile in [`demo.html`](demo.html). La pagina crea due peer collegati da veri WebRTC DataChannel nello stesso browser e mostra dal vivo:
+Apri la [demo ComputeRTC su GitHub Pages](https://onissum.github.io/MACN/macn-computertc-v0.5.2/demo.html) e premi **Avvia ricostruzione**. Il sorgente autonomo è disponibile in [`demo.html`](demo.html). La pagina ricostruisce il test reale del 10 luglio 2026 con due peer collegati da veri WebRTC DataChannel nello stesso browser:
 
 - traffico `CONTROL` e `DATA` su canali separati;
-- distribuzione e calcolo di 40 task Mandelbrot;
-- aggiornamenti del carico e richiesta Help anti-duplicato;
-- work-stealing dal Coordinator al Worker;
+- 40 task con assegnazione iniziale 28 al Coordinator e 12 al Worker;
+- aggiornamenti del carico in circa 30 ms e una sola richiesta Help in volo;
+- due operazioni di work-stealing, con 4 task acquisiti dal Coordinator;
+- distribuzione finale elaborata di 32 task dal Coordinator e 8 dal Worker;
 - raccolta centralizzata dei risultati fino a `40/40`;
-- messaggi finali `COMPLETED` e `JOB COMPLETE`.
+- tempo totale registrato di 9,15 secondi;
+- messaggi finali `COMPLETED 40/40` e `JOB COMPLETE 40/40`.
 
-La demo è autonoma e non richiede il server di signaling. È una rappresentazione locale a due peer; per la prova tra dispositivi fisici diversi usa `client.html` e `signaling-server.js`.
+La temporizzazione dell’animazione è accelerata, mentre i risultati finali corrispondono alla sessione registrata. La demo è autonoma e non richiede il server di signaling. Per la prova tra dispositivi fisici diversi usa `client.html` e `signaling-server.js`.
 
 ## Avvio locale
 
@@ -53,7 +55,7 @@ In alternativa, su Windows, `START_TEST_COMPUTERTC.bat` installa le dipendenze s
 ## File inclusi
 
 - `client.html`: client browser MACN e logica del calcolo distribuito;
-- `demo.html`: dimostrazione autonoma a due peer nello stesso browser;
+- `demo.html`: ricostruzione interattiva del test reale a due peer;
 - `computertc-transport.js`: trasporto ComputeRTC sopra WebRTC DataChannels;
 - `signaling-server.js`: server Express e Socket.IO per signaling e file statici;
 - `test-computertc.js`: test del formato del protocollo e dei messaggi principali;
