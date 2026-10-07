@@ -8,8 +8,8 @@ function mix(x) {
 export const monteCarlo = {
   id: 'monte-carlo-v1', unit: 'samples',
   validate(params) {
-    if (!params || !Number.isSafeInteger(params.samples) || params.samples < 1000 || params.samples > 200_000_000 ||
-        !Number.isInteger(params.seed) || params.seed < 0 || params.seed > 0xffffffff) throw Error('samples: 1000..200000000; seed: uint32');
+    if (!params || !Number.isSafeInteger(params.samples) || params.samples < 1000 || params.samples > 2_000_000_000 ||
+        !Number.isInteger(params.seed) || params.seed < 0 || params.seed > 0xffffffff) throw Error('samples: 1000..2000000000; seed: uint32');
     return { samples: params.samples, seed: params.seed };
   },
   totalUnits(params) { return params.samples; },

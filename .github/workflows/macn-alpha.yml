@@ -1,0 +1,33 @@
+name: MACN alpha
+on:
+  push:
+    branches: [main, macn-1.0-alpha]
+    paths: ['alpha/**', 'macn-computertc-v0.5.2/**', '.github/workflows/macn-alpha.yml']
+  pull_request:
+    paths: ['alpha/**', 'macn-computertc-v0.5.2/**', '.github/workflows/macn-alpha.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: alpha
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: alpha/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: node test-computertc.js
+        working-directory: macn-computertc-v0.5.2
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alpha-browser-screenshots
+          path: alpha/results/*.png

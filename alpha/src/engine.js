@@ -49,13 +49,13 @@ export class TaskEngine {
           .reduce((sum, peer) => sum + peer.rate, 0);
         const fairBudget = Math.max(1, Math.floor(remaining * n.rate / idleRate));
         const count = this.scheduler.chunk(n, fairBudget);
-        t = { ...workload(j.workloadId).makeTask(j.next, count, j.params), id: `t-${j.tasks.size}`, count, attempt: 0, status: 'pending' };
+        t = { payload: workload(j.workloadId).makeTask(j.next, count, j.params), id: `t-${j.tasks.size}`, count, attempt: 0, status: 'pending' };
         j.next += count; j.tasks.set(t.id, t);
       }
       if (!t) continue;
       t.attempt++; t.owner = id; t.status = 'leased'; t.sent = this.now(); t.deadline = t.sent + this.scheduler.leaseMs(n, t.count);
       n.busy = t.id; n.assigned++;
-      const message = { jobId: j.id, workloadId: j.workloadId, task: { id: t.id, start: t.start, count: t.count, seed: t.seed, attempt: t.attempt } };
+      const message = { jobId: j.id, workloadId: j.workloadId, task: { ...t.payload, id: t.id, attempt: t.attempt } };
       if (this.send(id, 'task', message) === false) { this.requeue(n, 'send-failed'); n.cooldown = this.now() + 1000; }
       else this.event('task-assigned', { jobId: j.id, taskId: t.id, nodeId: id, count: t.count, attempt: t.attempt });
     }

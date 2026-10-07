@@ -81,3 +81,16 @@ test('deterministic workload validates inputs and partition invariance', () => {
   const b = monteCarlo.merge([monteCarlo.compute({ start: 0, count: 345, seed: 7 }), monteCarlo.compute({ start: 345, count: 12000, seed: 7 })]);
   assert.equal(a.hits, b.hits); assert.equal(a.count, b.count); assert.ok(Math.abs(b.pi - Math.PI) < 0.1);
 });
+test('short jobs reserve work for each idle node after rates grow', () => {
+  const f = fixture(); f.node('fast', 1000000); f.node('b', 1000); f.node('c', 1000); f.start(10000);
+  assert.equal(f.messages.length, 3);
+  const ranges = f.messages.map(m => m.task); assert.equal(ranges.reduce((s, r) => s + r.count, 0), 10000);
+  assert.ok(ranges.every(r => r.count > 0));
+});
+test('transport backpressure retries without losing a range', () => {
+  let writable = false; const sent = [];
+  const f = fixture({ send: (id, type, data) => { if (type === 'task' && writable) sent.push({ id, ...data }); return writable; } });
+  f.node('a'); f.start(1000); assert.equal(f.engine.job.pending.length, 1);
+  writable = true; f.advance(1001); f.engine.tick(); assert.equal(sent.length, 1);
+  f.advance(1); assert.equal(f.reply(sent[0]), true); assert.equal(f.engine.job.units, 1000);
+});
