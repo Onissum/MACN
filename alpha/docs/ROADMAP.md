@@ -1,3 +1,11 @@
+# Aggiornamento alpha.2
+
+Il laboratorio software è ora implementato: confronti degli scheduler, simulazione fino a 1.000 nodi, worker reali locali e richieste concorrenti. Vedi [ALPHA2-LAB.md](ALPHA2-LAB.md). La verifica fisica a tre dispositivi rimane aperta.
+
+Prossimo controllo: pool dinamico semplice come ulteriore baseline, connessioni reali crescenti con metriche di rete/OS, coda degli idle e ammissione del broker su API autenticata. Più coordinatori richiedono ownership e failover misurati; non sono ancora implementati.
+
+---
+
 # Roadmap dopo 1.0-alpha.1
 
 ## Alpha.2 — prova fisica ripetibile

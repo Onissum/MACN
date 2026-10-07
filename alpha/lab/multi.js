@@ -34,10 +34,10 @@ export function multiRun({ nodes = 20, samples = 2000000, seed = 42, loseNode = 
   if (loseNode) events.push(200, () => { slots.delete('n0'); broker.removeNode('n0'); });
   function pulse() {
     for (const n of broker.nodes.values()) if (n.connected) broker.heartbeat(n.id, 8);
-    broker.tick(); if (broker.snapshot().some(j => j.status === 'running')) events.push(now + 500, pulse);
+    broker.tick(); if ([...broker.jobs.values()].some(e => e.engine.job.status === 'running')) events.push(now + 500, pulse);
   }
   events.push(0, pulse);
-  while (broker.snapshot().some(j => j.status === 'running') && events.size) {
+  while ([...broker.jobs.values()].some(e => e.engine.job.status === 'running') && events.size) {
     const event = events.pop(); now = event.at; event.fn();
     if (now > 120000) throw Error('Multi-job simulation deadline');
   }

@@ -1,4 +1,6 @@
-# MACN 1.0-alpha.1
+# MACN 1.0-alpha.2
+
+Novità alpha.2: [laboratorio di scalabilità](docs/ALPHA2-LAB.md), tre scheduler confrontabili, prove con 10/50 nodi locali e 100/1.000 nodi simulati, broker sperimentale per richieste concorrenti e lettore report su `/lab.html`. I report del laboratorio sono separati dai benchmark browser descritti sotto.
 
 Prima alpha eseguibile e misurabile: più browser collaborano a **un solo job**, con calibrazione, assegnazione adattiva, recupero dei task persi e confronto verificato con un nodo solo.
 
@@ -11,7 +13,7 @@ Requisiti: Node.js 22 o successivo con npm; browser moderno con Web Worker su PC
 Dalla cartella del repository:
 
 ```sh
-git switch macn-1.0-alpha
+git switch macn-alpha.2-lab
 cd alpha
 npm ci
 npm test
