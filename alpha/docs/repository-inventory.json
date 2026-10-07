@@ -1,0 +1,930 @@
+[
+  {
+    "file": "NUOVO MACN/MATTONE 1/client.html",
+    "lines": 218,
+    "sha256": "6e51e25aedd7c11a3af9c3e07e115a7398872957fe4038563cbede2d657a658d",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": true
+    }
+  },
+  {
+    "file": "NUOVO MACN/MATTONE 1/package.json",
+    "lines": 17,
+    "sha256": "317c48438ee0317355abc4801e56d32391a5637d882b25c81836f96eb60b542a",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "NUOVO MACN/MATTONE 1/server.js",
+    "lines": 78,
+    "sha256": "c22dd2ab4a3600bf4c961f29461ac4d43456edc4a7dc533db1e0c025dd8e153d",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "NUOVO MACN/MATTONE 2/client.html",
+    "lines": 318,
+    "sha256": "a02ca4891c800de4366ccee71c08d9180060f98249c8f8407c3c6d4731ead7f3",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": true
+    }
+  },
+  {
+    "file": "NUOVO MACN/MATTONE 2/package.json",
+    "lines": 17,
+    "sha256": "bdc08b0a5a749e3c510ffab3cd7aacf9aa8d900927ce50bbe3b8e08b5b106b13",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "NUOVO MACN/MATTONE 2/server.js",
+    "lines": 69,
+    "sha256": "d8faa7df782aac8aa1763f99fc9b307dcb7ab73254eaf52b4159768e410c1fef",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "NUOVO MACN/MATTONE 3 I NODI SI TROVANO VIA WEB/client.html",
+    "lines": 364,
+    "sha256": "9fccffe67ac267e9d6c07e15a137fcc10742eae3ec04a257a6cfb24cb8fb02ce",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": true
+    }
+  },
+  {
+    "file": "NUOVO MACN/MATTONE 3 I NODI SI TROVANO VIA WEB/package.json",
+    "lines": 17,
+    "sha256": "cc3e668536905c4b21ba317466b5874132e1d2f8701e882ed1afd72ff558795d",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "NUOVO MACN/MATTONE 3 I NODI SI TROVANO VIA WEB/server.js",
+    "lines": 96,
+    "sha256": "6ee37d7d6c73d626dad27e84ed3a0f70a201be2501a63b7f703fc6cf6d8daebd",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "NUOVO MACN/MATTONE 4 MULTI PEER/client.html",
+    "lines": 338,
+    "sha256": "4f1e18debcd178c806ae2e2b52c0c98314f8b6f52462966df455882b668f484a",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "NUOVO MACN/MATTONE 4 MULTI PEER/package.json",
+    "lines": 17,
+    "sha256": "94b875aa821e4e3ee4d8320484a5711b642f552d9fc207999918a4c74202bdde",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "NUOVO MACN/MATTONE 4 MULTI PEER/server.js",
+    "lines": 53,
+    "sha256": "0ddeb5fc06ee2543c52042c7bff51c28f2563f86e1e378d3f6037e83eae4f00a",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "README.md",
+    "lines": 133,
+    "sha256": "27a6c9b29a079b325bd806b68e46dddeed9b6897a41bf1aaf5f8a8fda9a9e17f",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": true,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "historic-prototypes/v11/MACN_v11_asymmetric_distribution.html",
+    "lines": 1070,
+    "sha256": "8ead078e6f5ba98aa7a790fd077069aa97322c05288f8cea05f196781c065e60",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "historic-prototypes/v11/README.md",
+    "lines": 45,
+    "sha256": "33da7fab0f06fd7d9571088b73e86daaca968361dfb7f9cb4257e5e8709b04de",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": true,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-computertc-v0.5.2/README.md",
+    "lines": 67,
+    "sha256": "4478a09d6bb6bfb3031aadbb61196139d5907b83522bd54be9711a6a83e97dca",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": true,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-computertc-v0.5.2/START_TEST_COMPUTERTC.bat",
+    "lines": 47,
+    "sha256": "583fbcbe8b5ac1dbfeb2780e4a5e7bc1dcccaa2eba5825afddda2c1befb822b8",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-computertc-v0.5.2/client.html",
+    "lines": 1245,
+    "sha256": "975c2bff2910d56ff7e5d4aa3145ce81ab0d2c9d0738baa3be80f087e4debdb7",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-computertc-v0.5.2/computertc-transport.js",
+    "lines": 183,
+    "sha256": "0ad052940878e6ad7792ddeefe8ec262b7395a53e51ddc3291d7b40f2d415486",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": true,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-computertc-v0.5.2/demo.html",
+    "lines": 807,
+    "sha256": "6d8815c14aece279baba7781da41c4b19b4c0c87cefa427cb6c690a98d33aad5",
+    "features": {
+      "webrtc": true,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-computertc-v0.5.2/package.json",
+    "lines": 8,
+    "sha256": "e7bb606226cff0db3af86e84ca8d6551203b8616585969216532463f8419101c",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-computertc-v0.5.2/signaling-server.js",
+    "lines": 131,
+    "sha256": "dfd2ef4660144d2325d36ebe7f1bdd8d7ed0375b45583acf2539fc20b9d65ba2",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-computertc-v0.5.2/test-computertc.js",
+    "lines": 32,
+    "sha256": "0b2ede8bce7d96b1289d782db49615b485025eb0f627437add7f180e2d5af1c9",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/ISTRUZIONI/ISTRUZIONI_URL_CONNESSIONE.txt",
+    "lines": 50,
+    "sha256": "9c136ebd364fa132d5c91e78e41127b131e5c9ec0fa7ec2d6d8bc4a3070669fb",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/ISTRUZIONI/stress-test-showcase.html",
+    "lines": 411,
+    "sha256": "cdb009c8016867267792770abd94f1ed04be76f7f36a216d7f1f81016963332e",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/MIGLIORIE/MIGLIORIE.txt",
+    "lines": 72,
+    "sha256": "fcbc7b4b918a063970a011007720abcb61269144b14ffe89c8ffd12861d3bea0",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": true,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/README.md",
+    "lines": 53,
+    "sha256": "0c82b90d798f0c1f8437c4a7632c8a332b4eebe80733e4bd40db67f5d6f53f98",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/TASK/Task AI_ML.json",
+    "lines": 76,
+    "sha256": "6f636219f5f63f0da00a2cc55c327e170e54e0f40bd83a6dd12315fe0c1ad786",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/TASK/grover-visible.json",
+    "lines": 29,
+    "sha256": "a4d25d306e8459336e723d9949dd4bd02d102c4cc97d247b6548b33cb11f7df8",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/TASK/julia-set.json",
+    "lines": 29,
+    "sha256": "a9fa843209ee93a51d7cb801af3c01a22b4b2db60d2ef3cd909841a52dee1108",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/TASK/mandelbrot-ultra.json",
+    "lines": 18,
+    "sha256": "34b01ac1a9fb122f4a6d7cbd5e2a7eb7b3716cc734fc04668229f642b1da304f",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/TASK/matrix-extreme.json",
+    "lines": 29,
+    "sha256": "ee01534d3c549be46d007fb3ee70deced172b1a783e833f5a11fe042c0cd3d0f",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/TASK/primes-mega.json",
+    "lines": 18,
+    "sha256": "4da1f012bbf98ab0e82fe3b612a5b22ade5626aa34721ab208bdc2efb797c2ba",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/TASK/raytracer-serious.json",
+    "lines": 18,
+    "sha256": "33e20a9ed481870a1711c567a25e5a75b46e66f6ef426ab3eea67b6491a3c210",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/TASK/shor-visible.json",
+    "lines": 29,
+    "sha256": "6aa4aa2c2758527626a7caef7435f89064b82850ab31673ee697c3a73b093e97",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/client - Copia (10).html",
+    "lines": 1631,
+    "sha256": "adb4f2568a53a53291daa86fcc975b9ea0c4f677130073870a84649c713b0fbd",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": true,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/client - Copia (11).html",
+    "lines": 1088,
+    "sha256": "b837219211614e8cfec32eb8552c7e42bed8ab79e20141bd58f172689060a292",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/client - Copia (2).html",
+    "lines": 2345,
+    "sha256": "c82609b5b4cf995d8cddf7fc4e1ccb826e2259d7b2193aefd1d363f1a7c5a504",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": true,
+      "eval": true,
+      "leases": true,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/client - Copia (3).html",
+    "lines": 661,
+    "sha256": "f29742fce4030620e5523139d82f8a95aa051b0f2cde9a80ebc3c809f40ee48f",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": true,
+      "eval": true,
+      "leases": true,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/client - Copia (4).html",
+    "lines": 1343,
+    "sha256": "0122eb45cfb53eaae0be1af1e77dad9fb1b7350fb228b9ab2f54794f98740b33",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": true,
+      "eval": true,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/client - Copia (5).html",
+    "lines": 1444,
+    "sha256": "68e1f979411bd73c32881ccc6e2dbe19ca1959c35bb1efa01b03c5408cfdd16e",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": true,
+      "eval": true,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/client - Copia (6).html",
+    "lines": 1515,
+    "sha256": "e2e80d772520a709d26779ee50ba7542d898517ff0e8d414415ff2107354416e",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": true,
+      "eval": true,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/client - Copia (7).html",
+    "lines": 1620,
+    "sha256": "c57ae7aa7175a9612908991d3d208a0aedee594f882762ca13b7d2f0e9809b60",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": true,
+      "eval": true,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/client - Copia (8).html",
+    "lines": 728,
+    "sha256": "9df63d860f2d45a3b057287bbafd7876a3fc9b8b1203f7acbefacc837fe566e1",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/client - Copia (9).html",
+    "lines": 743,
+    "sha256": "65cf7481bc42a4a0adc6a2403ef94ea0cdef343486820d11609f437105481c49",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": true,
+      "eval": true,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/client - Copia.html",
+    "lines": 2028,
+    "sha256": "c91529a192f23a1466b322c0a394b35b3832452791a73019ef4fc7321ee6b62d",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": true,
+      "eval": true,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/client.html",
+    "lines": 1070,
+    "sha256": "8ead078e6f5ba98aa7a790fd077069aa97322c05288f8cea05f196781c065e60",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/ngrok token.txt",
+    "lines": 1,
+    "sha256": "d83aedcf38b3feb86c0e9730f8e73b83d6d296f85d555b04f5885f1c2e04cc28",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/package.json",
+    "lines": 8,
+    "sha256": "e7bb606226cff0db3af86e84ca8d6551203b8616585969216532463f8419101c",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/prove/PROVAclient.html",
+    "lines": 1996,
+    "sha256": "7e7eeeac593f379eb4840fdb65bf439604c82e27df26928a1d8b544723e6ee9e",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": true,
+      "eval": true,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/prove/client - Copia.html",
+    "lines": 1997,
+    "sha256": "050fecf97977c6c87cb3410a0f0cdcd21b7ae4259b70531ce8cf0ba77eb11f16",
+    "features": {
+      "webrtc": true,
+      "socketio": true,
+      "worker": false,
+      "benchmark": true,
+      "eval": true,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": true
+    }
+  },
+  {
+    "file": "macn-p2p/signaling-server.js",
+    "lines": 130,
+    "sha256": "88bd8073bfa9b753e80891e53765e18719ea759fcde0fe61bc02c9f8d99c7688",
+    "features": {
+      "webrtc": false,
+      "socketio": true,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/start-coturn.sh",
+    "lines": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/start-macn.bat",
+    "lines": 56,
+    "sha256": "c3ccaba8befeeab715cbb55bc34b75c24c27d31bd53c29b5da750b6add1f4c53",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/start-tunnel.bat",
+    "lines": 51,
+    "sha256": "103f1b0e6b16b70b77314c1ab9bca1a3533eb1dc1c05d38106ba4be0df26e0b4",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": true,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/stop-macn.bat",
+    "lines": 24,
+    "sha256": "cc3f2d42d72b35ebd0d6111fba659e9ecf0f1efa6b5d82b357d41fac109bdd66",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn-p2p/tunnel-temp.txt",
+    "lines": 31,
+    "sha256": "fc868e596e4bd4efe980d530a1969c5015efc743b08b08f8ee3048486b549ddd",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": true,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": false
+    }
+  },
+  {
+    "file": "macn_mattone_1.html",
+    "lines": 534,
+    "sha256": "c5b17d4c6bf1f0544faa87bc1d162850cf4195f169d751b6280cc8f68fd6c7dc",
+    "features": {
+      "webrtc": false,
+      "socketio": false,
+      "worker": false,
+      "benchmark": false,
+      "eval": false,
+      "leases": false,
+      "backpressure": false,
+      "timeouts": false,
+      "ui": true
+    }
+  }
+]
