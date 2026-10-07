@@ -1,0 +1,3323 @@
+{
+  "version": "1.0.0-alpha.1",
+  "transport": "socket.io-websocket",
+  "status": "completed",
+  "params": {
+    "samples": 500000000,
+    "seed": 42
+  },
+  "repeats": 3,
+  "baselineId": "w5LutwltEA50yPozAAAC",
+  "nodeIds": [
+    "f1qyf78G7ZDrBg5aAAAA",
+    "yraNxVc2ARza44fAAAAB",
+    "w5LutwltEA50yPozAAAC"
+  ],
+  "round": 3,
+  "phase": "distributed",
+  "runs": [
+    {
+      "nodes": [
+        {
+          "id": "f1qyf78G7ZDrBg5aAAAA",
+          "name": "PC test",
+          "rate": 147058.82353343998,
+          "initialRate": 147058.82353343998,
+          "connected": true,
+          "lastSeen": 4707.473716,
+          "busy": null,
+          "assigned": 0,
+          "completed": 0,
+          "units": 0,
+          "computeMs": 0,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.5335770000001503,
+          "cooldown": 0,
+          "latency": {
+            "samples": 9,
+            "p50": 0.7963550000004034,
+            "p95": 1.1952580000001944,
+            "p99": 1.1952580000001944
+          },
+          "state": "ready",
+          "capacityShare": 0,
+          "loadPercent": 0,
+          "utilizationPercent": 0
+        },
+        {
+          "id": "yraNxVc2ARza44fAAAAB",
+          "name": "Notebook test",
+          "rate": 138888.88888529583,
+          "initialRate": 138888.88888529583,
+          "connected": true,
+          "lastSeen": 4889.435193,
+          "busy": null,
+          "assigned": 0,
+          "completed": 0,
+          "units": 0,
+          "computeMs": 0,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.5425810000006095,
+          "cooldown": 0,
+          "latency": {
+            "samples": 9,
+            "p50": 0.9604039999999259,
+            "p95": 1.922497999999905,
+            "p99": 1.922497999999905
+          },
+          "state": "ready",
+          "capacityShare": 0,
+          "loadPercent": 0,
+          "utilizationPercent": 0
+        },
+        {
+          "id": "w5LutwltEA50yPozAAAC",
+          "name": "Smartphone viewport",
+          "rate": 134656.03199639107,
+          "initialRate": 166666.66666666666,
+          "connected": true,
+          "lastSeen": 4573.977343,
+          "busy": null,
+          "assigned": 100,
+          "completed": 100,
+          "units": 500000000,
+          "computeMs": 3341.6999999987893,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.45076199999948585,
+          "cooldown": 0,
+          "lastRate": 125876.80749025279,
+          "latency": {
+            "samples": 8,
+            "p50": 0.5209689999996954,
+            "p95": 1.1318619999997281,
+            "p99": 1.1318619999997281
+          },
+          "state": "ready",
+          "capacityShare": 100,
+          "loadPercent": 0,
+          "utilizationPercent": 95.64477927044601
+        }
+      ],
+      "job": {
+        "id": "job-1",
+        "workloadId": "monte-carlo-v1",
+        "params": {
+          "samples": 500000000,
+          "seed": 42
+        },
+        "mode": "baseline",
+        "nodeIds": [
+          "w5LutwltEA50yPozAAAC"
+        ],
+        "status": "completed",
+        "completed": 100,
+        "created": 100,
+        "units": 500000000,
+        "percent": 100,
+        "reassigned": 0,
+        "duplicates": 0,
+        "rejected": 0,
+        "elapsedMs": 3493.865557,
+        "throughput": 143107967.90627626,
+        "result": {
+          "hits": 392697127,
+          "count": 500000000,
+          "pi": 3.141577016
+        }
+      }
+    },
+    {
+      "nodes": [
+        {
+          "id": "f1qyf78G7ZDrBg5aAAAA",
+          "name": "PC test",
+          "rate": 143055.05409542465,
+          "initialRate": 147058.82353343998,
+          "connected": true,
+          "lastSeen": 6207.81154,
+          "busy": null,
+          "assigned": 34,
+          "completed": 34,
+          "units": 170000000,
+          "computeMs": 1189.3000000005122,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.71209700000054,
+          "cooldown": 0,
+          "lastRate": 129380.43667915986,
+          "latency": {
+            "samples": 12,
+            "p50": 0.6234530000001541,
+            "p95": 1.1952580000001944,
+            "p99": 1.1952580000001944
+          },
+          "state": "ready",
+          "capacityShare": 35.795396832295744,
+          "loadPercent": 0,
+          "utilizationPercent": 93.5184012037288
+        },
+        {
+          "id": "yraNxVc2ARza44fAAAAB",
+          "name": "Notebook test",
+          "rate": 125805.72701702245,
+          "initialRate": 138888.88888529583,
+          "connected": true,
+          "lastSeen": 6390.269191,
+          "busy": null,
+          "assigned": 34,
+          "completed": 34,
+          "units": 170000000,
+          "computeMs": 1211.6999999999534,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.755022000000281,
+          "cooldown": 0,
+          "lastRate": 116638.35659354863,
+          "latency": {
+            "samples": 12,
+            "p50": 0.8825449999999364,
+            "p95": 1.922497999999905,
+            "p99": 1.922497999999905
+          },
+          "state": "ready",
+          "capacityShare": 31.479250773942542,
+          "loadPercent": 0,
+          "utilizationPercent": 95.2797836866266
+        },
+        {
+          "id": "w5LutwltEA50yPozAAAC",
+          "name": "Smartphone viewport",
+          "rate": 130785.72864870701,
+          "initialRate": 166666.66666666666,
+          "connected": true,
+          "lastSeen": 6074.448027,
+          "busy": null,
+          "assigned": 32,
+          "completed": 32,
+          "units": 160000000,
+          "computeMs": 1198.3999999994412,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.9141829999998663,
+          "cooldown": 0,
+          "lastRate": 136525.4065590101,
+          "latency": {
+            "samples": 11,
+            "p50": 0.5634230000000571,
+            "p95": 1.1318619999997281,
+            "p99": 1.1318619999997281
+          },
+          "state": "ready",
+          "capacityShare": 32.72535239376172,
+          "loadPercent": 0,
+          "utilizationPercent": 94.23396283733966
+        }
+      ],
+      "job": {
+        "id": "job-2",
+        "workloadId": "monte-carlo-v1",
+        "params": {
+          "samples": 500000000,
+          "seed": 42
+        },
+        "mode": "distributed",
+        "nodeIds": [
+          "f1qyf78G7ZDrBg5aAAAA",
+          "yraNxVc2ARza44fAAAAB",
+          "w5LutwltEA50yPozAAAC"
+        ],
+        "status": "completed",
+        "completed": 100,
+        "created": 100,
+        "units": 500000000,
+        "percent": 100,
+        "reassigned": 0,
+        "duplicates": 0,
+        "rejected": 0,
+        "elapsedMs": 1271.7283280000001,
+        "throughput": 393165732.79949766,
+        "result": {
+          "hits": 392697127,
+          "count": 500000000,
+          "pi": 3.141577016
+        }
+      }
+    },
+    {
+      "nodes": [
+        {
+          "id": "f1qyf78G7ZDrBg5aAAAA",
+          "name": "PC test",
+          "rate": 143055.05409542465,
+          "initialRate": 147058.82353343998,
+          "connected": true,
+          "lastSeen": 9707.114343,
+          "busy": null,
+          "assigned": 0,
+          "completed": 0,
+          "units": 0,
+          "computeMs": 0,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.41640000000006694,
+          "cooldown": 0,
+          "lastRate": 129380.43667915986,
+          "latency": {
+            "samples": 19,
+            "p50": 0.6234530000001541,
+            "p95": 1.1952580000001944,
+            "p99": 1.1952580000001944
+          },
+          "state": "ready",
+          "capacityShare": 0,
+          "loadPercent": 0,
+          "utilizationPercent": 0
+        },
+        {
+          "id": "yraNxVc2ARza44fAAAAB",
+          "name": "Notebook test",
+          "rate": 125805.72701702245,
+          "initialRate": 138888.88888529583,
+          "connected": true,
+          "lastSeen": 9891.499014,
+          "busy": null,
+          "assigned": 0,
+          "completed": 0,
+          "units": 0,
+          "computeMs": 0,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.8463809999993828,
+          "cooldown": 0,
+          "lastRate": 116638.35659354863,
+          "latency": {
+            "samples": 19,
+            "p50": 0.755022000000281,
+            "p95": 1.922497999999905,
+            "p99": 1.922497999999905
+          },
+          "state": "ready",
+          "capacityShare": 0,
+          "loadPercent": 0,
+          "utilizationPercent": 0
+        },
+        {
+          "id": "w5LutwltEA50yPozAAAC",
+          "name": "Smartphone viewport",
+          "rate": 154417.3505666102,
+          "initialRate": 166666.66666666666,
+          "connected": true,
+          "lastSeen": 10075.233942,
+          "busy": null,
+          "assigned": 100,
+          "completed": 100,
+          "units": 500000000,
+          "computeMs": 3376.700000000419,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.7479720000010275,
+          "cooldown": 0,
+          "lastRate": 156926.9436029664,
+          "latency": {
+            "samples": 19,
+            "p50": 0.6073890000006941,
+            "p95": 1.1318619999997281,
+            "p99": 1.1318619999997281
+          },
+          "state": "ready",
+          "capacityShare": 100,
+          "loadPercent": 0,
+          "utilizationPercent": 95.72375134223614
+        }
+      ],
+      "job": {
+        "id": "job-3",
+        "workloadId": "monte-carlo-v1",
+        "params": {
+          "samples": 500000000,
+          "seed": 42
+        },
+        "mode": "baseline",
+        "nodeIds": [
+          "w5LutwltEA50yPozAAAC"
+        ],
+        "status": "completed",
+        "completed": 100,
+        "created": 100,
+        "units": 500000000,
+        "percent": 100,
+        "reassigned": 0,
+        "duplicates": 0,
+        "rejected": 0,
+        "elapsedMs": 3527.5466670000005,
+        "throughput": 141741569.1980695,
+        "result": {
+          "hits": 392697127,
+          "count": 500000000,
+          "pi": 3.141577016
+        }
+      }
+    },
+    {
+      "nodes": [
+        {
+          "id": "f1qyf78G7ZDrBg5aAAAA",
+          "name": "PC test",
+          "rate": 121085.72699702717,
+          "initialRate": 147058.82353343998,
+          "connected": true,
+          "lastSeen": 11208.046317,
+          "busy": null,
+          "assigned": 32,
+          "completed": 32,
+          "units": 160000000,
+          "computeMs": 1269.8000000000466,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.49955600000066624,
+          "cooldown": 0,
+          "lastRate": 121788.93723855747,
+          "latency": {
+            "samples": 22,
+            "p50": 0.5604480000001786,
+            "p95": 1.1952580000001944,
+            "p99": 5.893688000000111
+          },
+          "state": "ready",
+          "capacityShare": 30.832164297075813,
+          "loadPercent": 0,
+          "utilizationPercent": 95.49367038954459
+        },
+        {
+          "id": "yraNxVc2ARza44fAAAAB",
+          "name": "Notebook test",
+          "rate": 132653.02608388744,
+          "initialRate": 138888.88888529583,
+          "connected": true,
+          "lastSeen": 11392.503398,
+          "busy": null,
+          "assigned": 36,
+          "completed": 36,
+          "units": 180000000,
+          "computeMs": 1276.1000000007916,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.4586540000000241,
+          "cooldown": 0,
+          "lastRate": 147447.41251171363,
+          "latency": {
+            "samples": 22,
+            "p50": 0.6526770000000397,
+            "p95": 1.817269000000124,
+            "p99": 1.922497999999905
+          },
+          "state": "ready",
+          "capacityShare": 33.77755575455327,
+          "loadPercent": 0,
+          "utilizationPercent": 95.96745375978027
+        },
+        {
+          "id": "w5LutwltEA50yPozAAAC",
+          "name": "Smartphone viewport",
+          "rate": 138986.60291529482,
+          "initialRate": 166666.66666666666,
+          "connected": true,
+          "lastSeen": 11576.32658,
+          "busy": null,
+          "assigned": 32,
+          "completed": 32,
+          "units": 160000000,
+          "computeMs": 1254.0999999998603,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.801021999999648,
+          "cooldown": 0,
+          "lastRate": 140571.72375597953,
+          "latency": {
+            "samples": 22,
+            "p50": 0.6073890000006941,
+            "p95": 1.0992530000003171,
+            "p99": 1.1318619999997281
+          },
+          "state": "ready",
+          "capacityShare": 35.39027994837092,
+          "loadPercent": 0,
+          "utilizationPercent": 94.3129721495591
+        }
+      ],
+      "job": {
+        "id": "job-4",
+        "workloadId": "monte-carlo-v1",
+        "params": {
+          "samples": 500000000,
+          "seed": 42
+        },
+        "mode": "distributed",
+        "nodeIds": [
+          "f1qyf78G7ZDrBg5aAAAA",
+          "yraNxVc2ARza44fAAAAB",
+          "w5LutwltEA50yPozAAAC"
+        ],
+        "status": "completed",
+        "completed": 100,
+        "created": 100,
+        "units": 500000000,
+        "percent": 100,
+        "reassigned": 0,
+        "duplicates": 0,
+        "rejected": 0,
+        "elapsedMs": 1329.7216399999998,
+        "throughput": 376018547.76162034,
+        "result": {
+          "hits": 392697127,
+          "count": 500000000,
+          "pi": 3.141577016
+        }
+      }
+    },
+    {
+      "nodes": [
+        {
+          "id": "f1qyf78G7ZDrBg5aAAAA",
+          "name": "PC test",
+          "rate": 121085.72699702717,
+          "initialRate": 147058.82353343998,
+          "connected": true,
+          "lastSeen": 15212.978846,
+          "busy": null,
+          "assigned": 0,
+          "completed": 0,
+          "units": 0,
+          "computeMs": 0,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.568120000001727,
+          "cooldown": 0,
+          "lastRate": 121788.93723855747,
+          "latency": {
+            "samples": 30,
+            "p50": 0.5516050000001087,
+            "p95": 1.1952580000001944,
+            "p99": 5.893688000000111
+          },
+          "state": "ready",
+          "capacityShare": 0,
+          "loadPercent": 0,
+          "utilizationPercent": 0
+        },
+        {
+          "id": "yraNxVc2ARza44fAAAAB",
+          "name": "Notebook test",
+          "rate": 132653.02608388744,
+          "initialRate": 138888.88888529583,
+          "connected": true,
+          "lastSeen": 15393.832818,
+          "busy": null,
+          "assigned": 0,
+          "completed": 0,
+          "units": 0,
+          "computeMs": 0,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.7462589999995544,
+          "cooldown": 0,
+          "lastRate": 147447.41251171363,
+          "latency": {
+            "samples": 30,
+            "p50": 0.6265480000001844,
+            "p95": 1.817269000000124,
+            "p99": 1.922497999999905
+          },
+          "state": "ready",
+          "capacityShare": 0,
+          "loadPercent": 0,
+          "utilizationPercent": 0
+        },
+        {
+          "id": "w5LutwltEA50yPozAAAC",
+          "name": "Smartphone viewport",
+          "rate": 134575.8670100745,
+          "initialRate": 166666.66666666666,
+          "connected": true,
+          "lastSeen": 15077.355655,
+          "busy": null,
+          "assigned": 100,
+          "completed": 100,
+          "units": 500000000,
+          "computeMs": 3379,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.3424479999994219,
+          "cooldown": 0,
+          "lastRate": 138247.4590808238,
+          "latency": {
+            "samples": 29,
+            "p50": 0.5758009999990463,
+            "p95": 1.0992530000003171,
+            "p99": 1.1318619999997281
+          },
+          "state": "ready",
+          "capacityShare": 100,
+          "loadPercent": 0,
+          "utilizationPercent": 95.75569612960277
+        }
+      ],
+      "job": {
+        "id": "job-5",
+        "workloadId": "monte-carlo-v1",
+        "params": {
+          "samples": 500000000,
+          "seed": 42
+        },
+        "mode": "baseline",
+        "nodeIds": [
+          "w5LutwltEA50yPozAAAC"
+        ],
+        "status": "completed",
+        "completed": 100,
+        "created": 100,
+        "units": 500000000,
+        "percent": 100,
+        "reassigned": 0,
+        "duplicates": 0,
+        "rejected": 0,
+        "elapsedMs": 3528.7717979999998,
+        "throughput": 141692358.87777862,
+        "result": {
+          "hits": 392697127,
+          "count": 500000000,
+          "pi": 3.141577016
+        }
+      }
+    },
+    {
+      "nodes": [
+        {
+          "id": "f1qyf78G7ZDrBg5aAAAA",
+          "name": "PC test",
+          "rate": 137807.3920205262,
+          "initialRate": 147058.82353343998,
+          "connected": true,
+          "lastSeen": 16213.282259,
+          "busy": null,
+          "assigned": 33,
+          "completed": 33,
+          "units": 165000000,
+          "computeMs": 1125.299999999581,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.37838299999930314,
+          "cooldown": 0,
+          "lastRate": 154588.43041017267,
+          "latency": {
+            "samples": 32,
+            "p50": 0.5513650000011694,
+            "p95": 1.1952580000001944,
+            "p99": 5.893688000000111
+          },
+          "state": "ready",
+          "capacityShare": 32.60003760507165,
+          "loadPercent": 0,
+          "utilizationPercent": 97.17697443634167
+        },
+        {
+          "id": "yraNxVc2ARza44fAAAAB",
+          "name": "Notebook test",
+          "rate": 149853.22728802654,
+          "initialRate": 138888.88888529583,
+          "connected": true,
+          "lastSeen": 16393.699912,
+          "busy": null,
+          "assigned": 35,
+          "completed": 35,
+          "units": 175000000,
+          "computeMs": 1092.5000000009313,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.39615000000048894,
+          "cooldown": 0,
+          "lastRate": 149061.47763391194,
+          "latency": {
+            "samples": 32,
+            "p50": 0.6191969999999856,
+            "p95": 1.817269000000124,
+            "p99": 1.922497999999905
+          },
+          "state": "ready",
+          "capacityShare": 35.44962845028928,
+          "loadPercent": 0,
+          "utilizationPercent": 94.34448109111642
+        },
+        {
+          "id": "w5LutwltEA50yPozAAAC",
+          "name": "Smartphone viewport",
+          "rate": 135060.95448216968,
+          "initialRate": 166666.66666666666,
+          "connected": true,
+          "lastSeen": 16577.213773,
+          "busy": null,
+          "assigned": 32,
+          "completed": 32,
+          "units": 160000000,
+          "computeMs": 1107.3000000000466,
+          "reassigned": 0,
+          "slow": false,
+          "rttMs": 0.4057839999986754,
+          "cooldown": 0,
+          "lastRate": 147556.87572397254,
+          "latency": {
+            "samples": 32,
+            "p50": 0.5671680000000379,
+            "p95": 1.0992530000003171,
+            "p99": 1.1318619999997281
+          },
+          "state": "ready",
+          "capacityShare": 31.95033394463907,
+          "loadPercent": 0,
+          "utilizationPercent": 95.6225573566211
+        }
+      ],
+      "job": {
+        "id": "job-6",
+        "workloadId": "monte-carlo-v1",
+        "params": {
+          "samples": 500000000,
+          "seed": 42
+        },
+        "mode": "distributed",
+        "nodeIds": [
+          "f1qyf78G7ZDrBg5aAAAA",
+          "yraNxVc2ARza44fAAAAB",
+          "w5LutwltEA50yPozAAAC"
+        ],
+        "status": "completed",
+        "completed": 100,
+        "created": 100,
+        "units": 500000000,
+        "percent": 100,
+        "reassigned": 0,
+        "duplicates": 0,
+        "rejected": 0,
+        "elapsedMs": 1157.9903640000011,
+        "throughput": 431782522.15577114,
+        "result": {
+          "hits": 392697127,
+          "count": 500000000,
+          "pi": 3.141577016
+        }
+      }
+    }
+  ],
+  "pairs": [
+    {
+      "round": 1,
+      "verified": true,
+      "speedup": 2.7473364240416602,
+      "baselineMs": 3493.865557,
+      "distributedMs": 1271.7283280000001,
+      "contributors": [
+        "f1qyf78G7ZDrBg5aAAAA",
+        "yraNxVc2ARza44fAAAAB",
+        "w5LutwltEA50yPozAAAC"
+      ],
+      "cohortChanged": false
+    },
+    {
+      "round": 2,
+      "verified": true,
+      "speedup": 2.6528459497733685,
+      "baselineMs": 3527.5466670000005,
+      "distributedMs": 1329.7216399999998,
+      "contributors": [
+        "f1qyf78G7ZDrBg5aAAAA",
+        "yraNxVc2ARza44fAAAAB",
+        "w5LutwltEA50yPozAAAC"
+      ],
+      "cohortChanged": false
+    },
+    {
+      "round": 3,
+      "verified": true,
+      "speedup": 3.0473239741051907,
+      "baselineMs": 3528.7717979999998,
+      "distributedMs": 1157.9903640000011,
+      "contributors": [
+        "f1qyf78G7ZDrBg5aAAAA",
+        "yraNxVc2ARza44fAAAAB",
+        "w5LutwltEA50yPozAAAC"
+      ],
+      "cohortChanged": false
+    }
+  ],
+  "startedAt": "2026-10-07T07:58:44.247Z",
+  "medianSpeedup": 2.7473364240416602,
+  "methodology": "Warm-up + median of five calibration runs. Each pair: full single-node then full distributed job; coordinator monotonic wall time including dispatch, network, retries and merge. One worker per browser; no claimed physical-device count.",
+  "logs": [
+    {
+      "at": 13493.971647,
+      "type": "task-completed",
+      "taskId": "t-51",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.064667000000554,
+      "rate": 145749.47813851596
+    },
+    {
+      "at": 13494.07955,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-52",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13535.995157,
+      "type": "task-completed",
+      "taskId": "t-52",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 42.002126999999746,
+      "rate": 136401.7174445117
+    },
+    {
+      "at": 13536.119555,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-53",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13569.137743,
+      "type": "task-completed",
+      "taskId": "t-53",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.115695000000414,
+      "rate": 141506.14948711137
+    },
+    {
+      "at": 13569.265656,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-54",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13606.469355,
+      "type": "task-completed",
+      "taskId": "t-54",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 37.312003000000914,
+      "rate": 138880.79442473146
+    },
+    {
+      "at": 13606.585521,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-55",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13641.547619,
+      "type": "task-completed",
+      "taskId": "t-55",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.059486000000106,
+      "rate": 140187.68056302317
+    },
+    {
+      "at": 13641.697536,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-56",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13675.050505,
+      "type": "task-completed",
+      "taskId": "t-56",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.48174400000062,
+      "rate": 143389.28166845682
+    },
+    {
+      "at": 13675.156285,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-57",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13712.705722,
+      "type": "task-completed",
+      "taskId": "t-57",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 37.63686999999845,
+      "rate": 139699.99205053403
+    },
+    {
+      "at": 13712.800876,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-58",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13749.944574,
+      "type": "task-completed",
+      "taskId": "t-58",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 37.21965300000011,
+      "rate": 137823.16558258503
+    },
+    {
+      "at": 13750.092237,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-59",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13783.170025,
+      "type": "task-completed",
+      "taskId": "t-59",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.20329700000002,
+      "rate": 142290.66695416378
+    },
+    {
+      "at": 13783.267703,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-60",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13820.574909,
+      "type": "task-completed",
+      "taskId": "t-60",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 37.38727700000163,
+      "rate": 139296.30063602835
+    },
+    {
+      "at": 13821.023097,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-61",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13853.437671,
+      "type": "task-completed",
+      "taskId": "t-61",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 32.841519999999946,
+      "rate": 143828.80141119205
+    },
+    {
+      "at": 13853.551494,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-62",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13885.413452,
+      "type": "task-completed",
+      "taskId": "t-62",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 31.958183999999164,
+      "rate": 148247.77731422297
+    },
+    {
+      "at": 13885.531801,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-63",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13918.706425,
+      "type": "task-completed",
+      "taskId": "t-63",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.27556800000093,
+      "rate": 148952.1935933396
+    },
+    {
+      "at": 13918.803412,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-64",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13956.917989,
+      "type": "task-completed",
+      "taskId": "t-64",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 38.18333100000018,
+      "rate": 142650.44325880994
+    },
+    {
+      "at": 13957.022807,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-65",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 13991.528655,
+      "type": "task-completed",
+      "taskId": "t-65",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 34.58989499999916,
+      "rate": 143315.59853294562
+    },
+    {
+      "at": 13991.671892,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-66",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14025.404711,
+      "type": "task-completed",
+      "taskId": "t-66",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.85750700000062,
+      "rate": 144842.34684939813
+    },
+    {
+      "at": 14025.506084,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-67",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14058.038767,
+      "type": "task-completed",
+      "taskId": "t-67",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 32.61826199999996,
+      "rate": 147798.45265356428
+    },
+    {
+      "at": 14058.155734,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-68",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14091.485342,
+      "type": "task-completed",
+      "taskId": "t-68",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.42853800000012,
+      "rate": 148419.47392572364
+    },
+    {
+      "at": 14091.56345,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-69",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14127.33956,
+      "type": "task-completed",
+      "taskId": "t-69",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.8375130000004,
+      "rate": 145304.171555461
+    },
+    {
+      "at": 14127.439541,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-70",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14168.026628,
+      "type": "task-completed",
+      "taskId": "t-70",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 40.66618700000072,
+      "rate": 137481.00597753035
+    },
+    {
+      "at": 14168.155864,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-71",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14201.562939,
+      "type": "task-completed",
+      "taskId": "t-71",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.512564999999086,
+      "rate": 141581.87375113904
+    },
+    {
+      "at": 14201.734869,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-72",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14234.962594,
+      "type": "task-completed",
+      "taskId": "t-72",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.376570000000356,
+      "rate": 144460.20840340745
+    },
+    {
+      "at": 14235.057738,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-73",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14268.452866,
+      "type": "task-completed",
+      "taskId": "t-73",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.473126000000775,
+      "rate": 146179.88151503226
+    },
+    {
+      "at": 14268.542952,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-74",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14304.56242,
+      "type": "task-completed",
+      "taskId": "t-74",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 36.092758000000686,
+      "rate": 143503.1040629797
+    },
+    {
+      "at": 14304.932089,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-75",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14337.313153,
+      "type": "task-completed",
+      "taskId": "t-75",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 32.73185399999966,
+      "rate": 146741.75569091155
+    },
+    {
+      "at": 14337.460816,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-76",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14370.110836,
+      "type": "task-completed",
+      "taskId": "t-76",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 32.78081799999927,
+      "rate": 148767.0201243237
+    },
+    {
+      "at": 14370.237859,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-77",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14401.894877,
+      "type": "task-completed",
+      "taskId": "t-77",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 31.76732599999923,
+      "rate": 151786.6117255104
+    },
+    {
+      "at": 14402.085175,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-78",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14433.93828,
+      "type": "task-completed",
+      "taskId": "t-78",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 32.02302299999974,
+      "rate": 153309.47996214387
+    },
+    {
+      "at": 14434.040215,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-79",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14466.378193,
+      "type": "task-completed",
+      "taskId": "t-79",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 32.42224600000009,
+      "rate": 153626.44795650645
+    },
+    {
+      "at": 14466.492246,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-80",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14497.807532,
+      "type": "task-completed",
+      "taskId": "t-80",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 31.411251999999877,
+      "rate": 155569.71100379468
+    },
+    {
+      "at": 14497.914664,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-81",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14531.865948,
+      "type": "task-completed",
+      "taskId": "t-81",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 34.036362999999255,
+      "rate": 152535.9114043619
+    },
+    {
+      "at": 14531.978058,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-82",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14568.861352,
+      "type": "task-completed",
+      "taskId": "t-82",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 36.975564000000304,
+      "rate": 146476.89702257657
+    },
+    {
+      "at": 14568.95906,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-83",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14604.890544,
+      "type": "task-completed",
+      "taskId": "t-83",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 36.01124499999969,
+      "rate": 143805.91469658626
+    },
+    {
+      "at": 14604.979509,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-84",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14640.820842,
+      "type": "task-completed",
+      "taskId": "t-84",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.914223000001584,
+      "rate": 142201.05772400636
+    },
+    {
+      "at": 14640.916427,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-85",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14677.519522,
+      "type": "task-completed",
+      "taskId": "t-85",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 36.67934100000093,
+      "rate": 140141.4683658749
+    },
+    {
+      "at": 14677.657551,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-86",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14711.279432,
+      "type": "task-completed",
+      "taskId": "t-86",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.73970899999949,
+      "rate": 142959.6217019325
+    },
+    {
+      "at": 14711.434486,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-87",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14743.539282,
+      "type": "task-completed",
+      "taskId": "t-87",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 32.24154300000009,
+      "rate": 147201.55340388886
+    },
+    {
+      "at": 14743.694677,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-88",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14779.008071,
+      "type": "task-completed",
+      "taskId": "t-88",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.44902000000002,
+      "rate": 145047.67767683254
+    },
+    {
+      "at": 14779.111728,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-89",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14815.961236,
+      "type": "task-completed",
+      "taskId": "t-89",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 36.932182999998986,
+      "rate": 141665.13780666076
+    },
+    {
+      "at": 14816.055128,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-90",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14853.176353,
+      "type": "task-completed",
+      "taskId": "t-90",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 37.19436499999938,
+      "rate": 139132.4774110698
+    },
+    {
+      "at": 14853.323725,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-91",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14888.187655,
+      "type": "task-completed",
+      "taskId": "t-91",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 34.992473999998765,
+      "rate": 140446.86405813013
+    },
+    {
+      "at": 14888.29038,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-92",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14932.088695,
+      "type": "task-completed",
+      "taskId": "t-92",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 43.882362000000285,
+      "rate": 131169.80997368292
+    },
+    {
+      "at": 14932.272143,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-93",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 14966.126125,
+      "type": "task-completed",
+      "taskId": "t-93",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 34.01833099999931,
+      "rate": 136703.2294553115
+    },
+    {
+      "at": 14966.353269,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-94",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15002.774104,
+      "type": "task-completed",
+      "taskId": "t-94",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 36.627307000000656,
+      "rate": 136635.65955171664
+    },
+    {
+      "at": 15003.017342,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-95",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15037.950776,
+      "type": "task-completed",
+      "taskId": "t-95",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.154608999999255,
+      "rate": 138593.28008878013
+    },
+    {
+      "at": 15038.144609,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-96",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15074.915784,
+      "type": "task-completed",
+      "taskId": "t-96",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 36.94226400000116,
+      "rate": 137456.848938187
+    },
+    {
+      "at": 15075.036307,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-97",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15114.423749,
+      "type": "task-completed",
+      "taskId": "t-97",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 39.49003799999991,
+      "rate": 133661.9256267625
+    },
+    {
+      "at": 15114.528567,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-98",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15152.720291,
+      "type": "task-completed",
+      "taskId": "t-98",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 38.277634000000035,
+      "rate": 132598.85589505563
+    },
+    {
+      "at": 15152.826342,
+      "type": "task-assigned",
+      "jobId": "job-5",
+      "taskId": "t-99",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15188.908874,
+      "type": "task-completed",
+      "taskId": "t-99",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 36.16703000000052,
+      "rate": 134575.8670100745
+    },
+    {
+      "at": 15188.972531,
+      "type": "job-completed",
+      "jobId": "job-5",
+      "totalMs": 3528.7717979999998,
+      "result": {
+        "hits": 392697127,
+        "count": 500000000,
+        "pi": 3.141577016
+      }
+    },
+    {
+      "at": 15410.275992,
+      "type": "job-start",
+      "jobId": "job-6",
+      "mode": "distributed",
+      "params": {
+        "samples": 500000000,
+        "seed": 42
+      }
+    },
+    {
+      "at": 15410.392859,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-0",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15410.419429,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-1",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15410.438909,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-2",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15444.265934,
+      "type": "task-completed",
+      "taskId": "t-0",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 33.970814000000246,
+      "rate": 130220.53170159538
+    },
+    {
+      "at": 15444.441039,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-3",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15445.339729,
+      "type": "task-completed",
+      "taskId": "t-1",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 34.939157999999225,
+      "rate": 136311.53545228625
+    },
+    {
+      "at": 15445.49222,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-4",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15447.762614,
+      "type": "task-completed",
+      "taskId": "t-2",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 37.33781699999963,
+      "rate": 134343.68462877843
+    },
+    {
+      "at": 15447.805669,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-5",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15477.033813,
+      "type": "task-completed",
+      "taskId": "t-3",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 32.74985200000083,
+      "rate": 138078.70158871307
+    },
+    {
+      "at": 15477.132383,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-6",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15477.1704,
+      "type": "task-completed",
+      "taskId": "t-4",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 31.82169800000156,
+      "rate": 143596.42074414852
+    },
+    {
+      "at": 15477.193926,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-7",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15482.814253,
+      "type": "task-completed",
+      "taskId": "t-5",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.03844899999967,
+      "rate": 137268.5281394566
+    },
+    {
+      "at": 15482.89874,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-8",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15507.651094,
+      "type": "task-completed",
+      "taskId": "t-7",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 30.445810999999594,
+      "rate": 150816.84524890338
+    },
+    {
+      "at": 15507.847231,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-9",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15511.690294,
+      "type": "task-completed",
+      "taskId": "t-6",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 34.64289099999951,
+      "rate": 140266.57058048586
+    },
+    {
+      "at": 15511.795674,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-10",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15515.734943,
+      "type": "task-completed",
+      "taskId": "t-8",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 32.902233000000706,
+      "rate": 142412.4226664923
+    },
+    {
+      "at": 15515.821524,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-11",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15538.446299,
+      "type": "task-completed",
+      "taskId": "t-9",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 30.775755000000572,
+      "rate": 154893.89233552595
+    },
+    {
+      "at": 15538.532599,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-12",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15545.929799,
+      "type": "task-completed",
+      "taskId": "t-10",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 34.20613500000036,
+      "rate": 142333.68406050594
+    },
+    {
+      "at": 15545.987316,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-13",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15551.273723,
+      "type": "task-completed",
+      "taskId": "t-11",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.52606100000048,
+      "rate": 141827.687275122
+    },
+    {
+      "at": 15551.342277,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-14",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15570.324802,
+      "type": "task-completed",
+      "taskId": "t-12",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 31.862528999999995,
+      "rate": 155604.47944045253
+    },
+    {
+      "at": 15570.398434,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-15",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15581.314607,
+      "type": "task-completed",
+      "taskId": "t-13",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 35.374431000000186,
+      "rate": 141987.655031206
+    },
+    {
+      "at": 15581.365694,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-16",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15585.550705,
+      "type": "task-completed",
+      "taskId": "t-14",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 34.26466299999993,
+      "rate": 143261.02202022073
+    },
+    {
+      "at": 15585.59367,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-17",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15601.593573,
+      "type": "task-completed",
+      "taskId": "t-15",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 31.251745999999912,
+      "rate": 157139.78297909864
+    },
+    {
+      "at": 15601.775579,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-18",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15619.424026,
+      "type": "task-completed",
+      "taskId": "t-16",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 38.09089200000017,
+      "rate": 138234.71714793376
+    },
+    {
+      "at": 15619.5784,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-19",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15621.298271,
+      "type": "task-completed",
+      "taskId": "t-17",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.737771000000066,
+      "rate": 142087.46367589603
+    },
+    {
+      "at": 15621.386274,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-20",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15636.480663,
+      "type": "task-completed",
+      "taskId": "t-18",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 34.87298799999917,
+      "rate": 152322.96549981047
+    },
+    {
+      "at": 15636.567033,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-21",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15652.335772,
+      "type": "task-completed",
+      "taskId": "t-19",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 32.89420000000064,
+      "rate": 143053.43438432555
+    },
+    {
+      "at": 15652.422213,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-22",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15658.844759,
+      "type": "task-completed",
+      "taskId": "t-20",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 37.53648199999952,
+      "rate": 138978.16235821924
+    },
+    {
+      "at": 15658.919632,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-23",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15670.859875,
+      "type": "task-completed",
+      "taskId": "t-21",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 34.36692299999959,
+      "rate": 149930.98326554836
+    },
+    {
+      "at": 15670.9296,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-24",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15689.513447,
+      "type": "task-completed",
+      "taskId": "t-22",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 37.16297300000042,
+      "rate": 140074.61399087356
+    },
+    {
+      "at": 15689.602331,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-25",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15691.944625,
+      "type": "task-completed",
+      "taskId": "t-23",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.091002999999546,
+      "rate": 143220.27083599527
+    },
+    {
+      "at": 15692.034961,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-26",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15703.72833,
+      "type": "task-completed",
+      "taskId": "t-24",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 32.854434000000765,
+      "rate": 150720.40006120485
+    },
+    {
+      "at": 15703.845878,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-27",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15724.052961,
+      "type": "task-completed",
+      "taskId": "t-25",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 34.52215799999976,
+      "rate": 141740.57923575572
+    },
+    {
+      "at": 15724.103908,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-28",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15724.36921,
+      "type": "task-completed",
+      "taskId": "t-26",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 32.41657199999827,
+      "rate": 147077.90953095056
+    },
+    {
+      "at": 15724.535671,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-29",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15735.835165,
+      "type": "task-completed",
+      "taskId": "t-27",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 32.034395000000586,
+      "rate": 152597.04263424038
+    },
+    {
+      "at": 15735.893272,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-30",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15757.706265,
+      "type": "task-completed",
+      "taskId": "t-29",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.2825529999991,
+      "rate": 148180.74224686253
+    },
+    {
+      "at": 15757.837543,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-31",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15758.558244,
+      "type": "task-completed",
+      "taskId": "t-28",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 34.49358500000017,
+      "rate": 142865.44778055238
+    },
+    {
+      "at": 15758.601159,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-32",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15768.616132,
+      "type": "task-completed",
+      "taskId": "t-30",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 32.768168000000514,
+      "rate": 152593.56562357227
+    },
+    {
+      "at": 15768.691426,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-33",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15791.067481,
+      "type": "task-completed",
+      "taskId": "t-32",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 32.49455500000113,
+      "rate": 146717.71771695444
+    },
+    {
+      "at": 15791.138208,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-34",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15793.834708,
+      "type": "task-completed",
+      "taskId": "t-31",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 36.112960000000385,
+      "rate": 144776.53981826187
+    },
+    {
+      "at": 15793.919166,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-35",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15800.95377,
+      "type": "task-completed",
+      "taskId": "t-33",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 32.307872999999745,
+      "rate": 153352.18137725483
+    },
+    {
+      "at": 15801.00649,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-36",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15823.199828,
+      "type": "task-completed",
+      "taskId": "t-34",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 32.11702400000104,
+      "rate": 149854.75303506845
+    },
+    {
+      "at": 15823.250745,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-37",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15832.194392,
+      "type": "task-completed",
+      "taskId": "t-35",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 38.350469999999405,
+      "rate": 139736.52540771116
+    },
+    {
+      "at": 15832.274353,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-38",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15832.8936,
+      "type": "task-completed",
+      "taskId": "t-36",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 31.930836999999883,
+      "rate": 154484.87240245283
+    },
+    {
+      "at": 15832.958769,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-39",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15855.950415,
+      "type": "task-completed",
+      "taskId": "t-37",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 32.7376379999987,
+      "rate": 150860.88151310815
+    },
+    {
+      "at": 15856.082135,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-40",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15864.612917,
+      "type": "task-completed",
+      "taskId": "t-39",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 31.70994299999984,
+      "rate": 155602.9042328661
+    },
+    {
+      "at": 15864.777967,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-41",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15868.996991,
+      "type": "task-completed",
+      "taskId": "t-38",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 36.793093999998746,
+      "rate": 138392.01520980019
+    },
+    {
+      "at": 15869.070022,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-42",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15888.519179,
+      "type": "task-completed",
+      "taskId": "t-40",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 32.55691500000103,
+      "rate": 151811.59463544723
+    },
+    {
+      "at": 15888.575394,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-43",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15897.081544,
+      "type": "task-completed",
+      "taskId": "t-41",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 32.456749000000855,
+      "rate": 155059.79554921278
+    },
+    {
+      "at": 15897.152692,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-44",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15904.423512,
+      "type": "task-completed",
+      "taskId": "t-42",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.416456000000835,
+      "rate": 139366.86850680236
+    },
+    {
+      "at": 15904.510414,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-45",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15924.733121,
+      "type": "task-completed",
+      "taskId": "t-43",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 36.198598999999376,
+      "rate": 147021.94895839613
+    },
+    {
+      "at": 15924.855757,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-46",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15928.346829,
+      "type": "task-completed",
+      "taskId": "t-44",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 31.252636000001075,
+      "rate": 156784.14379340733
+    },
+    {
+      "at": 15928.4598,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-47",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15939.991773,
+      "type": "task-completed",
+      "taskId": "t-45",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.55518099999972,
+      "rate": 139807.73302365348
+    },
+    {
+      "at": 15940.082059,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-48",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15955.992928,
+      "type": "task-completed",
+      "taskId": "t-46",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 31.21938500000033,
+      "rate": 151619.18270294621
+    },
+    {
+      "at": 15956.069243,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-49",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15958.958986,
+      "type": "task-completed",
+      "taskId": "t-47",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 30.597405000000435,
+      "rate": 159104.08625817462
+    },
+    {
+      "at": 15959.032106,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-50",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15974.508813,
+      "type": "task-completed",
+      "taskId": "t-48",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 34.499885000001086,
+      "rate": 141599.83322922178
+    },
+    {
+      "at": 15974.576295,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-51",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15989.667759,
+      "type": "task-completed",
+      "taskId": "t-49",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 33.65829600000143,
+      "rate": 150545.5940179183
+    },
+    {
+      "at": 15989.74799,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-52",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 15990.977561,
+      "type": "task-completed",
+      "taskId": "t-50",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 32.006617000000915,
+      "rate": 158093.8500560738
+    },
+    {
+      "at": 15991.026194,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-53",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16008.555567,
+      "type": "task-completed",
+      "taskId": "t-51",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 34.030940000000555,
+      "rate": 143463.68418303595
+    },
+    {
+      "at": 16008.910314,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-54",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16022.044837,
+      "type": "task-completed",
+      "taskId": "t-53",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 31.054356999999072,
+      "rate": 159113.80352988193
+    },
+    {
+      "at": 16022.355928,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-55",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16022.433525,
+      "type": "task-completed",
+      "taskId": "t-52",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 32.7508940000007,
+      "rate": 151288.291999024
+    },
+    {
+      "at": 16022.517863,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-56",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16045.604283,
+      "type": "task-completed",
+      "taskId": "t-54",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 37.03081899999961,
+      "rate": 140509.3287117381
+    },
+    {
+      "at": 16045.748491,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-57",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16052.839945,
+      "type": "task-completed",
+      "taskId": "t-55",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 30.780876999999236,
+      "rate": 160277.45310980236
+    },
+    {
+      "at": 16052.90906,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-58",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16055.06055,
+      "type": "task-completed",
+      "taskId": "t-56",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 32.61833200000001,
+      "rate": 151988.2018641885
+    },
+    {
+      "at": 16055.149254,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-59",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16078.178298,
+      "type": "task-completed",
+      "taskId": "t-57",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 32.556008000001384,
+      "rate": 145084.58282873654
+    },
+    {
+      "at": 16078.237448,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-60",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16084.836703,
+      "type": "task-completed",
+      "taskId": "t-58",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 31.984268999998676,
+      "rate": 158894.74177709973
+    },
+    {
+      "at": 16084.952077,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-61",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16089.887365,
+      "type": "task-completed",
+      "taskId": "t-59",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 34.788597000000664,
+      "rate": 149096.17071407344
+    },
+    {
+      "at": 16090.005373,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-62",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16115.554911,
+      "type": "task-completed",
+      "taskId": "t-60",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 37.36036799999965,
+      "rate": 141146.05920491111
+    },
+    {
+      "at": 16115.797828,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-63",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16115.850157,
+      "type": "task-completed",
+      "taskId": "t-61",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 31.000985000000583,
+      "rate": 159731.40141085675
+    },
+    {
+      "at": 16115.928235,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-64",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16122.969909,
+      "type": "task-completed",
+      "taskId": "t-62",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 33.072659999999814,
+      "rate": 149826.3074353118
+    },
+    {
+      "at": 16123.090231,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-65",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16146.027926,
+      "type": "task-completed",
+      "taskId": "t-64",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 30.16241600000103,
+      "rate": 161844.63590221523
+    },
+    {
+      "at": 16146.124092,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-66",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16149.538809,
+      "type": "task-completed",
+      "taskId": "t-63",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.96798399999898,
+      "rate": 143264.0395284604
+    },
+    {
+      "at": 16149.686833,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-67",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16156.619322,
+      "type": "task-completed",
+      "taskId": "t-65",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 33.63974800000142,
+      "rate": 149408.89262402608
+    },
+    {
+      "at": 16156.70389,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-68",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16177.749342,
+      "type": "task-completed",
+      "taskId": "t-66",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 31.70639300000039,
+      "rate": 160392.9295917509
+    },
+    {
+      "at": 16177.839038,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-69",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16183.906048,
+      "type": "task-completed",
+      "taskId": "t-67",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 34.355900999998994,
+      "rate": 144059.0177880932
+    },
+    {
+      "at": 16183.960861,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-70",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16194.10927,
+      "type": "task-completed",
+      "taskId": "t-68",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 37.45079900000019,
+      "rate": 143843.75522158368
+    },
+    {
+      "at": 16194.340149,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-71",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16211.562387,
+      "type": "task-completed",
+      "taskId": "t-69",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 33.792843999999604,
+      "rate": 156041.51611086907
+    },
+    {
+      "at": 16211.654136,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-72",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16223.858912,
+      "type": "task-completed",
+      "taskId": "t-70",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 39.939824000000954,
+      "rate": 137454.2782272904
+    },
+    {
+      "at": 16223.91027,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-73",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16236.274808,
+      "type": "task-completed",
+      "taskId": "t-71",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 42.1534300000003,
+      "rate": 135013.44928124693
+    },
+    {
+      "at": 16236.330221,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-74",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16245.125018,
+      "type": "task-completed",
+      "taskId": "t-72",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 33.550662999999986,
+      "rate": 153586.90851143972
+    },
+    {
+      "at": 16245.169355,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-75",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16263.424141,
+      "type": "task-completed",
+      "taskId": "t-73",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 39.552418999999645,
+      "rate": 133590.3622926945
+    },
+    {
+      "at": 16263.494527,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-76",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16276.445121,
+      "type": "task-completed",
+      "taskId": "t-74",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 40.157483999999386,
+      "rate": 131337.1694063986
+    },
+    {
+      "at": 16276.501046,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-77",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16277.259363,
+      "type": "task-completed",
+      "taskId": "t-75",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 32.12268799999947,
+      "rate": 154310.11946909357
+    },
+    {
+      "at": 16277.306505,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-78",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16299.323798,
+      "type": "task-completed",
+      "taskId": "t-76",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.88040799999908,
+      "rate": 135606.8709573856
+    },
+    {
+      "at": 16299.39805,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-79",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16309.114121,
+      "type": "task-completed",
+      "taskId": "t-77",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 32.656630999999834,
+      "rate": 138957.05165140948
+    },
+    {
+      "at": 16309.167752,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-80",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16311.033004,
+      "type": "task-completed",
+      "taskId": "t-78",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 33.7632450000001,
+      "rate": 152133.08851827704
+    },
+    {
+      "at": 16311.067657,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-81",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16335.464559,
+      "type": "task-completed",
+      "taskId": "t-79",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 36.12391600000046,
+      "rate": 136588.82636275678
+    },
+    {
+      "at": 16335.54413,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-82",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16344.911303,
+      "type": "task-completed",
+      "taskId": "t-81",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 33.86720199999945,
+      "rate": 150558.91909305257
+    },
+    {
+      "at": 16344.982771,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-83",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16346.909156,
+      "type": "task-completed",
+      "taskId": "t-80",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 37.78277600000001,
+      "rate": 136639.48492052732
+    },
+    {
+      "at": 16346.989367,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-84",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16371.44554,
+      "type": "task-completed",
+      "taskId": "t-82",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.95877699999983,
+      "rate": 137449.57583278118
+    },
+    {
+      "at": 16371.533123,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-85",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16378.783763,
+      "type": "task-completed",
+      "taskId": "t-84",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 31.848518000000695,
+      "rate": 143763.27688940987
+    },
+    {
+      "at": 16379.126983,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-86",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16380.058692,
+      "type": "task-completed",
+      "taskId": "t-83",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 35.10996299999897,
+      "rate": 147706.6994100833
+    },
+    {
+      "at": 16380.106525,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-87",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16407.083111,
+      "type": "task-completed",
+      "taskId": "t-85",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 35.617379999999685,
+      "rate": 138475.54066662834
+    },
+    {
+      "at": 16407.223824,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-88",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16411.15389,
+      "type": "task-completed",
+      "taskId": "t-86",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 32.338327999998,
+      "rate": 147561.48189118094
+    },
+    {
+      "at": 16411.190556,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-89",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16417.219683,
+      "type": "task-completed",
+      "taskId": "t-87",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 37.15036499999951,
+      "rate": 143115.21750646178
+    },
+    {
+      "at": 16417.301336,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-90",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16447.400452,
+      "type": "task-completed",
+      "taskId": "t-88",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 40.29850299999816,
+      "rate": 133435.03216825606
+    },
+    {
+      "at": 16447.508245,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-91",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16450.662007,
+      "type": "task-completed",
+      "taskId": "t-90",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 33.42918499999723,
+      "rate": 145374.35787083447
+    },
+    {
+      "at": 16450.783471,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-92",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16454.220416,
+      "type": "task-completed",
+      "taskId": "t-89",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 43.057683000002726,
+      "rate": 136558.11627584213
+    },
+    {
+      "at": 16454.261057,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-93",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16483.759885,
+      "type": "task-completed",
+      "taskId": "t-92",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 33.03024600000208,
+      "rate": 147475.0754707547
+    },
+    {
+      "at": 16483.857262,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-94",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16487.483819,
+      "type": "task-completed",
+      "taskId": "t-91",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 40.05694600000061,
+      "rate": 130420.57476740328
+    },
+    {
+      "at": 16487.567315,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-95",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16495.580099,
+      "type": "task-completed",
+      "taskId": "t-93",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 41.34936699999889,
+      "rate": 131085.06796167043
+    },
+    {
+      "at": 16495.709345,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-96",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16515.936374,
+      "type": "task-completed",
+      "taskId": "t-94",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 32.156849000002694,
+      "rate": 150279.55402485747
+    },
+    {
+      "at": 16516.051468,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-97",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16527.677614,
+      "type": "task-completed",
+      "taskId": "t-95",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 40.17538700000296,
+      "rate": 128332.38150581428
+    },
+    {
+      "at": 16527.744094,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-98",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16535.760944,
+      "type": "task-completed",
+      "taskId": "t-96",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 40.16879700000209,
+      "rate": 128771.44827225502
+    },
+    {
+      "at": 16535.825241,
+      "type": "task-assigned",
+      "jobId": "job-6",
+      "taskId": "t-99",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "count": 5000000,
+      "attempt": 1
+    },
+    {
+      "at": 16549.49862,
+      "type": "task-completed",
+      "taskId": "t-97",
+      "nodeId": "yraNxVc2ARza44fAAAAB",
+      "elapsedMs": 33.5432069999988,
+      "rate": 149853.22728802654
+    },
+    {
+      "at": 16561.576063,
+      "type": "task-completed",
+      "taskId": "t-98",
+      "nodeId": "w5LutwltEA50yPozAAAC",
+      "elapsedMs": 33.885238999999274,
+      "rate": 135060.95448216968
+    },
+    {
+      "at": 16568.115187,
+      "type": "task-completed",
+      "taskId": "t-99",
+      "nodeId": "f1qyf78G7ZDrBg5aAAAA",
+      "elapsedMs": 32.34394700000121,
+      "rate": 137807.3920205262
+    },
+    {
+      "at": 16568.261799,
+      "type": "job-completed",
+      "jobId": "job-6",
+      "totalMs": 1157.9903640000011,
+      "result": {
+        "hits": 392697127,
+        "count": 500000000,
+        "pi": 3.141577016
+      }
+    }
+  ],
+  "environment": {
+    "kind": "three isolated Chromium contexts on ONE Linux host",
+    "node": "v24.19.0",
+    "browser": "153.0.8010.0",
+    "physicalDevices": 1,
+    "warning": "Not a PC/notebook/phone hardware benchmark; processes compete for the same CPU."
+  }
+}

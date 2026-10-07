@@ -4,6 +4,15 @@
 
 # MACN - Mesh Autonomous Compute Network
 
+## Runnable 1.0-alpha
+
+The new [alpha implementation](alpha/README.md) provides a Node coordinator, browser Web Workers, adaptive scheduling, task leases/reassignment, live metrics and repeated verified single-node/distributed benchmarks. It uses **Socket.IO/WebSocket for this alpha**, while preserving the existing WebRTC experiments below.
+
+Start from `alpha/` with `npm ci`, `npm test`, then `npm start`. Open the coordinator's LAN address on each device and enter the displayed session token. Full [three-device instructions](alpha/README.md#prova-precisa-con-tre-dispositivi-fisici), [architecture audit](alpha/docs/ARCHITECTURE-AUDIT.md), [validation](alpha/docs/VALIDATION.md), [measured example](alpha/examples/BENCHMARK.md) and [next roadmap](alpha/docs/ROADMAP.md) are included.
+
+The automated demo validates three browser workers on one host. **A new test on three heterogeneous physical devices remains to be performed.** The historical seven-device and ComputeRTC two-peer results below describe earlier experiments.
+
+
 MACN is an experimental project exploring distributed computing across everyday devices.
 
 Its goal is to enable PCs, smartphones, and tablets to collaborate in executing computationally intensive tasks such as AI workloads, rendering, video encoding, scientific simulations, and large-scale data processing.
