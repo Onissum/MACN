@@ -45,7 +45,7 @@ export class Coordinator {
     s.status = 'completed';
     const speeds = s.pairs.map(p => p.speedup).sort((a, b) => a - b);
     const middle = Math.floor(speeds.length / 2);
-    const report = { version: '1.0.0-alpha.1', transport: 'socket.io-websocket', ...structuredClone(s),
+    const report = { version: '1.0.0-alpha.2', transport: 'socket.io-websocket', ...structuredClone(s),
       medianSpeedup: speeds.length % 2 ? speeds[middle] : (speeds[middle - 1] + speeds[middle]) / 2,
       methodology: 'Warm-up + median of five calibration runs. Each pair: full single-node then full distributed job; coordinator monotonic wall time including dispatch, network, retries and merge. One worker per browser; no claimed physical-device count.',
       logs: [...this.logs] };

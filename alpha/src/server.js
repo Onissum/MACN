@@ -10,6 +10,7 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 export async function startServer({ port = 3003, host = '0.0.0.0', token = process.env.MACN_TOKEN || randomBytes(12).toString('hex'), quiet = false, saveReports = true } = {}) {
   const app = express(); app.disable('x-powered-by');
   app.use((req, res, next) => { res.setHeader('X-Content-Type-Options', 'nosniff'); next(); });
+  app.get('/lab-report.js', (_, res) => res.sendFile(resolve(root, 'lab/report.js')));
   app.get('/workloads.js', (_, res) => res.sendFile(resolve(root, 'src/workloads.js')));
   app.use(express.static(resolve(root, 'public')));
   const server = createServer(app); let network;

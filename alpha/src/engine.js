@@ -49,7 +49,7 @@ export class TaskEngine {
     let idleRate = idle.reduce((sum, n) => sum + n.rate, 0), assigned = 0;
     for (const n of idle) {
       const id = n.id;
-      if (assigned >= limit) break;
+      if (j.status !== 'running' || assigned >= limit) break;
       let t = j.pending.shift();
       if (!t) {
         const orphan = j.orphans[0];
@@ -58,7 +58,7 @@ export class TaskEngine {
         const end = range ? range.end : j.allocations ? start : j.totalUnits;
         const remaining = end - start;
         if (remaining > 0) {
-          const budget = range ? remaining : Math.max(1, Math.floor(remaining * n.rate / idleRate));
+          const budget = range ? remaining : Math.min(remaining, Math.max(1, Math.floor(remaining * n.rate / idleRate)));
           const count = this.scheduler.chunk(n, budget);
           t = { payload: workload(j.workloadId).makeTask(start, count, j.params),
             id: `t-${j.tasks.size}`, count, attempt: 0, status: 'pending' };

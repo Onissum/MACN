@@ -94,3 +94,16 @@ test('transport backpressure retries without losing a range', () => {
   writable = true; f.advance(1001); f.engine.tick(); assert.equal(sent.length, 1);
   f.advance(1); assert.equal(f.reply(sent[0]), true); assert.equal(f.engine.job.units, 1000);
 });
+test('retry-limit abort prevents dispatch to further nodes in the same pass', () => {
+  let sends = 0;
+  const engine = new TaskEngine({ maxAttempts: 1, send: (_, event) => { if (event === 'task') sends++; return false; } });
+  for (const id of ['a', 'b']) engine.addNode(id, id, { workload: monteCarlo.id, rate: 100 });
+  engine.start({ params: { samples: 100000, seed: 42 } });
+  assert.equal(engine.job.status, 'failed'); assert.equal(sends, 1);
+});
+test('extreme fractional rates cannot allocate beyond the workload boundary', () => {
+  const f = fixture(); f.node('huge', 1e8); f.node('tiny', 0.001); f.node('fraction', 0.0037); f.start(10000);
+  while (f.engine.job.status === 'running') { f.advance(1); f.reply(f.messages.shift()); }
+  assert.equal(f.engine.job.units, 10000);
+  assert.ok([...f.engine.job.tasks.values()].every(t => t.payload.start + t.count <= 10000));
+});
