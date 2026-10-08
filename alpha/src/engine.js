@@ -4,7 +4,7 @@ import { workload } from './workloads.js';
 export class TaskEngine {
   constructor({ now = () => performance.now(), send = () => true, log = () => {}, scheduler = new AdaptiveScheduler(), heartbeatMs = 8000, maxAttempts = 8, autoDispatch = true, jobPrefix = 'job' } = {}) {
     Object.assign(this, { now, send, log, scheduler, heartbeatMs, maxAttempts, autoDispatch, jobPrefix });
-    this.nodes = new Map(); this.idleNodes = new Set(); this.job = null; this.sequence = 0;
+    this.nodes = new Map(); this.idleNodes = new Set(); this.parkedNodes = new Set(); this.job = null; this.sequence = 0;
   }
   event(type, details = {}) { this.log({ at: this.now(), type, ...details }); }
   addNode(id, name, bench) {
@@ -26,8 +26,9 @@ export class TaskEngine {
     const n = this.nodes.get(id); if (!n || !n.connected) return;
     n.connected = false;
     this.idleNodes.delete(id);
+    this.parkedNodes.delete(id);
     const range = this.job?.allocations?.get(id);
-    if (range && range.start < range.end) { this.job.orphans.push({ ...range }); range.start = range.end; }
+    if (range && range.start < range.end) { this.job.orphans.push({ ...range }); range.start = range.end; this.restoreParked(); }
     this.requeue(n, reason); this.event('node-lost', { id, reason }); this.dispatch();
   }
   start({ workloadId = 'monte-carlo-v1', params, nodeIds, mode = 'distributed' }) {
@@ -37,6 +38,7 @@ export class TaskEngine {
     if (!ids.length || new Set(ids).size !== ids.length || ids.some(id => !this.nodes.get(id)?.connected || this.nodes.get(id).workloadId !== workloadId)) throw Error('Select connected nodes');
     for (const n of this.nodes.values()) { n.busy = null; n.assigned = n.completed = n.units = n.computeMs = n.reassigned = 0; n.cooldown = 0; }
     this.idleNodes = new Set(ids);
+    this.parkedNodes.clear();
     this.job = { id: `${this.jobPrefix}-${++this.sequence}`, workloadId, params, totalUnits: w.totalUnits(params), mode, nodeIds: ids, nodeSet: new Set(ids), status: 'running', started: this.now(),
       allocations: this.scheduler.allocations?.(ids.map(id => this.nodes.get(id)), w.totalUnits(params)) || null, orphans: [],
       ended: null, next: 0, tasks: new Map(), pending: [], completed: 0, units: 0, reassigned: 0, duplicates: 0, rejected: 0, result: null };
@@ -54,7 +56,12 @@ export class TaskEngine {
     const idle = [];
     for (const id of this.idleNodes) {
       if (!j.nodeSet.has(id)) continue;
-      if (!hasWork(id)) { this.idleNodes.delete(id); continue; }
+      if (!hasWork(id)) {
+        this.idleNodes.delete(id);
+        const n = this.nodes.get(id);
+        if (n?.connected && !n.busy) this.parkedNodes.add(id);
+        continue;
+      }
       const n = this.nodes.get(id);
       if (n?.connected && !n.busy && n.cooldown <= this.now() && eligible(id)) idle.push(n);
     }
@@ -98,6 +105,16 @@ export class TaskEngine {
     this.event('task-reassigned', { taskId: t.id, reason, attempt: t.attempt });
     if (t.attempt >= this.maxAttempts) { this.abort(`Retry limit: ${t.id}`); return; }
     j.pending.push(t);
+    this.restoreParked();
+  }
+  restoreParked() {
+    const j = this.job;
+    if (!j || j.status !== 'running' || (!j.pending.length && !j.orphans.length)) return;
+    for (const id of this.parkedNodes) {
+      const n = this.nodes.get(id);
+      if (n?.connected && j.nodeSet.has(id)) this.idleNodes.add(id);
+    }
+    this.parkedNodes.clear();
   }
   accept(id, message) {
     const j = this.job, n = this.nodes.get(id);

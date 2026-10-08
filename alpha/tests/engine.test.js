@@ -41,6 +41,28 @@ test('slow responsive node times out while fast node recovers its task', () => {
   while (f.engine.job.status === 'running') { f.advance(10); f.reply(f.messages.shift()); }
   assert.equal(f.engine.job.units, 100000); assert.ok(f.engine.job.reassigned >= 1);
 });
+test('parked fast node resumes when a still-in-flight task times out', () => {
+  const f = fixture(); f.node('stalled'); f.node('fast'); f.start(1000000);
+  const stalled = f.messages.find(m => m.id === 'stalled');
+  const takeFast = () => { const index = f.messages.findIndex(m => m.id === 'fast'); return index < 0 ? null : f.messages.splice(index, 1)[0]; };
+  let next = takeFast();
+  while (next && f.engine.job.status === 'running') {
+    f.advance(10); f.reply(next);
+    next = takeFast();
+  }
+  assert.equal(f.engine.job.status, 'running');
+  assert.ok(f.engine.parkedNodes.has('fast'));
+  f.advance(4000); f.engine.tick();
+  assert.ok(f.messages.some(m => m.id === 'fast' && m.task.id === stalled.task.id && m.task.attempt === 2));
+  while (f.engine.job.status === 'running') {
+    const message = takeFast();
+    assert.ok(message, 'retry work must be dispatched to the surviving idle node');
+    f.advance(10); f.reply(message);
+  }
+  assert.equal(f.engine.job.status, 'completed');
+  assert.equal(f.engine.job.reassigned, 1);
+  assert.equal(f.engine.job.units, 1000000);
+});
 test('heartbeat loss and all nodes absent preserve pending work for reconnect', () => {
   const f = fixture(); f.node('lost'); f.start(10000); const late = f.messages.shift(); f.advance(9000); f.engine.tick();
   assert.equal(f.engine.nodes.get('lost').connected, false); assert.equal(f.reply(late), false);
