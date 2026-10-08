@@ -1,6 +1,6 @@
 # MACN 1.0-alpha.2
 
-Novità alpha.2: [laboratorio di scalabilità](docs/ALPHA2-LAB.md), tre scheduler confrontabili, prove con 10/50 worker di calcolo locali, 100/1.000/10.000 nodi simulati e fino a 5.000 connessioni WebSocket locali di control plane; broker sperimentale per richieste concorrenti e lettore report su `/lab.html`. La CI verifica 10/100/1.000/2.000 e tenta uno stress a 5.000; archivia i report. Queste misure non equivalgono a dispositivi fisici distinti.
+Novità alpha.2: [laboratorio di scalabilità](docs/ALPHA2-LAB.md), tre scheduler confrontabili, prove con 10/50 worker di calcolo locali, 100/1.000/10.000 nodi simulati e fino a 5.000 connessioni WebSocket locali di control plane; broker sperimentale per richieste concorrenti e lettore report su `/lab.html`. La CI verifica 10/100/1.000/2.000 e completa uno stress a 5.000; archivia i report. Queste misure non equivalgono a dispositivi fisici distinti.
 
 Prima alpha eseguibile e misurabile: più browser collaborano a **un solo job**, con calibrazione, assegnazione adattiva, recupero dei task persi e confronto verificato con un nodo solo.
 

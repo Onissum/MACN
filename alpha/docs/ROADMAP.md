@@ -1,6 +1,6 @@
 # Aggiornamento alpha.2
 
-Il laboratorio software confronta gli scheduler, simula fino a 10.000 nodi, verifica 2.000 WebSocket locali e tenta uno stress fino a 5.000, oltre ai worker thread reali e alle richieste concorrenti. Vedi [ALPHA2-LAB.md](ALPHA2-LAB.md). L'indice dei nodi liberi riduce le scansioni ripetute; la prova fisica a tre dispositivi rimane aperta. La CI ripete il probe socket e archivia il report.
+Il laboratorio software confronta gli scheduler, simula fino a 10.000 nodi, verifica 2.000 WebSocket locali tre volte e completa uno stress a 5.000 una volta, oltre ai worker thread reali e alle richieste concorrenti. Vedi [ALPHA2-LAB.md](ALPHA2-LAB.md). L'indice dei nodi liberi riduce le scansioni ripetute; la prova fisica a tre dispositivi rimane aperta. La CI archivia i report socket.
 
 Prossimo controllo: leggere i risultati socket della CI, poi ripetere 10/100/1.000 su un host di riferimento e su una LAN eterogenea; aggiungere un pool dinamico semplice come baseline. Restano autenticazione/ruoli del broker, persistenza e coordinatori multipli con ownership/failover misurati.
 

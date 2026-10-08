@@ -15,7 +15,7 @@ La matrice 10→10.000 mantiene costante il lavoro medio per nodo, così gli int
 
 ## Probe WebSocket del runner GitHub (8 ottobre)
 
-Il controllo CI ha completato 42 test Node, ComputeRTC, browser e il job condiviso su 10/100/1.000/2.000 connessioni WebSocket locali, tre ripetizioni per dimensione. Mediane: 32,1 / 148,2 / 1.112,3 / 3.539,5 ms. Mediane del p95 per round-trip task: 4,09 / 16,53 / 118,88 / 388,04 ms. Tutti i risultati sono stati verificati. Il JSON completo include anche CPU, event loop, memoria e messaggi nell'artifact GitHub Actions. Sono valori del runner e dei suoi client sullo stesso host: mostrano che questa implementazione ha retto fino a 2.000 connessioni nel probe, non il massimo assoluto del coordinatore né la capacità di calcolo di 2.000 computer.
+Il run CI finale ha completato 42 test Node, ComputeRTC, browser e il job condiviso su 10/100/1.000/2.000 connessioni WebSocket locali, tre ripetizioni per dimensione. Mediane job: 32,3 / 153,0 / 1.156,9 / 3.617,1 ms. Mediane del p95 per round-trip task: 3,69 / 17,48 / 126,58 / 384,07 ms. Un ulteriore stress con 5.000 connessioni (una ripetizione) ha completato e verificato il job in 7.729,9 ms, con p95 task di 995,51 ms. Il JSON completo include CPU, event loop, memoria e messaggi nell'artifact GitHub Actions. Sono valori del runner e dei suoi client sullo stesso host: mostrano che questa implementazione ha retto il probe fino a 5.000 connessioni, non il massimo assoluto del coordinatore né la capacità di calcolo di 5.000 computer.
 
 ## Cosa emerge
 
