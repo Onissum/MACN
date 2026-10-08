@@ -22,6 +22,8 @@ jobs:
           cache-dependency-path: alpha/package-lock.json
       - run: npm ci
       - run: npm test
+      - run: npm run lab:compare -- --nodes 1,2,4 --samples 5000000 --repeats 2 --out results/ci-comparison.json
+      - run: cat results/ci-comparison.md >> "$GITHUB_STEP_SUMMARY"
       - run: npm run lab:capacity -- --nodes 10,100,1000,2000 --out results/ci-capacity.json
       - run: cat results/ci-capacity.md >> "$GITHUB_STEP_SUMMARY"
       - id: capacity_stress
@@ -39,6 +41,8 @@ jobs:
           name: alpha2-validation-artifacts
           path: |
             alpha/results/*.png
+            alpha/results/ci-comparison.json
+            alpha/results/ci-comparison.md
             alpha/results/ci-capacity.json
             alpha/results/ci-capacity.md
             alpha/results/ci-capacity-stress.json

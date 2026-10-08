@@ -12,6 +12,7 @@ npm run lab:scale
 npm run lab:real
 npm run lab:multi
 npm run lab:capacity
+npm run lab:compare -- --nodes 1,2,4 --samples 50000000 --repeats 3
 npm start
 ```
 
@@ -27,6 +28,7 @@ Aprire `http://localhost:3003/lab.html` e selezionare un report JSON dalla carte
 | `lab:scale` | 100–10.000 nodi in una simulazione deterministica a eventi | Gestione di task, nodi lenti/persi, tempi di coordinamento sul processo locale e risultati previsti dal modello | Socket reali, costi reali della rete, speedup Monte Carlo su dispositivi distribuiti |
 | `lab:multi` | Cinque richieste concorrenti di tre utenti logici su slot condivisi | Separazione dei job, ammissione, turni per utente, recupero, fencing dei duplicati | Identità autenticate, equità in CPU-secondi, più coordinatori o disponibilità pubblica |
 | `lab:capacity` | Connessioni WebSocket reali a un coordinatore locale (10/100/1.000/2.000 gate CI; 5.000 stress non bloccante) e task checksum quasi gratuiti | Limite osservato di connessioni e costo del control plane di questo host; latenza task p50/p95/p99, event loop, CPU, RSS e messaggi | Capacità WAN o fisica, velocità di calcolo aggregata, equivalenza GPU o un limite universale di nodi |
+| `lab:compare` | Lo stesso Monte Carlo deterministico sequenziale e via MACN con 1 o più worker thread reali e connessioni WebSocket di loopback | Correttezza rispetto al risultato sequenziale; speedup di job e end-to-end, setup, throughput e RTT task p50/p95/p99 | Dispositivi distinti, rete Wi-Fi/WAN o confronto con GPU |
 
 ### Parametri
 
@@ -34,8 +36,10 @@ Aprire `http://localhost:3003/lab.html` e selezionare un report JSON dalla carte
 
 `npm run lab:capacity -- --nodes 10,100,1000,2000 --repeats 3 --out results/capacita.json` apre WebSocket locali veri al server e misura connessioni, task, messaggi, round-trip p50/p95/p99, event loop, CPU e RSS. Per tentare 5.000 connessioni usa `npm run lab:capacity -- --nodes 5000 --repeats 1 --out results/stress-5000.json`; il probe limita a due minuti sia la fase di connessione sia il job. I client e il server sono nello stesso processo host e il task checksum è O(1): il report stima la capacità del control plane su quella macchina, non il calcolo aggregato. Il server demo mantiene il limite standard di 64 connessioni; il probe lo alza solo per la durata del benchmark.
 
-- `--mode`: `simulated`, `real`, `multi`.
-- `--nodes`: elenco separato da virgole; massimo 50 worker con kernel reali, 5.000 socket locali per `capacity`, 10.000 nodi nel CLI simulato e 1.000 nel test multi-job. Multi richiede almeno 2.
+Per confrontare calcolo e costo MACN sullo stesso input: `npm run lab:compare -- --nodes 1,2,4 --samples 50000000 --repeats 3 --seed 42 --out results/confronto.json`. Esegue un riferimento sequenziale e job MACN con worker thread e WebSocket reali sullo stesso host, senza ritardi artificiali; seed e campioni sono accoppiati a ogni ripetizione e i risultati devono coincidere esattamente. Il report distingue speedup nel solo job da speedup end-to-end (che include avvio server, worker e connessioni), e include RTT dei task. Ripeti la prova sullo stesso computer, senza altri carichi pesanti. È un confronto di architettura locale: non è una misura di tre dispositivi fisici né una comparazione con GPU.
+
+- `--mode`: `simulated`, `real`, `multi`, `capacity`, `compare`.
+- `--nodes`: elenco separato da virgole; massimo 50 worker con kernel reali e in `compare`, 5.000 socket locali per `capacity`, 10.000 nodi nel CLI simulato e 1.000 nel test multi-job. Multi richiede almeno 2.
 - `--repeats`: da 1 a 10, default 3 per confronti scheduler. Multi esegue un workload concorrente per dimensione; non usa scenari o ripetizioni.
 - `--samples`: opzionale, stesso totale per tutte le politiche. Default simulato: nodi × 1.000.000; reale: nodi × 5.000.000; multi: 2.000.000 per job.
 - `--seed`: default 42, incrementato per ripetizione; ogni confronto è accoppiato sullo stesso seed.
@@ -68,6 +72,8 @@ Nodi reali locali:
 - `churn`: chiusura di un client su dieci dopo 100 ms, primo risultato perso su un altro gruppo e duplicati su un terzo.
 - Calibrazione e verifica sequenziale finale sono **fuori** dal tempo del job distribuito. Il tempo del solo kernel di verifica non viene presentato come una baseline equivalente di speedup.
 
+Il modo `compare` usa lo stesso Monte Carlo e lo stesso protocollo, ma disabilita i ritardi di eterogeneità e il ritardo aggiuntivo di consegna. Mantiene misurato il costo reale dei thread, dell'event loop, del coordinatore e del WebSocket locale. L'avvio e la calibrazione dei worker sono riportati come `setupMs`; non sono inclusi nello speedup del job, ma entrano nello speedup end-to-end. Un risultato valido deve coincidere con il conteggio sequenziale di hit e campioni.
+
 ## Correzioni guidate dalle misure
 
 1. Alpha.1 ricalcolava la somma delle velocità dei nodi liberi per ogni assegnazione. Ora prepara la lista e la somma una volta per dispatch. Rimane una scansione O(N) per dispatch: non è ancora una coda degli idle O(1).
@@ -87,7 +93,7 @@ Identificatori diversi per richiesta/job/task/tentativo; un risultato vecchio no
 
 JSON simulato: tempo virtuale, tempo reale del simulatore, CPU del processo, tempo totale/massimo delle chiamate dispatch, numero di eventi/messaggi, picco della coda eventi, RSS campionato, task, retry, duplicati e checksum. I costi includono il simulatore; non sono il throughput di un cluster fisico. RSS è del processo locale, con campionamento e possibili residui dell'allocatore fra prove, non memoria isolata per singolo nodo.
 
-JSON reale: tempo totale, throughput, CPU processo, utilizzo/event-loop delay del coordinatore, RTT aggregato di loopback, RSS campionato, calibrazione e conteggi di guasti. I thread competono sullo stesso host; timer e scheduling locale influenzano i risultati. Il report indica campioni e ambiente.
+JSON reale: tempo totale, throughput, CPU processo, utilizzo/event-loop delay del coordinatore, RTT heartbeat e RTT task di loopback, RSS campionato, calibrazione e conteggi di guasti. I thread competono sullo stesso host; timer e scheduling locale influenzano i risultati. `compare` aggiunge un confronto accoppiato con baseline sequenziale e riporta separatamente setup e tempo job. Il report indica campioni e ambiente.
 
 Il probe `capacity` usa connessioni Socket.IO/WebSocket vere al server esistente; i client di prova girano nello stesso processo Node e restituiscono un checksum O(1). Confronta il carico di controllo e la capacità di accettare connessioni con il limite demo predefinito di 64 lasciato invariato. Il p95/p99 del task è il tempo fra dispatch e risultato osservato dal coordinator e include il ritardo dell'event loop. Le misure della CI descrivono il runner GitHub; per vedere numeri ripetibili lanciarlo sul proprio host con più ripetizioni e salvare report distinti. Un singolo host non può stabilire la scala Internet.
 

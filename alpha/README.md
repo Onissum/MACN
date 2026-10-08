@@ -2,6 +2,8 @@
 
 Novità alpha.2: [laboratorio di scalabilità](docs/ALPHA2-LAB.md), tre scheduler confrontabili, prove con 10/50 worker di calcolo locali, 100/1.000/10.000 nodi simulati e fino a 5.000 connessioni WebSocket locali di control plane; broker sperimentale per richieste concorrenti e lettore report su `/lab.html`. La CI verifica 10/100/1.000/2.000 e completa uno stress a 5.000; archivia i report. Queste misure non equivalgono a dispositivi fisici distinti.
 
+Il comando `npm run lab:compare -- --nodes 1,2,4 --samples 50000000 --repeats 3` confronta lo stesso Monte Carlo sequenziale con MACN su uno o più worker thread e WebSocket locali. Verifica risultati identici, misura speedup nel job e end-to-end, costo di setup, throughput e RTT dei task. È una misura locale, non un test su dispositivi fisici o GPU.
+
 Prima alpha eseguibile e misurabile: più browser collaborano a **un solo job**, con calibrazione, assegnazione adattiva, recupero dei task persi e confronto verificato con un nodo solo.
 
 **Topologia di questa alpha:** coordinatore Node.js e nodi browser collegati via Socket.IO/WebSocket. Non è ancora la versione P2P decentralizzata. I prototipi WebRTC/ComputeRTC sono conservati senza modifiche; motivazioni, architettura precedente e valutazione dei DataChannel in [ARCHITECTURE-AUDIT.md](docs/ARCHITECTURE-AUDIT.md).

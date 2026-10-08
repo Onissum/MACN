@@ -6,6 +6,7 @@ import { simulate, scenarios as simulatedScenarios } from './simulate.js';
 import { realRun } from './real.js';
 import { multiRun } from './multi.js';
 import { capacityRun } from './capacity.js';
+import { compareRun } from './compare.js';
 import { policyNames } from '../src/policies.js';
 import { markdown, summarize } from './report.js';
 
@@ -15,12 +16,12 @@ async function main() {
     repeats: { type: 'string', default: '3' }, samples: { type: 'string' }, seed: { type: 'string', default: '42' }, out: { type: 'string' },
     help: { type: 'boolean', default: false }
   } });
-  if (values.help) { console.log('npm run lab -- --mode simulated|real|multi|capacity --nodes 10,100,1000,10000 --scenarios steady,slowdown,churn,latency --repeats 3 --seed 42 --samples 100000000 --out results/lab.json'); return; }
+  if (values.help) { console.log('npm run lab -- --mode simulated|real|multi|capacity|compare --nodes 10,100,1000,10000 --scenarios steady,slowdown,churn,latency --repeats 3 --seed 42 --samples 100000000 --out results/lab.json'); return; }
   const mode = values.mode, repeats = Number(values.repeats), seed = Number(values.seed);
-  if (!['simulated', 'real', 'multi', 'capacity'].includes(mode)) throw Error('Invalid mode');
+  if (!['simulated', 'real', 'multi', 'capacity', 'compare'].includes(mode)) throw Error('Invalid mode');
   if (!Number.isInteger(repeats) || repeats < 1 || repeats > 10 || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff - repeats) throw Error('Invalid repeats/seed');
-  const sizes = (values.nodes || (mode === 'real' ? '10,50' : mode === 'multi' ? '20' : mode === 'capacity' ? '10,100,1000' : '100,1000')).split(',').map(Number);
-  const maxNodes = mode === 'real' ? 50 : mode === 'capacity' ? 5000 : mode === 'simulated' ? 10000 : 1000;
+  const sizes = (values.nodes || (mode === 'real' ? '10,50' : mode === 'multi' ? '20' : mode === 'capacity' ? '10,100,1000' : mode === 'compare' ? '1,2,4' : '100,1000')).split(',').map(Number);
+  const maxNodes = ['real', 'compare'].includes(mode) ? 50 : mode === 'capacity' ? 5000 : mode === 'simulated' ? 10000 : 1000;
   if (sizes.some(n => !Number.isInteger(n) || n < 1 || n > maxNodes)) throw Error(`Invalid node counts (maximum ${maxNodes} for ${mode})`);
   const scenarios = (values.scenarios || (mode === 'real' ? 'steady,slowdown,churn' : 'steady,slowdown,churn,latency')).split(',');
   if (scenarios.some(s => !simulatedScenarios.includes(s) || (mode === 'real' && s === 'latency'))) throw Error('Invalid scenarios');
@@ -32,6 +33,19 @@ async function main() {
     await writeFile(out + '.tmp', JSON.stringify(report, null, 2)); await rename(out + '.tmp', out);
     if (mode !== 'multi') await writeFile(out.replace(/\.json$/, '') + '.md', markdown(report));
   };
+  if (mode === 'compare') {
+    const comparison = await compareRun({ nodes: sizes, samples: Number(values.samples || 50_000_000), seed, repeats,
+      onRun: async run => {
+        await save();
+        console.log(`compare repeat=${run.repeat} ${run.topology} n=${run.nodes}: ${run.elapsedMs.toFixed(1)} ms; verified=${run.verified}`);
+      } });
+    report.summary = comparison.summary;
+    report.comparison = { kind: comparison.kind, workload: comparison.workload, samples: comparison.samples,
+      requestedWorkers: comparison.requestedWorkers, physicalHosts: comparison.physicalHosts, note: comparison.note };
+    report.complete = true; report.completedAt = new Date().toISOString(); await save();
+    for (const row of comparison.summary) console.log(`compare n=${row.nodes} #${row.repeats}: job=${row.medianJobMs.toFixed(1)} ms; setup=${row.medianSetupMs.toFixed(1)} ms; speedup=${row.medianJobSpeedup.toFixed(2)}x; verified=${row.verified}`);
+    console.log(`Saved ${out}`); return;
+  }
   for (const nodes of sizes) {
     if (mode === 'capacity') {
       for (let repeat = 0; repeat < repeats; repeat++) {
