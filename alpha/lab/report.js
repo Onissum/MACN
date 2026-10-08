@@ -22,6 +22,18 @@ export function summarize(runs) {
   });
 }
 export function markdown(report) {
+  if (report.mode === 'capacity') {
+    const lines = ['# MACN coordinator capacity probe', '',
+      'Real local Socket.IO/WebSocket connections to one coordinator. O(1) checksum tasks measure connection and control-plane capacity, not compute speed or GPU equivalence.', '',
+      '| Nodes | Repeat | Connected | Connect ms | Job ms | Units/s | Tasks | Messages | Task RTT p50/p95/p99 ms | Loop p99 ms | CPU ms | RSS MiB | Verified |',
+      '|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|'];
+    for (const r of report.runs) {
+      const fmt = n => Number.isFinite(n) ? n.toFixed(2) : '—';
+      lines.push(`| ${r.nodes} | ${r.repeat ?? '—'} | ${r.connected} | ${fmt(r.connectMs)} | ${fmt(r.elapsedMs)} | ${fmt(r.throughput)} | ${r.taskCount} | ${r.protocolMessages} | ${fmt(r.taskRoundTripMs.p50)} / ${fmt(r.taskRoundTripMs.p95)} / ${fmt(r.taskRoundTripMs.p99)} | ${fmt(r.eventLoopDelayMs.p99)} | ${fmt(r.processCpuMs)} | ${fmt(r.sampledPeakProcessRssBytes / 1048576)} | ${r.verified} |`);
+    }
+    lines.push('', 'All clients run on the same host as the coordinator. Loopback results do not predict WAN or physical-device limits. The normal demo connection cap remains unchanged.', '');
+    return lines.join('\n');
+  }
   const real = report.mode === 'real';
   const lines = ['# MACN alpha.2 laboratory report', '', `Mode: **${report.mode}**. Complete: **${report.complete}**.`, '',
     real ? 'Real Monte Carlo, local worker threads and loopback WebSockets on ONE host. Injected service delays; not heterogeneous physical devices.' :

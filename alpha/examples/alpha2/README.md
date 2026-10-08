@@ -7,8 +7,11 @@ Tutti i file finali hanno `complete: true` e tutte le prove finali hanno `verifi
 | [Reale locale](real.md) / [JSON](real.json) | 10 e 50 worker thread + WebSocket | 54 | Monte Carlo identico alla verifica sequenziale, copertura esatta |
 | [Simulata](simulated.md) / [JSON](simulated.json) | 100 e 1.000 nodi | 72 | Checksum sintetico e copertura esatta |
 | [Richieste concorrenti](multi.json) | 20 e 1.000 nodi simulati; 5 job/3 utenti | 2 scenari | Job separati, uno slot per nodo, risultati duplicati respinti |
+| [Scala 10→10.000](scale-simulated.md) / [JSON](scale-simulated.json) | 10, 100, 1.000 e 10.000 nodi simulati; carico per nodo invariato | 12 | Checksum e copertura esatta; una ripetizione per scheduler/dimensione |
 
 Le prove reali locali confrontano tre scheduler sugli stessi campioni; non confrontano 50 computer con uno. Il seed e i parametri coincidono all'interno di ogni terna, l'ordine ruota fra ripetizioni. I modelli simulati e il carico reale locale sono documentati in [ALPHA2-LAB.md](../../docs/ALPHA2-LAB.md).
+
+La matrice 10→10.000 mantiene costante il lavoro medio per nodo, così gli intervalli virtuali sono confrontabili. Il suo tempo wall misura l'engine/simulatore di questo host. La prova con veri socket di loopback è invece eseguita nella CI a 10/100/1.000 e archiviata come artifact del workflow; non è inclusa in questo esempio perché dipende dal runner usato.
 
 ## Cosa emerge
 
@@ -26,6 +29,8 @@ Da `alpha/`: `npm run lab:scale`, `npm run lab:real`, `npm run lab:multi -- --no
 
 ## Primo limite osservato
 
-Nel processo locale, le prove a 1.000 nodi simulati hanno richiesto fino a circa 6,7 secondi di wall time; una singola chiamata dispatch ha raggiunto circa 182 ms nel campionamento. Sono costi del simulatore e dell'engine insieme, influenzati anche da allocazioni/GC: non misure di latenza Internet. Resta utile sostituire le scansioni dei nodi con strutture per i soli slot liberi.
+Nella prima implementazione, il processo locale impiegava fino a circa 6,7 secondi per le prove a 1.000 nodi; una singola chiamata dispatch arrivava a circa 182 ms. Erano costi del simulatore/engine, non latenza Internet. La matrice successiva a 10.000 nodi e la correzione sono descritte sotto.
+
+Un successivo probe a 10.000 nodi ha trovato e corretto una scansione ripetuta degli idle: la medesima prova adattiva (1 miliardo di unità) è passata da circa 18,7 s wall/18,1 s di dispatch a circa 0,25 s wall/0,08 s di dispatch. La matrice archiviata usa un carico per nodo dieci volte maggiore e registra circa 1,8–4,7 s wall e fino a circa 559 MiB RSS a 10.000 nodi. Sono risultati del simulatore sullo stesso host, non una misura del coordinatore in rete; il JSON conserva tutte le 12 esecuzioni.
 
 Il processo del laboratorio reale ha raggiunto circa 1,25 GiB di RSS campionato durante la matrice completa; non è una stima isolata della memoria di ogni worker. Su computer con poca memoria usare prima 10 nodi. Nella prova multiutente il conteggio dei turni durante lavoro non ancora completato può differire: un proprietario può avere già tutto il suo lavoro in volo e non richiedere nuovi slot.

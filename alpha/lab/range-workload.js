@@ -3,7 +3,11 @@ import { workloads, monteCarlo } from '../src/workloads.js';
 const MOD = 4294967291n;
 export const rangeWorkload = {
   id: 'range-check-v1', unit: 'modelled-units',
-  validate: params => monteCarlo.validate(params),
+  validate(params) {
+    if (!params || !Number.isSafeInteger(params.samples) || params.samples < 1000 || params.samples > 1_000_000_000_000 ||
+        !Number.isInteger(params.seed) || params.seed < 0 || params.seed > 0xffffffff) throw Error('samples: 1000..1000000000000; seed: uint32');
+    return { samples: params.samples, seed: params.seed };
+  },
   totalUnits: params => params.samples,
   makeTask: (start, count, params) => ({ start, count, seed: params.seed }),
   compute({ start, count, seed }) {

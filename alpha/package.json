@@ -14,7 +14,8 @@
     "lab": "node lab/cli.js",
     "lab:real": "node lab/cli.js --mode real",
     "lab:scale": "node lab/cli.js --mode simulated",
-    "lab:multi": "node lab/cli.js --mode multi"
+    "lab:multi": "node lab/cli.js --mode multi",
+    "lab:capacity": "node lab/cli.js --mode capacity"
   },
   "dependencies": {
     "express": "4.21.2",

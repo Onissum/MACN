@@ -45,7 +45,7 @@ test('heartbeat loss and all nodes absent preserve pending work for reconnect', 
   const f = fixture(); f.node('lost'); f.start(10000); const late = f.messages.shift(); f.advance(9000); f.engine.tick();
   assert.equal(f.engine.nodes.get('lost').connected, false); assert.equal(f.reply(late), false);
   // A new session is explicitly admitted to this job by the coordinator policy.
-  f.node('new'); f.engine.job.nodeIds.push('new'); f.engine.dispatch(); f.reply(f.messages.shift());
+  f.node('new'); f.engine.job.nodeIds.push('new'); f.engine.job.nodeSet.add('new'); f.engine.idleNodes.add('new'); f.engine.dispatch(); f.reply(f.messages.shift());
   assert.equal(f.engine.job.status, 'completed');
 });
 test('duplicate and unknown results cannot inflate completion', () => {

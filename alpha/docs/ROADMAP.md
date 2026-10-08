@@ -1,8 +1,8 @@
 # Aggiornamento alpha.2
 
-Il laboratorio software è ora implementato: confronti degli scheduler, simulazione fino a 1.000 nodi, worker reali locali e richieste concorrenti. Vedi [ALPHA2-LAB.md](ALPHA2-LAB.md). La verifica fisica a tre dispositivi rimane aperta.
+Il laboratorio software confronta gli scheduler, simula fino a 10.000 nodi, apre fino a 1.000 WebSocket locali e prova worker thread reali e richieste concorrenti. Vedi [ALPHA2-LAB.md](ALPHA2-LAB.md). L'indice dei nodi liberi riduce le scansioni ripetute; la prova fisica a tre dispositivi rimane aperta. La CI ripete il probe socket a 10/100/1.000 e archivia il report.
 
-Prossimo controllo: pool dinamico semplice come ulteriore baseline, connessioni reali crescenti con metriche di rete/OS, coda degli idle e ammissione del broker su API autenticata. Più coordinatori richiedono ownership e failover misurati; non sono ancora implementati.
+Prossimo controllo: leggere i risultati socket della CI, poi ripetere 10/100/1.000 su un host di riferimento e su una LAN eterogenea; aggiungere un pool dinamico semplice come baseline. Restano autenticazione/ruoli del broker, persistenza e coordinatori multipli con ownership/failover misurati.
 
 ---
 

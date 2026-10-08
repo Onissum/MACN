@@ -35,6 +35,12 @@ test('1000 simulated nodes finish with exact full coverage', () => {
   assert.equal(result.verified, true); assert.equal(result.contributors, 1000);
   assert.equal(result.kind, 'discrete-event-simulation');
 });
+test('10000-node simulation finishes correctly without quadratic idle scans', () => {
+  const result = simulate({ nodes: 10000, samples: 1000000000, policy: 'adaptive' });
+  assert.equal(result.verified, true); assert.equal(result.contributors, 10000);
+  assert.equal(result.status, 'completed'); assert.ok(result.dispatchCalls > 10000);
+  assert.ok(result.dispatchMs < result.wallMs);
+});
 test('slowdown comparison can measure adaptive improvement without timing the host', () => {
   const fixed = simulate({ nodes: 20, policy: 'calibrated', scenario: 'slowdown' });
   const adaptive = simulate({ nodes: 20, policy: 'adaptive', scenario: 'slowdown' });

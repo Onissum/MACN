@@ -17,7 +17,9 @@ export class JobBroker {
     this.nodes.set(id, { id, name, benchmark, active: null, connected: true, lastSeen: this.now() });
     for (const entry of this.jobs.values()) {
       entry.engine.addNode(id, name, benchmark);
-      if (entry.engine.job.status === 'running' && entry.workloadId === benchmark.workload) entry.engine.job.nodeIds.push(id);
+      if (entry.engine.job.status === 'running' && entry.workloadId === benchmark.workload) {
+        entry.engine.job.nodeIds.push(id); entry.engine.job.nodeSet.add(id); entry.engine.idleNodes.add(id);
+      }
     }
     this.pump();
   }
