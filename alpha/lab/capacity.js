@@ -7,11 +7,17 @@ import { coverage } from './simulate.js';
 import { rangeWorkload } from './range-workload.js';
 
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+function withDeadline(promise, ms, stage) {
+  let timer;
+  return Promise.race([promise, new Promise((_, reject) => {
+    timer = setTimeout(() => reject(Error(`Capacity probe ${stage} deadline exceeded`)), Math.max(1, ms));
+  })]).finally(() => clearTimeout(timer));
+}
 
 // Real Socket.IO/WebSocket connections to one local coordinator. Worker work is
 // deliberately O(1): this measures control-plane capacity, not compute power.
-export async function capacityRun({ nodes = 10, samples = nodes * 1500000, seed = 42, deadlineMs = 120000 } = {}) {
-  if (!Number.isInteger(nodes) || nodes < 1 || nodes > 2000) throw Error('capacity nodes: 1..2000');
+export async function capacityRun({ nodes = 10, samples = nodes * 1500000, seed = 42, deadlineMs = 120000, connectDeadlineMs = 120000 } = {}) {
+  if (!Number.isInteger(nodes) || nodes < 1 || nodes > 5000) throw Error('capacity nodes: 1..5000');
   rangeWorkload.validate({ samples, seed });
   const clients = [], completionLatency = [], lag = monitorEventLoopDelay({ resolution: 10 });
   const app = await startServer({ port: 0, host: '127.0.0.1', quiet: true, saveReports: false, maxConnections: nodes + 1 });
@@ -29,13 +35,14 @@ export async function capacityRun({ nodes = 10, samples = nodes * 1500000, seed 
         socket.emit('result', { jobId: message.jobId, taskId: message.task.id, attempt: message.task.attempt,
           result, computeMs: performance.now() - start });
       });
-      await new Promise((resolve, reject) => {
+      await withDeadline(new Promise((resolve, reject) => {
         socket.once('connect', resolve);
         socket.once('connect_error', reject);
-      });
-      await new Promise((resolve, reject) => socket.emit('register', {
+      }), connectDeadlineMs - (performance.now() - connectStarted), 'connect');
+      await withDeadline(new Promise((resolve, reject) => socket.emit('register', {
         name: `loopback-${i}`, benchmark: { workload: rangeWorkload.id, rate: 1000 }
-      }, ack => ack?.ok ? resolve() : reject(Error(ack?.error || 'Registration failed'))));
+      }, ack => ack?.ok ? resolve() : reject(Error(ack?.error || 'Registration failed')))),
+      connectDeadlineMs - (performance.now() - connectStarted), 'registration');
       connected++;
     }
     connectMs = performance.now() - connectStarted;

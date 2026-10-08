@@ -15,5 +15,5 @@ test('capacity probe connects real loopback workers and verifies one shared job'
 });
 
 test('capacity probe rejects unmeasured scale beyond its physical socket limit', async () => {
-  await assert.rejects(() => capacityRun({ nodes: 2001 }), /1\.\.2000/);
+  await assert.rejects(() => capacityRun({ nodes: 5001 }), /1\.\.5000/);
 });

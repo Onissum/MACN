@@ -13,6 +13,10 @@ Le prove reali locali confrontano tre scheduler sugli stessi campioni; non confr
 
 La matrice 10→10.000 mantiene costante il lavoro medio per nodo, così gli intervalli virtuali sono confrontabili. Il suo tempo wall misura l'engine/simulatore di questo host. La prova con veri socket di loopback è invece eseguita nella CI a 10/100/1.000 e archiviata come artifact del workflow; non è inclusa in questo esempio perché dipende dal runner usato.
 
+## Probe WebSocket del runner GitHub (8 ottobre)
+
+Il controllo CI ha completato 42 test Node, ComputeRTC, browser e il job condiviso su 10/100/1.000/2.000 connessioni WebSocket locali, tre ripetizioni per dimensione. Mediane: 32,1 / 148,2 / 1.112,3 / 3.539,5 ms. Mediane del p95 per round-trip task: 4,09 / 16,53 / 118,88 / 388,04 ms. Tutti i risultati sono stati verificati. Il JSON completo include anche CPU, event loop, memoria e messaggi nell'artifact GitHub Actions. Sono valori del runner e dei suoi client sullo stesso host: mostrano che questa implementazione ha retto fino a 2.000 connessioni nel probe, non il massimo assoluto del coordinatore né la capacità di calcolo di 2.000 computer.
+
 ## Cosa emerge
 
 - Nel modello stabile a 1.000 nodi, calibrazione statica e adattivo sono vicini: circa 4,079 e 4,025 secondi virtuali. La calibrazione iniziale da sola ha già molto valore.

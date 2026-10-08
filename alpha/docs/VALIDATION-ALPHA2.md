@@ -24,4 +24,8 @@ Raw JSON, ambiente, tempi ed eccezioni: [examples/alpha2](../examples/alpha2/REA
 
 ## Limiti espliciti
 
-Non sono state collegate macchine fisiche esterne. Mille nodi simulati non sono mille connessioni WebSocket. Il broker non è ancora esposto come servizio pubblico autenticato e la UI ordinaria resta a una suite per volta. Non sono implementati più coordinatori, persistenza o failover. La correttezza dei risultati non è una difesa contro nodi malevoli. La suite automatica GitHub comprende test Node e browser; il suo esito remoto va verificato sul commit pubblicato.
+Non sono state collegate macchine fisiche esterne. Mille nodi simulati non sono mille connessioni WebSocket. Il broker non è ancora esposto come servizio pubblico autenticato e la UI ordinaria resta a una suite per volta. Non sono implementati più coordinatori, persistenza o failover. La correttezza dei risultati non è una difesa contro nodi malevoli.
+
+## Probe del coordinatore su GitHub Actions — 8 ottobre 2026
+
+Il commit `5d8e77c` ha superato **42/42 test Node**, la suite ComputeRTC storica, i test Playwright e il probe Socket.IO/WebSocket su 10, 100, 1.000 e 2.000 client locali. Tutte e tre le ripetizioni per dimensione hanno completato e verificato il risultato. Mediane job: **32,1 / 148,2 / 1.112,3 / 3.539,5 ms**. Mediane p95 del tempo task lato coordinatore: **4,09 / 16,53 / 118,88 / 388,04 ms**. Il JSON completo, con CPU, event loop, RSS e messaggi, è nell'artifact `alpha2-validation-artifacts` del run CI; questi dati descrivono il runner e client sullo stesso host, non una rete di dispositivi fisici.
