@@ -16,5 +16,15 @@ try {
   // A second complete suite in the same sessions catches worker lifecycle regressions.
   const second = await runSuite(h, { samples: 10000000 }); assert.equal(second.status, 'completed');
   await h.pages[2].click('#leave'); await h.pages[0].waitForFunction(() => document.querySelector('#online').textContent === '2');
+  await h.pages[0].goto(new URL('/lab.html', h.pages[0].url()).href);
+  const fixture = { mode: 'simulated', complete: true, runs: ['equal', 'calibrated', 'adaptive'].map((policy, i) => ({ policy, repeat: 1, nodes: 1000, scenario: 'steady', modelledMs: 1000 - i * 200, verified: true })) };
+  await h.pages[0].locator('#report-file').setInputFiles({ name: 'lab-test.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(fixture)) });
+  await h.pages[0].waitForFunction(() => document.querySelector('#lab-results').textContent.includes('1000'));
+  assert.match(await h.pages[0].locator('#report-kind').textContent(), /Simulazione/);
+  const capacity = { mode: 'capacity', complete: true, runs: [{ nodes: 10, connected: 10, connectMs: 40, elapsedMs: 20, throughput: 750000, taskCount: 100, protocolMessages: 204, taskRoundTripMs: { p50: 2, p95: 4, p99: 5 }, eventLoopDelayMs: { p99: 1 }, sampledPeakProcessRssBytes: 104857600, verified: true }] };
+  await h.pages[0].locator('#report-file').setInputFiles({ name: 'capacity-test.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(capacity)) });
+  await h.pages[0].waitForFunction(() => document.querySelector('#lab-results').textContent.includes('750.000'));
+  assert.match(await h.pages[0].locator('#report-kind').textContent(), /Connessioni reali/);
+  assert.deepEqual(h.errors, []);
   console.log(JSON.stringify({ browserTests: 'passed', verified: true, contributors: 3, repeatSuite: 'passed', mobile: 'passed', speedup: report.medianSpeedup }));
 } finally { await h.close(); }

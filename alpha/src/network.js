@@ -1,10 +1,11 @@
 import { Server } from 'socket.io';
 // Adapter contract: send(nodeId,event,payload) returns false if unavailable.
-export function attachNetwork(server, coordinator, token) {
+export function attachNetwork(server, coordinator, token, { maxConnections = 64 } = {}) {
   const io = new Server(server, { transports: ['websocket'], maxHttpBufferSize: 65536, pingInterval: 2000, pingTimeout: 6000 });
   io.use((socket, next) => socket.handshake.auth?.token === token ? next() : next(Error('Invalid session token')));
   io.on('connection', socket => {
-    if (io.engine.clientsCount > 64) { socket.disconnect(true); return; }
+    if (io.engine.clientsCount > maxConnections) { socket.disconnect(true); return; }
+    if (socket.handshake.auth?.role !== 'worker') socket.join('dashboards');
     let registered = false, probe = null;
     socket.on('register', (data, ack) => {
       try {
@@ -28,9 +29,12 @@ export function attachNetwork(server, coordinator, token) {
       if (!probe) { probe = { nonce: Math.random().toString(36), sent: performance.now() }; socket.emit('ping-app', probe.nonce); }
     }, 500);
     socket.on('disconnect', () => { clearInterval(timer); coordinator.engine.removeNode(socket.id); });
-    socket.emit('snapshot', coordinator.snapshot());
+    if (socket.handshake.auth?.role !== 'worker') socket.emit('snapshot', coordinator.snapshot());
   });
-  const timer = setInterval(() => { coordinator.tick(); io.volatile.emit('snapshot', coordinator.snapshot()); }, 250);
+  const timer = setInterval(() => {
+    coordinator.tick();
+    if (io.sockets.adapter.rooms.get('dashboards')?.size) io.to('dashboards').volatile.emit('snapshot', coordinator.snapshot());
+  }, 250);
   return { io, send(id, event, payload) {
     const socket = io.sockets.sockets.get(id);
     if (!socket?.connected || socket.conn.writeBuffer.length > 32) return false;

@@ -1,14 +1,20 @@
 // Transport-independent adaptive scheduling policy. Rates are units per millisecond.
 export class AdaptiveScheduler {
+  name = 'adaptive';
+  penalize(node) { node.rate *= 0.5; if (node.serviceRate) node.serviceRate *= 0.5; }
   constructor({ targetMs = 150, minChunk = 2000, maxChunk = 5000000, alpha = 0.35 } = {}) {
     Object.assign(this, { targetMs, minChunk, maxChunk, alpha });
   }
   chunk(node, remaining) {
-    return Math.min(remaining, this.maxChunk, Math.max(this.minChunk, Math.floor(node.rate * this.targetMs)));
+    return Math.min(remaining, this.maxChunk, Math.max(this.minChunk, Math.floor((node.serviceRate ?? node.rate) * Math.max(this.targetMs, 4 * (node.rttMs || 0)))));
   }
   observe(node, count, elapsedMs) {
     const delivered = count / Math.max(1, elapsedMs);
     node.lastRate = delivered;
+    // Chunk sizing must not shrink recursively when RTT dominates completion.
+    // Estimate service rate independently; weights still use delivered throughput.
+    const service = count / Math.max(1, elapsedMs - (node.rttMs || 0));
+    node.serviceRate = (1 - this.alpha) * (node.serviceRate ?? node.initialRate) + this.alpha * service;
     node.rate = Math.max(0.001, (1 - this.alpha) * node.rate + this.alpha * delivered);
     node.slow = delivered < node.initialRate * 0.35;
   }

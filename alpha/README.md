@@ -1,4 +1,8 @@
-# MACN 1.0-alpha.1
+# MACN 1.0-alpha.2
+
+Novità alpha.2: [laboratorio di scalabilità](docs/ALPHA2-LAB.md), tre scheduler confrontabili, prove con 10/50 worker di calcolo locali, 100/1.000/10.000 nodi simulati e fino a 5.000 connessioni WebSocket locali di control plane; broker sperimentale per richieste concorrenti e lettore report su `/lab.html`. La CI verifica 10/100/1.000/2.000 e completa uno stress a 5.000; archivia i report. Queste misure non equivalgono a dispositivi fisici distinti.
+
+Il comando `npm run lab:compare -- --nodes 1,2,4 --samples 50000000 --repeats 3` confronta lo stesso Monte Carlo sequenziale con MACN su uno o più worker thread e WebSocket locali. Verifica risultati identici, misura speedup nel job e end-to-end, costo di setup, throughput e RTT dei task. Nel run CI a 50 milioni di campioni il tempo mediano di job è stato 0,88× / 1,63× / 2,27× la baseline rispettivamente con 1/2/4 worker. È una misura su un solo host, non un test su dispositivi fisici o GPU; dettagli e condizioni in [VALIDATION-ALPHA2.md](docs/VALIDATION-ALPHA2.md).
 
 Prima alpha eseguibile e misurabile: più browser collaborano a **un solo job**, con calibrazione, assegnazione adattiva, recupero dei task persi e confronto verificato con un nodo solo.
 
@@ -11,7 +15,7 @@ Requisiti: Node.js 22 o successivo con npm; browser moderno con Web Worker su PC
 Dalla cartella del repository:
 
 ```sh
-git switch macn-1.0-alpha
+git switch macn-alpha.2-lab
 cd alpha
 npm ci
 npm test
@@ -21,6 +25,8 @@ npm start
 Il server ascolta sulla porta **3003** e mostra un **token di sessione**. Apri `http://localhost:3003` sul PC. Il browser del PC è un nodo di calcolo; il processo server coordina e non esegue il kernel.
 
 Il token è generato ad ogni avvio. Facoltativamente impostare `MACN_TOKEN` nell'ambiente per mantenere lo stesso token, oppure `PORT` per una porta diversa. Non occorrono servizi CDN, STUN, TURN, account o tunnel per la demo LAN. Il client Socket.IO viene servito localmente.
+
+Per il test di capacità, esegui `npm run lab:capacity`: apre WebSocket di loopback veri a 10, 100, 1.000 e 2.000 client e ripete ogni dimensione tre volte. Tutti i client condividono un solo host e calcolano un checksum O(1), quindi il report misura connessioni, task e costo del coordinatore, non potenza CPU/GPU aggregata. I file escono in `results/alpha2-capacity.json` e `.md`. La simulazione discreta può estendersi a 10.000 nodi con `npm run lab:scale -- --nodes 1000,10000 --scenarios steady --repeats 1`.
 
 ## Prova precisa con tre dispositivi fisici
 

@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="it">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MACN alpha.2 · Laboratorio</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><div><span class="eyebrow">MACN · LABORATORIO DI SCALABILITÀ</span><h1>alpha.2 <small>Misure riproducibili</small></h1><p>Confronta gli scheduler, osserva i guasti, verifica i risultati.</p></div><a href="/">Dashboard dei nodi</a></header>
+<main>
+<section class="panel"><h2>Apri un report del laboratorio</h2><p>Seleziona il JSON prodotto da lab:real, lab:scale o lab:multi. La lettura avviene in questo browser.</p><input id="report-file" type="file" accept=".json,application/json"><button id="download-summary" class="secondary" disabled>Scarica riepilogo</button><p id="lab-error" role="alert"></p></section>
+<section class="panel"><h2 id="report-kind">Nessun report caricato</h2><p id="report-description">I tempi simulati e quelli misurati su nodi locali sono presentati separatamente.</p><p id="report-meta"></p></section>
+<section class="panel"><h2>Risultati</h2><div class="table-wrap" id="lab-results"></div><p>Un rapporto uguale/adattivo maggiore di 1 favorisce lo scheduler adattivo; minore di 1 favorisce le quote uguali. Nessuna conversione in potenza di dispositivi reali per le simulazioni.</p></section>
+<section class="panel"><h2>Come produrre i report</h2><p>Dalla cartella alpha: <code>npm run lab:real</code> esegue Monte Carlo con 10 e 50 nodi locali; <code>npm run lab:scale</code> simula 100 e 1.000 nodi; <code>npm run lab:multi</code> verifica più richieste concorrenti. Trovi i file nella cartella results.</p></section>
+</main><script type="module" src="/lab-view.js"></script>
+</body></html>

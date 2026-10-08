@@ -1,7 +1,7 @@
 name: MACN alpha
 on:
   push:
-    branches: [main, macn-1.0-alpha]
+    branches: [main, macn-1.0-alpha, macn-alpha.2-lab]
     paths: ['alpha/**', 'macn-computertc-v0.5.2/**', '.github/workflows/macn-alpha.yml']
   pull_request:
     paths: ['alpha/**', 'macn-computertc-v0.5.2/**', '.github/workflows/macn-alpha.yml']
@@ -22,6 +22,15 @@ jobs:
           cache-dependency-path: alpha/package-lock.json
       - run: npm ci
       - run: npm test
+      - run: npm run lab:compare -- --nodes 1,2,4 --samples 50000000 --repeats 3 --out results/ci-comparison.json
+      - run: cat results/ci-comparison.md >> "$GITHUB_STEP_SUMMARY"
+      - run: npm run lab:capacity -- --nodes 10,100,1000,2000 --out results/ci-capacity.json
+      - run: cat results/ci-capacity.md >> "$GITHUB_STEP_SUMMARY"
+      - id: capacity_stress
+        run: npm run lab:capacity -- --nodes 5000 --repeats 1 --out results/ci-capacity-stress.json
+        continue-on-error: true
+      - if: steps.capacity_stress.outcome == 'success'
+        run: cat results/ci-capacity-stress.md >> "$GITHUB_STEP_SUMMARY"
       - run: node test-computertc.js
         working-directory: macn-computertc-v0.5.2
       - run: npx playwright install --with-deps chromium
@@ -29,5 +38,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: alpha-browser-screenshots
-          path: alpha/results/*.png
+          name: alpha2-validation-artifacts
+          path: |
+            alpha/results/*.png
+            alpha/results/ci-comparison.json
+            alpha/results/ci-comparison.md
+            alpha/results/ci-capacity.json
+            alpha/results/ci-capacity.md
+            alpha/results/ci-capacity-stress.json
+            alpha/results/ci-capacity-stress.md

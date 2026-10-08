@@ -4,6 +4,10 @@
 
 # MACN - Mesh Autonomous Compute Network
 
+## Alpha.2 scalability laboratory
+
+The [alpha.2 lab](alpha/docs/ALPHA2-LAB.md) compares equal, calibration-only and adaptive scheduling using the same task engine. It runs real Monte Carlo on 10/50 local worker threads, simulates up to 10,000 nodes, and probes up to 5,000 real loopback WebSocket connections to one coordinator. The connection probe measures control-plane capacity only; its clients share one host and do not model GPU compute or physical peers. The CI gates 10/100/1,000/2,000 connections and completed a 5,000-connection stress probe once. The browser report viewer is at `/lab.html`; the original demo remains available.
+
 ## Runnable 1.0-alpha
 
 The new [alpha implementation](alpha/README.md) provides a Node coordinator, browser Web Workers, adaptive scheduling, task leases/reassignment, live metrics and repeated verified single-node/distributed benchmarks. It uses **Socket.IO/WebSocket for this alpha**, while preserving the existing WebRTC experiments below.
