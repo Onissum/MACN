@@ -11,7 +11,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 // Real Socket.IO/WebSocket connections to one local coordinator. Worker work is
 // deliberately O(1): this measures control-plane capacity, not compute power.
 export async function capacityRun({ nodes = 10, samples = nodes * 1500000, seed = 42, deadlineMs = 120000 } = {}) {
-  if (!Number.isInteger(nodes) || nodes < 1 || nodes > 1000) throw Error('capacity nodes: 1..1000');
+  if (!Number.isInteger(nodes) || nodes < 1 || nodes > 2000) throw Error('capacity nodes: 1..2000');
   rangeWorkload.validate({ samples, seed });
   const clients = [], completionLatency = [], lag = monitorEventLoopDelay({ resolution: 10 });
   const app = await startServer({ port: 0, host: '127.0.0.1', quiet: true, saveReports: false, maxConnections: nodes + 1 });

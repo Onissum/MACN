@@ -6,7 +6,7 @@
 
 ## Alpha.2 scalability laboratory
 
-The [alpha.2 lab](alpha/docs/ALPHA2-LAB.md) compares equal, calibration-only and adaptive scheduling using the same task engine. It runs real Monte Carlo on 10/50 local worker threads, simulates up to 10,000 nodes, and probes up to 1,000 real loopback WebSocket connections to one coordinator. The connection probe measures control-plane capacity only; its clients share one host and do not model GPU compute or physical peers. The CI saves a 10/100/1,000-node probe report. The browser report viewer is at `/lab.html`; the original demo remains available.
+The [alpha.2 lab](alpha/docs/ALPHA2-LAB.md) compares equal, calibration-only and adaptive scheduling using the same task engine. It runs real Monte Carlo on 10/50 local worker threads, simulates up to 10,000 nodes, and probes up to 2,000 real loopback WebSocket connections to one coordinator. The connection probe measures control-plane capacity only; its clients share one host and do not model GPU compute or physical peers. The CI saves a 10/100/1,000/2,000-node probe report. The browser report viewer is at `/lab.html`; the original demo remains available.
 
 ## Runnable 1.0-alpha
 

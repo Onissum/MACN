@@ -1,6 +1,6 @@
 # MACN 1.0-alpha.2
 
-Novità alpha.2: [laboratorio di scalabilità](docs/ALPHA2-LAB.md), tre scheduler confrontabili, prove con 10/50 worker di calcolo locali, 100/1.000 nodi simulati e fino a 1.000 connessioni WebSocket locali di control plane; broker sperimentale per richieste concorrenti e lettore report su `/lab.html`. La CI esegue il probe a 10/100/1.000 e conserva il report. Queste misure non equivalgono a dispositivi fisici distinti.
+Novità alpha.2: [laboratorio di scalabilità](docs/ALPHA2-LAB.md), tre scheduler confrontabili, prove con 10/50 worker di calcolo locali, 100/1.000/10.000 nodi simulati e fino a 2.000 connessioni WebSocket locali di control plane; broker sperimentale per richieste concorrenti e lettore report su `/lab.html`. La CI esegue il probe a 10/100/1.000/2.000 e conserva il report. Queste misure non equivalgono a dispositivi fisici distinti.
 
 Prima alpha eseguibile e misurabile: più browser collaborano a **un solo job**, con calibrazione, assegnazione adattiva, recupero dei task persi e confronto verificato con un nodo solo.
 
@@ -24,7 +24,7 @@ Il server ascolta sulla porta **3003** e mostra un **token di sessione**. Apri `
 
 Il token è generato ad ogni avvio. Facoltativamente impostare `MACN_TOKEN` nell'ambiente per mantenere lo stesso token, oppure `PORT` per una porta diversa. Non occorrono servizi CDN, STUN, TURN, account o tunnel per la demo LAN. Il client Socket.IO viene servito localmente.
 
-Per il test di capacità, esegui `npm run lab:capacity`: apre WebSocket di loopback veri a 10, 100 e 1.000 client e ripete ogni dimensione tre volte. Tutti i client condividono un solo host e calcolano un checksum O(1), quindi il report misura connessioni, task e costo del coordinatore, non potenza CPU/GPU aggregata. I file escono in `results/alpha2-capacity.json` e `.md`. La simulazione discreta può estendersi a 10.000 nodi con `npm run lab:scale -- --nodes 1000,10000 --scenarios steady --repeats 1`.
+Per il test di capacità, esegui `npm run lab:capacity`: apre WebSocket di loopback veri a 10, 100, 1.000 e 2.000 client e ripete ogni dimensione tre volte. Tutti i client condividono un solo host e calcolano un checksum O(1), quindi il report misura connessioni, task e costo del coordinatore, non potenza CPU/GPU aggregata. I file escono in `results/alpha2-capacity.json` e `.md`. La simulazione discreta può estendersi a 10.000 nodi con `npm run lab:scale -- --nodes 1000,10000 --scenarios steady --repeats 1`.
 
 ## Prova precisa con tre dispositivi fisici
 

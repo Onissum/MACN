@@ -20,7 +20,7 @@ async function main() {
   if (!['simulated', 'real', 'multi', 'capacity'].includes(mode)) throw Error('Invalid mode');
   if (!Number.isInteger(repeats) || repeats < 1 || repeats > 10 || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff - repeats) throw Error('Invalid repeats/seed');
   const sizes = (values.nodes || (mode === 'real' ? '10,50' : mode === 'multi' ? '20' : mode === 'capacity' ? '10,100,1000' : '100,1000')).split(',').map(Number);
-  const maxNodes = mode === 'real' ? 50 : mode === 'capacity' ? 1000 : mode === 'simulated' ? 10000 : 1000;
+  const maxNodes = mode === 'real' ? 50 : mode === 'capacity' ? 2000 : mode === 'simulated' ? 10000 : 1000;
   if (sizes.some(n => !Number.isInteger(n) || n < 1 || n > maxNodes)) throw Error(`Invalid node counts (maximum ${maxNodes} for ${mode})`);
   const scenarios = (values.scenarios || (mode === 'real' ? 'steady,slowdown,churn' : 'steady,slowdown,churn,latency')).split(',');
   if (scenarios.some(s => !simulatedScenarios.includes(s) || (mode === 'real' && s === 'latency'))) throw Error('Invalid scenarios');
