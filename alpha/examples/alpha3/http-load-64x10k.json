@@ -1,0 +1,25 @@
+{
+  "kind": "local-http-concurrency-probe",
+  "clients": 64,
+  "requests": 10000,
+  "taskCount": 2000,
+  "allocations": 2000,
+  "errors": 0,
+  "nonSuccess": 0,
+  "elapsedMs": 3210.52,
+  "requestsPerSecond": 3114.8,
+  "latencyMs": {
+    "p50": 16.731,
+    "p95": 26.132,
+    "p99": 34.279,
+    "max": 510.444
+  },
+  "process": {
+    "node": "v24.19.0",
+    "platform": "linux",
+    "arch": "x64",
+    "rssDeltaBytes": 204468224,
+    "heapDeltaBytes": 21341584
+  },
+  "caveat": "Loopback HTTP to one local coordinator and in-memory SQLite; no remote network, persistent-disk contention, real worker compute, or multi-host behavior."
+}

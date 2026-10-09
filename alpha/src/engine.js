@@ -4,17 +4,28 @@ import { workload } from './workloads.js';
 export class TaskEngine {
   constructor({ now = () => performance.now(), send = () => true, log = () => {}, scheduler = new AdaptiveScheduler(), heartbeatMs = 8000, maxAttempts = 8, autoDispatch = true, jobPrefix = 'job' } = {}) {
     Object.assign(this, { now, send, log, scheduler, heartbeatMs, maxAttempts, autoDispatch, jobPrefix });
-    this.nodes = new Map(); this.job = null; this.sequence = 0;
+    this.nodes = new Map(); this.idleNodes = new Set(); this.parkedNodes = new Set(); this.job = null; this.sequence = 0;
   }
   event(type, details = {}) { this.log({ at: this.now(), type, ...details }); }
-  addNode(id, name, bench) {
+  addNode(id, name, bench, { admitToJob = true } = {}) {
     if (!bench || !Number.isFinite(bench.rate) || bench.rate <= 0 || bench.rate > 1e8) throw Error('Invalid benchmark');
     workload(bench.workload);
     if (this.nodes.has(id)) throw Error('Node already registered');
     this.nodes.set(id, { id, workloadId: bench.workload, name: String(name || id).slice(0, 60), rate: bench.rate, initialRate: bench.rate,
       connected: true, lastSeen: this.now(), busy: null, assigned: 0, completed: 0, units: 0,
       computeMs: 0, reassigned: 0, slow: false, rtts: [], rttMs: null, cooldown: 0 });
-    this.event('node-ready', { id }); this.dispatch();
+    this.idleNodes.add(id);
+    this.event('node-ready', { id });
+    const j = this.job;
+    // Adaptive jobs can safely absorb new capacity because work is drawn from
+    // the shared remaining range. Fixed partitions and baselines cannot.
+    if (admitToJob && j?.status === 'running' && j.mode !== 'baseline' && !j.allocations &&
+      j.workloadId === bench.workload && !j.nodeSet.has(id)) {
+      j.nodeIds.push(id);
+      j.nodeSet.add(id);
+      this.event('node-joined-job', { id, jobId: j.id });
+    }
+    this.dispatch();
   }
   heartbeat(id, rtt) {
     const n = this.nodes.get(id); if (!n || !n.connected) return;
@@ -24,8 +35,10 @@ export class TaskEngine {
   removeNode(id, reason = 'disconnected') {
     const n = this.nodes.get(id); if (!n || !n.connected) return;
     n.connected = false;
+    this.idleNodes.delete(id);
+    this.parkedNodes.delete(id);
     const range = this.job?.allocations?.get(id);
-    if (range && range.start < range.end) { this.job.orphans.push({ ...range }); range.start = range.end; }
+    if (range && range.start < range.end) { this.job.orphans.push({ ...range }); range.start = range.end; this.restoreParked(); }
     this.requeue(n, reason); this.event('node-lost', { id, reason }); this.dispatch();
   }
   start({ workloadId = 'monte-carlo-v1', params, nodeIds, mode = 'distributed' }) {
@@ -34,7 +47,9 @@ export class TaskEngine {
     const ids = nodeIds || [...this.nodes.values()].filter(n => n.connected).map(n => n.id);
     if (!ids.length || new Set(ids).size !== ids.length || ids.some(id => !this.nodes.get(id)?.connected || this.nodes.get(id).workloadId !== workloadId)) throw Error('Select connected nodes');
     for (const n of this.nodes.values()) { n.busy = null; n.assigned = n.completed = n.units = n.computeMs = n.reassigned = 0; n.cooldown = 0; }
-    this.job = { id: `${this.jobPrefix}-${++this.sequence}`, workloadId, params, totalUnits: w.totalUnits(params), mode, nodeIds: ids, status: 'running', started: this.now(),
+    this.idleNodes = new Set(ids);
+    this.parkedNodes.clear();
+    this.job = { id: `${this.jobPrefix}-${++this.sequence}`, workloadId, params, totalUnits: w.totalUnits(params), mode, nodeIds: ids, nodeSet: new Set(ids), status: 'running', started: this.now(),
       allocations: this.scheduler.allocations?.(ids.map(id => this.nodes.get(id)), w.totalUnits(params)) || null, orphans: [],
       ended: null, next: 0, tasks: new Map(), pending: [], completed: 0, units: 0, reassigned: 0, duplicates: 0, rejected: 0, result: null };
     this.event('job-start', { jobId: this.job.id, mode, params }); this.dispatch(); return this.job.id;
@@ -44,8 +59,22 @@ export class TaskEngine {
     const j = this.job; if (!j || j.status !== 'running') return 0;
     // Build this list once per dispatch, rather than rescanning all peers for
     // every assignment (the alpha.1 initial dispatch was quadratic).
-    const idle = j.nodeIds.map(id => this.nodes.get(id)).filter(n =>
-      n?.connected && !n.busy && n.cooldown <= this.now() && eligible(n.id));
+    // The idle index avoids scanning every registered peer after each result.
+    // Fixed allocations also retire a peer once its owned interval is exhausted.
+    const hasWork = id => j.pending.length > 0 || j.orphans.length > 0 ||
+      (j.allocations ? j.allocations.get(id)?.start < j.allocations.get(id)?.end : j.next < j.totalUnits);
+    const idle = [];
+    for (const id of this.idleNodes) {
+      if (!j.nodeSet.has(id)) continue;
+      if (!hasWork(id)) {
+        this.idleNodes.delete(id);
+        const n = this.nodes.get(id);
+        if (n?.connected && !n.busy) this.parkedNodes.add(id);
+        continue;
+      }
+      const n = this.nodes.get(id);
+      if (n?.connected && !n.busy && n.cooldown <= this.now() && eligible(id)) idle.push(n);
+    }
     let idleRate = idle.reduce((sum, n) => sum + n.rate, 0), assigned = 0;
     for (const n of idle) {
       const id = n.id;
@@ -70,7 +99,7 @@ export class TaskEngine {
       idleRate -= n.rate;
       if (!t) continue;
       t.attempt++; t.owner = id; t.status = 'leased'; t.sent = this.now(); t.deadline = t.sent + this.scheduler.leaseMs(n, t.count);
-      n.busy = t.id; n.assigned++; assigned++;
+      n.busy = t.id; this.idleNodes.delete(id); n.assigned++; assigned++;
       const message = { jobId: j.id, workloadId: j.workloadId, task: { ...t.payload, id: t.id, attempt: t.attempt } };
       if (this.send(id, 'task', message) === false) { this.requeue(n, 'send-failed'); n.cooldown = this.now() + 1000; }
       else this.event('task-assigned', { jobId: j.id, taskId: t.id, nodeId: id, count: t.count, attempt: t.attempt });
@@ -79,12 +108,23 @@ export class TaskEngine {
   }
   requeue(n, reason) {
     const j = this.job, t = j?.tasks.get(n.busy); n.busy = null;
+    if (n.connected && j?.nodeSet.has(n.id)) this.idleNodes.add(n.id);
     if (!t || t.status !== 'leased' || j.status !== 'running') return;
     this.send(n.id, 'cancel', { jobId: j.id, taskId: t.id, attempt: t.attempt });
     t.status = 'pending'; t.owner = null; j.reassigned++; n.reassigned++;
     this.event('task-reassigned', { taskId: t.id, reason, attempt: t.attempt });
     if (t.attempt >= this.maxAttempts) { this.abort(`Retry limit: ${t.id}`); return; }
     j.pending.push(t);
+    this.restoreParked();
+  }
+  restoreParked() {
+    const j = this.job;
+    if (!j || j.status !== 'running' || (!j.pending.length && !j.orphans.length)) return;
+    for (const id of this.parkedNodes) {
+      const n = this.nodes.get(id);
+      if (n?.connected && j.nodeSet.has(id)) this.idleNodes.add(id);
+    }
+    this.parkedNodes.clear();
   }
   accept(id, message) {
     const j = this.job, n = this.nodes.get(id);
@@ -97,7 +137,7 @@ export class TaskEngine {
     }
     const elapsed = this.now() - t.sent;
     this.scheduler.observe(n, t.count, elapsed);
-    n.busy = null; n.completed++; n.units += t.count; n.computeMs += message.computeMs;
+    n.busy = null; this.idleNodes.add(id); n.completed++; n.units += t.count; n.computeMs += message.computeMs;
     t.status = 'done'; t.result = message.result; j.completed++; j.units += t.count;
     this.event('task-completed', { taskId: t.id, nodeId: id, elapsedMs: elapsed, rate: n.rate });
     if (j.units === j.totalUnits && j.pending.length === 0 && [...j.tasks.values()].every(t => t.status === 'done')) {
@@ -123,17 +163,17 @@ export class TaskEngine {
     j.status = 'failed'; j.error = reason; j.ended = this.now();
     for (const n of this.nodes.values()) {
       if (n.busy) this.send(n.id, 'cancel', { jobId: j.id, taskId: n.busy });
-      n.busy = null;
+      n.busy = null; if (n.connected && j.nodeSet.has(n.id)) this.idleNodes.add(n.id);
     }
     this.event('job-failed', { reason });
   }
   snapshot() {
     const j = this.job, elapsedMs = j ? Math.max(1, (j.ended ?? this.now()) - j.started) : 0;
-    const totalRate = [...this.nodes.values()].filter(n => n.connected && (!j || j.nodeIds.includes(n.id))).reduce((a, n) => a + n.rate, 0);
+    const totalRate = [...this.nodes.values()].filter(n => n.connected && (!j || j.nodeSet.has(n.id))).reduce((a, n) => a + n.rate, 0);
     return {
       nodes: [...this.nodes.values()].map(n => ({ ...n, rtts: undefined, latency: percentiles(n.rtts),
         state: !n.connected ? 'offline' : n.cooldown > this.now() ? 'recovering' : n.slow ? 'slow' : n.busy ? 'working' : 'ready',
-        capacityShare: n.connected && (!j || j.nodeIds.includes(n.id)) ? n.rate / totalRate * 100 : 0,
+        capacityShare: n.connected && (!j || j.nodeSet.has(n.id)) ? n.rate / totalRate * 100 : 0,
         loadPercent: n.busy ? 100 : 0, utilizationPercent: elapsedMs ? Math.min(100, 100 * n.computeMs / elapsedMs) : 0 })),
       job: j ? { id: j.id, workloadId: j.workloadId, params: j.params, mode: j.mode, nodeIds: j.nodeIds, status: j.status,
         completed: j.completed, created: j.tasks.size, units: j.units, percent: j.units / j.totalUnits * 100,

@@ -1,10 +1,10 @@
 {
   "name": "macn-alpha",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
   },
   "scripts": {
     "start": "node src/server.js",
@@ -14,7 +14,14 @@
     "lab": "node lab/cli.js",
     "lab:real": "node lab/cli.js --mode real",
     "lab:scale": "node lab/cli.js --mode simulated",
-    "lab:multi": "node lab/cli.js --mode multi"
+    "lab:multi": "node lab/cli.js --mode multi",
+    "lab:capacity": "node lab/cli.js --mode capacity",
+    "lab:compare": "node lab/cli.js --mode compare",
+    "lab:break-even": "node lab/cli.js --mode break-even",
+    "batch:load": "node lab/batch-load.js",
+    "batch:http-load": "node lab/batch-http-load.js",
+    "lab:async": "node lab/async-sim.js",
+    "batch:worker": "node src/batch-worker.js"
   },
   "dependencies": {
     "express": "4.21.2",

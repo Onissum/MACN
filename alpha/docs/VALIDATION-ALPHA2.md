@@ -24,4 +24,28 @@ Raw JSON, ambiente, tempi ed eccezioni: [examples/alpha2](../examples/alpha2/REA
 
 ## Limiti espliciti
 
-Non sono state collegate macchine fisiche esterne. Mille nodi simulati non sono mille connessioni WebSocket. Il broker non è ancora esposto come servizio pubblico autenticato e la UI ordinaria resta a una suite per volta. Non sono implementati più coordinatori, persistenza o failover. La correttezza dei risultati non è una difesa contro nodi malevoli. La suite automatica GitHub comprende test Node e browser; il suo esito remoto va verificato sul commit pubblicato.
+Non sono state collegate macchine fisiche esterne. Mille nodi simulati non sono mille connessioni WebSocket. Il broker non è ancora esposto come servizio pubblico autenticato e la UI ordinaria resta a una suite per volta. Non sono implementati più coordinatori, persistenza o failover. La correttezza dei risultati non è una difesa contro nodi malevoli.
+
+## Probe del coordinatore su GitHub Actions — 8 ottobre 2026
+
+Il commit `373a619` ha superato **42/42 test Node**, la suite ComputeRTC storica, i test Playwright e il probe Socket.IO/WebSocket su 10, 100, 1.000 e 2.000 client locali. Tutte e tre le ripetizioni per dimensione hanno completato e verificato il risultato. Mediane job: **32,3 / 153,0 / 1.156,9 / 3.617,1 ms**; mediane p95 task: **3,69 / 17,48 / 126,58 / 384,07 ms**. Uno stress a 5.000 client ha completato il job in **7.729,9 ms**, p95 task **995,51 ms** (una ripetizione). Il JSON completo, con CPU, event loop, RSS e messaggi, è nell'artifact `alpha2-validation-artifacts` del run CI; questi dati descrivono il runner e client sullo stesso host, non una rete di dispositivi fisici. 5.000 è il massimo provato qui, non il limite assoluto.
+
+## Confronto di calcolo su GitHub Actions — 8 ottobre 2026
+
+Il commit `0b3e8e5` ha superato **44/44 test Node**, la suite ComputeRTC, Playwright e i probe di capacità. Il nuovo confronto esegue lo stesso Monte Carlo deterministico da **50 milioni di campioni**, seed accoppiati, per tre ripetizioni; ogni risultato coincide con la baseline sequenziale. Tutti i processi sono sullo stesso runner GitHub.
+
+| Topologia MACN | Tempo job mediano | Speedup job mediano accoppiato | Setup mediano |
+|---|---:|---:|---:|
+| 1 worker | 404,2 ms | 0,88× | 53,5 ms |
+| 2 worker | 220,7 ms | 1,63× | 97,9 ms |
+| 4 worker | 159,1 ms | 2,27× | 196,3 ms |
+
+La baseline sequenziale ha impiegato **353,1 ms** mediani. Con un solo worker MACN l'overhead supera il vantaggio; con quattro worker il tempo del solo job scende a circa il 44% della baseline, ma la crescita non è lineare. Il setup è misurato separatamente e lo speedup end-to-end, che lo include, è nel JSON. I numeri sono un primo confronto controllato su un unico host: non misurano dispositivi fisici eterogenei, LAN/WAN, GPU o un supercomputer. L'artifact `alpha2-validation-artifacts` del run CI conserva JSON/Markdown completi, inclusi throughput, RTT task e metriche del coordinatore.
+
+## Matrice break-even simulata — 8 ottobre 2026
+
+La matrice ha eseguito **288 run** (48 combinazioni, tre politiche e due ripetizioni) con 3 milioni di unità, 1/4/16/64 nodi, 0/16/64 byte per unità, moltiplicatori di calcolo 1×/10× e scenari steady/churn. **248 run sono terminate con copertura e checksum verificati**. Le 40 incomplete sono diagnostiche: 36 nei casi churn a un solo nodo, dove l'unico volontario scompare; 4 con partizione calibrata e 64 byte/unità in churn, che esauriscono i retry perché la lease non include il trasferimento dati. I job incompleti non ricevono uno speedup.
+
+Nel modello steady, 64 byte/unità e compute 1× richiedono 64 nodi per pareggiare la baseline locale più veloce; con compute 10× il pareggio scende a 4 nodi. In churn, 64 byte/unità e compute 1× non raggiungono il pareggio neppure a 64 nodi (0,84× nell'ultima dimensione). Sono risultati del modello parametrico, con saturazione del coordinatore esclusa dal tempo virtuale: non sono previsioni per una rete reale. Il dato diagnostico è che l'adattivo recupera casi in cui alcune partizioni statiche finiscono i retry; serve una lease consapevole dei byte prima di workload data-heavy.
+
+Report ripetibile: [JSON completo](../examples/alpha2/break-even-example.json), [tabella Markdown](../examples/alpha2/break-even-example.md), [assunzioni e limiti](BREAK-EVEN-LAB.md). La CI esegue anche una matrice smoke ridotta e ne conserva gli artifact.

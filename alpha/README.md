@@ -1,19 +1,25 @@
-# MACN 1.0-alpha.2
+# MACN 1.0-alpha.3
 
-Novità alpha.2: [laboratorio di scalabilità](docs/ALPHA2-LAB.md), tre scheduler confrontabili, prove con 10/50 nodi locali e 100/1.000 nodi simulati, broker sperimentale per richieste concorrenti e lettore report su `/lab.html`. I report del laboratorio sono separati dai benchmark browser descritti sotto.
+La direzione architetturale di MACN diventa **Batch asincrono come modalità principale**: i nodi prelevano job quando sono disponibili, calcolano con i propri tempi e riconsegnano risultati verificabili. Alpha.3 ne aggiunge il prototipo pull-based: job e task sono salvati in SQLite; i nodi misurano la velocità, aggiornano la stima durante il job, chiedono pacchetti proporzionati alla capacità, calcolano offline e restituiscono risultati idempotenti. Le lease si rinnovano durante il calcolo e le scadenze rendono i task riassegnabili. SQLite resta un coordinatore singolo, non una rete da 100.000 dispositivi; il worker Batch richiede Node.js. Adaptive/WebSocket e ComputeRTC restano disponibili per workload interattivi. Guida, limiti e roadmap: [ALPHA3-BATCH.md](docs/ALPHA3-BATCH.md), [ROADMAP.md](docs/ROADMAP.md).
+
+Novità alpha.2: [laboratorio di scalabilità](docs/ALPHA2-LAB.md), tre scheduler confrontabili, prove con 10/50 worker di calcolo locali, 100/1.000/10.000 nodi simulati e fino a 5.000 connessioni WebSocket locali di control plane; broker sperimentale per richieste concorrenti e lettore report su `/lab.html`. La CI verifica 10/100/1.000/2.000 e completa uno stress a 5.000; archivia i report. Queste misure non equivalgono a dispositivi fisici distinti.
+
+Il comando `npm run lab:compare -- --nodes 1,2,4 --samples 50000000 --repeats 3` confronta lo stesso Monte Carlo sequenziale con MACN su uno o più worker thread e WebSocket locali. Verifica risultati identici, misura speedup nel job e end-to-end, costo di setup, throughput e RTT dei task. Nel run CI a 50 milioni di campioni il tempo mediano di job è stato 0,88× / 1,63× / 2,27× la baseline rispettivamente con 1/2/4 worker. È una misura su un solo host, non un test su dispositivi fisici o GPU; dettagli e condizioni in [VALIDATION-ALPHA2.md](docs/VALIDATION-ALPHA2.md).
 
 Prima alpha eseguibile e misurabile: più browser collaborano a **un solo job**, con calibrazione, assegnazione adattiva, recupero dei task persi e confronto verificato con un nodo solo.
 
 **Topologia di questa alpha:** coordinatore Node.js e nodi browser collegati via Socket.IO/WebSocket. Non è ancora la versione P2P decentralizzata. I prototipi WebRTC/ComputeRTC sono conservati senza modifiche; motivazioni, architettura precedente e valutazione dei DataChannel in [ARCHITECTURE-AUDIT.md](docs/ARCHITECTURE-AUDIT.md).
 
+Perché prendiamo BOINC come riferimento, quali meccanismi MACN ha già implementato e quali sono i prossimi passi originali: [BOINC-INSPIRATIONS.md](docs/BOINC-INSPIRATIONS.md).
+
 ## Avvio del coordinatore
 
-Requisiti: Node.js 22 o successivo con npm; browser moderno con Web Worker su PC, notebook e smartphone. Sul telefono non serve installare Node.js.
+Requisiti: Node.js 22.13 o successivo con npm (il percorso Batch usa `node:sqlite`, ancora sperimentale in Node 22); browser moderno con Web Worker su PC, notebook e smartphone per il percorso Adaptive.
 
 Dalla cartella del repository:
 
 ```sh
-git switch macn-alpha.2-lab
+git switch macn-alpha.3-batch
 cd alpha
 npm ci
 npm test
@@ -23,6 +29,10 @@ npm start
 Il server ascolta sulla porta **3003** e mostra un **token di sessione**. Apri `http://localhost:3003` sul PC. Il browser del PC è un nodo di calcolo; il processo server coordina e non esegue il kernel.
 
 Il token è generato ad ogni avvio. Facoltativamente impostare `MACN_TOKEN` nell'ambiente per mantenere lo stesso token, oppure `PORT` per una porta diversa. Non occorrono servizi CDN, STUN, TURN, account o tunnel per la demo LAN. Il client Socket.IO viene servito localmente.
+
+Per il test di capacità, esegui `npm run lab:capacity`: apre WebSocket di loopback veri a 10, 100, 1.000 e 2.000 client e ripete ogni dimensione tre volte. Tutti i client condividono un solo host e calcolano un checksum O(1), quindi il report misura connessioni, task e costo del coordinatore, non potenza CPU/GPU aggregata. I file escono in `results/alpha2-capacity.json` e `.md`. La simulazione discreta può estendersi a 10.000 nodi con `npm run lab:scale -- --nodes 1000,10000 --scenarios steady --repeats 1`.
+
+Per stimare quando comunicazione e coordinamento annullano il parallelismo, parti con `npm run lab:break-even -- --nodes 1,4,16 --samples 1000000 --bytes 0,16,256 --compute 1,10 --scenarios steady,churn --repeats 2`. Il simulatore confronta le tre politiche, varia byte trasferiti per unità e intensità di calcolo, e calcola il primo numero di nodi con speedup simulato ≥ 1 rispetto al nodo singolo più veloce. Scrive JSON e Markdown in `results/alpha2-break-even.*`. **È un modello esplorativo e ottimistico**, con banda/RTT ipotetiche e saturazione del coordinatore esclusa dal tempo virtuale: non misura Internet, dispositivi o GPU. Il significato dei parametri e i limiti sono in [BREAK-EVEN-LAB.md](docs/BREAK-EVEN-LAB.md).
 
 ## Prova precisa con tre dispositivi fisici
 
@@ -38,7 +48,7 @@ Il token è generato ad ogni avvio. Facoltativamente impostare `MACN_TOKEN` nell
 
 **Test di guasto separato:** scegli il PC come riferimento. Durante la fase **Distribuito** disconnetti il telefono dal Wi-Fi o premi **Disconnetti** mentre lavora. Il nodo deve diventare offline e i suoi task passare ai superstiti; il risultato finale deve coincidere con la baseline. In caso di perdita senza chiusura pulita l'attesa dipende da heartbeat e lease, generalmente alcuni secondi. Il confronto segnala `cohortChanged`: non confondere questa prova con la misura senza guasti.
 
-Un nodo riconnesso riceve una nuova identità: parteciperà al **benchmark successivo**, perché la coorte del benchmark in corso rimane definita. Se scompaiono tutti i nodi selezionati la prova termina con un errore esplicito. Se sparisce il nodo di riferimento durante la baseline, la prova non può produrre un confronto valido.
+Un nodo riconnesso riceve una nuova identità. Se rientra durante la baseline o tra le fasi partecipa al **benchmark successivo**, così il confronto mantiene una coorte definita; se si collega durante la fase distribuita può ricevere subito il lavoro ancora disponibile nel job adattivo. Le politiche a partizione fissa non ammettono ingressi tardivi. Se tutti i nodi attivi spariscono la prova termina con un errore esplicito; se sparisce il riferimento durante la baseline, la prova non può produrre un confronto valido.
 
 ## Cosa misura
 
@@ -77,6 +87,8 @@ Risultato misurato e condizioni: [examples/BENCHMARK.md](examples/BENCHMARK.md).
 `src/scheduler.js` è indipendente dalla rete. `engine.js` gestisce lease e risultati; `network.js` è l'adapter. `coordinator.js` orchestra gli esperimenti. `public/compute-worker.js` esegue il codice senza bloccare il browser.
 
 Il registro in `src/workloads.js` contiene moduli versionati con `validate`, `totalUnits`, `makeTask`, `compute`, `validResult`, `merge`. Per aggiungere un workload: implementa questi metodi, il suo task di calibrazione e il criterio di uguaglianza della baseline; registra e seleziona il workload nell'orchestratore/interfaccia. La prima UI e il profilo nodo sono deliberatamente Monte Carlo. Rete, lease e algoritmo di scheduling restano riutilizzabili. Nessun codice remoto caricato via eval.
+
+Per verificare il comportamento asincrono senza dispositivi fisici: `npm run lab:async` simula tre nodi eterogenei e verifica il merge contro l'esecuzione sequenziale; `npm run lab:async -- --scenario=disconnect` simula la perdita di un nodo e il recupero dopo scadenza lease. Entrambi usano la coda Batch e SQLite reali con tempo virtuale. `npm run batch:load -- --tasks=1000` misura invece 1k/10k/100k poller sequenziali e il costo di preflight locale; nessuno di questi test misura HTTP concorrente o rete reale. Dettagli e istruzioni worker: [ALPHA3-BATCH.md](docs/ALPHA3-BATCH.md) e [esempi async](examples/alpha4/README.md).
 
 ## Limiti e problemi aperti
 

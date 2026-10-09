@@ -5,6 +5,9 @@ import os from 'node:os';
 import { simulate, scenarios as simulatedScenarios } from './simulate.js';
 import { realRun } from './real.js';
 import { multiRun } from './multi.js';
+import { capacityRun } from './capacity.js';
+import { compareRun } from './compare.js';
+import { breakEvenRun } from './break-even.js';
 import { policyNames } from '../src/policies.js';
 import { markdown, summarize } from './report.js';
 
@@ -12,15 +15,17 @@ async function main() {
   const { values } = parseArgs({ options: {
     mode: { type: 'string', default: 'simulated' }, nodes: { type: 'string' }, scenarios: { type: 'string' },
     repeats: { type: 'string', default: '3' }, samples: { type: 'string' }, seed: { type: 'string', default: '42' }, out: { type: 'string' },
+    bytes: { type: 'string' }, compute: { type: 'string' },
     help: { type: 'boolean', default: false }
   } });
-  if (values.help) { console.log('npm run lab -- --mode simulated|real|multi --nodes 100,1000 --scenarios steady,slowdown,churn,latency --repeats 3 --seed 42 --samples 100000000 --out results/lab.json'); return; }
+  if (values.help) { console.log('npm run lab -- --mode simulated|real|multi|capacity|compare|break-even --nodes 1,4,16,64 --scenarios steady,slowdown,churn,latency --bytes 0,64,1024 --compute 1,20 --repeats 3 --seed 42 --samples 10000000 --out results/lab.json'); return; }
   const mode = values.mode, repeats = Number(values.repeats), seed = Number(values.seed);
-  if (!['simulated', 'real', 'multi'].includes(mode)) throw Error('Invalid mode');
+  if (!['simulated', 'real', 'multi', 'capacity', 'compare', 'break-even'].includes(mode)) throw Error('Invalid mode');
   if (!Number.isInteger(repeats) || repeats < 1 || repeats > 10 || !Number.isInteger(seed) || seed < 0 || seed > 0xffffffff - repeats) throw Error('Invalid repeats/seed');
-  const sizes = (values.nodes || (mode === 'real' ? '10,50' : mode === 'multi' ? '20' : '100,1000')).split(',').map(Number);
-  if (sizes.some(n => !Number.isInteger(n) || n < 1 || n > (mode === 'real' ? 50 : 1000))) throw Error('Invalid node counts');
-  const scenarios = (values.scenarios || (mode === 'real' ? 'steady,slowdown,churn' : 'steady,slowdown,churn,latency')).split(',');
+  const sizes = (values.nodes || (mode === 'real' ? '10,50' : mode === 'multi' ? '20' : mode === 'capacity' ? '10,100,1000' : mode === 'compare' ? '1,2,4' : mode === 'break-even' ? '1,4,16,64' : '100,1000')).split(',').map(Number);
+  const maxNodes = ['real', 'compare'].includes(mode) ? 50 : mode === 'capacity' ? 5000 : mode === 'simulated' ? 10000 : 1000;
+  if (sizes.some(n => !Number.isInteger(n) || n < 1 || n > maxNodes)) throw Error(`Invalid node counts (maximum ${maxNodes} for ${mode})`);
+  const scenarios = (values.scenarios || (mode === 'real' ? 'steady,slowdown,churn' : mode === 'break-even' ? 'steady,latency' : 'steady,slowdown,churn,latency')).split(',');
   if (scenarios.some(s => !simulatedScenarios.includes(s) || (mode === 'real' && s === 'latency'))) throw Error('Invalid scenarios');
   const out = resolve(values.out || `results/alpha2-${mode}.json`);
   await mkdir(dirname(out), { recursive: true });
@@ -30,7 +35,41 @@ async function main() {
     await writeFile(out + '.tmp', JSON.stringify(report, null, 2)); await rename(out + '.tmp', out);
     if (mode !== 'multi') await writeFile(out.replace(/\.json$/, '') + '.md', markdown(report));
   };
+  if (mode === 'break-even') {
+    const result = breakEvenRun({ nodes: sizes, samples: Number(values.samples || 10_000_000), seed, repeats,
+      dataBytesPerUnit: (values.bytes || '0,64,1024').split(',').map(Number),
+      computeMultipliers: (values.compute || '1,20').split(',').map(Number), scenarios,
+    });
+    report.breakEven = { kind: result.kind, note: result.note, sizes: result.nodes, dataBytesPerUnit: result.dataBytesPerUnit,
+      computeMultipliers: result.computeMultipliers, repeats: result.repeats, policies: result.policies };
+    report.summary = result.summary; report.runs = result.runs;
+    report.complete = true; report.completedAt = new Date().toISOString(); await save();
+    for (const row of result.summary) console.log(`break-even n=${row.nodes} ${row.scenario} bytes/unit=${row.dataBytesPerUnit} compute×${row.computeMultiplier}: adaptive=${row.policies.adaptive.medianMs?.toFixed(1) ?? 'n/a'} ms; speedup=${row.policies.adaptive.medianSpeedup?.toFixed(2) ?? 'n/a'}×; verified=${row.policies.adaptive.verified}`);
+    console.log(`Saved ${out}`); return;
+  }
+  if (mode === 'compare') {
+    const comparison = await compareRun({ nodes: sizes, samples: Number(values.samples || 50_000_000), seed, repeats,
+      onRun: async run => {
+        await save();
+        console.log(`compare repeat=${run.repeat} ${run.topology} n=${run.nodes}: ${run.elapsedMs.toFixed(1)} ms; verified=${run.verified}`);
+      } });
+    report.summary = comparison.summary;
+    report.comparison = { kind: comparison.kind, workload: comparison.workload, samples: comparison.samples,
+      requestedWorkers: comparison.requestedWorkers, physicalHosts: comparison.physicalHosts, note: comparison.note };
+    report.complete = true; report.completedAt = new Date().toISOString(); await save();
+    for (const row of comparison.summary) console.log(`compare n=${row.nodes} #${row.repeats}: job=${row.medianJobMs.toFixed(1)} ms; setup=${row.medianSetupMs.toFixed(1)} ms; speedup=${row.medianJobSpeedup.toFixed(2)}x; verified=${row.verified}`);
+    console.log(`Saved ${out}`); return;
+  }
   for (const nodes of sizes) {
+    if (mode === 'capacity') {
+      for (let repeat = 0; repeat < repeats; repeat++) {
+        const run = await capacityRun({ nodes, samples: Number(values.samples || nodes * 1500000), seed: seed + repeat });
+        report.runs.push({ repeat: repeat + 1, ...run }); await save();
+        console.log(`capacity n=${nodes} #${repeat + 1} connected=${run.connected}/${nodes}: ${run.elapsedMs.toFixed(1)} ms; verified=${run.verified}; p95 task=${run.taskRoundTripMs.p95?.toFixed(2) ?? 'n/a'} ms`);
+        if (!run.verified) throw Error('Capacity probe verification failed; partial report saved at ' + out);
+      }
+      continue;
+    }
     if (mode === 'multi') { const r = multiRun({ nodes, samples: Number(values.samples || 2000000), seed }); report.runs.push(r); await save(); if (!r.verified) throw Error('Multi-job verification failed'); continue; }
     for (const scenario of scenarios) for (let repeat = 0; repeat < repeats; repeat++) {
       let calibrationRates;
@@ -46,7 +85,7 @@ async function main() {
       }
     }
   }
-  report.complete = true; report.completedAt = new Date().toISOString(); report.summary = mode === 'multi' ? undefined : summarize(report.runs); await save();
+  report.complete = true; report.completedAt = new Date().toISOString(); report.summary = ['multi', 'capacity'].includes(mode) ? undefined : summarize(report.runs); await save();
   console.log(`Saved ${out}`);
 }
 main().catch(error => { console.error(error.message); process.exitCode = 1; });

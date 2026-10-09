@@ -1,10 +1,10 @@
 import { Server } from 'socket.io';
 // Adapter contract: send(nodeId,event,payload) returns false if unavailable.
-export function attachNetwork(server, coordinator, token) {
+export function attachNetwork(server, coordinator, token, { maxConnections = 64 } = {}) {
   const io = new Server(server, { transports: ['websocket'], maxHttpBufferSize: 65536, pingInterval: 2000, pingTimeout: 6000 });
   io.use((socket, next) => socket.handshake.auth?.token === token ? next() : next(Error('Invalid session token')));
   io.on('connection', socket => {
-    if (io.engine.clientsCount > 64) { socket.disconnect(true); return; }
+    if (io.engine.clientsCount > maxConnections) { socket.disconnect(true); return; }
     if (socket.handshake.auth?.role !== 'worker') socket.join('dashboards');
     let registered = false, probe = null;
     socket.on('register', (data, ack) => {

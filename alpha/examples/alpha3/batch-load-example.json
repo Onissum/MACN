@@ -1,0 +1,41 @@
+[
+  {
+    "kind": "local-coordinator-simulation",
+    "nodes": 1000,
+    "taskCount": 1000,
+    "completed": 1000,
+    "runtime": { "node": "v24.19.0", "platform": "linux", "arch": "x64", "logicalCpus": 9, "totalMemoryBytes": 10451464192 },
+    "polls": 1000,
+    "elapsedMs": 221.21,
+    "pollsPerSecond": 4520.6,
+    "tasksPerSecond": 4520.6,
+    "heapDeltaBytes": 678112,
+    "caveat": "No real workers, network, device compute, or concurrent HTTP requests are included."
+  },
+  {
+    "kind": "local-coordinator-simulation",
+    "nodes": 10000,
+    "taskCount": 1000,
+    "completed": 1000,
+    "runtime": { "node": "v24.19.0", "platform": "linux", "arch": "x64", "logicalCpus": 9, "totalMemoryBytes": 10451464192 },
+    "polls": 10000,
+    "elapsedMs": 269.79,
+    "pollsPerSecond": 37065.4,
+    "tasksPerSecond": 3706.5,
+    "heapDeltaBytes": 2107896,
+    "caveat": "No real workers, network, device compute, or concurrent HTTP requests are included."
+  },
+  {
+    "kind": "local-coordinator-simulation",
+    "nodes": 100000,
+    "taskCount": 1000,
+    "completed": 1000,
+    "runtime": { "node": "v24.19.0", "platform": "linux", "arch": "x64", "logicalCpus": 9, "totalMemoryBytes": 10451464192 },
+    "polls": 100000,
+    "elapsedMs": 717.24,
+    "pollsPerSecond": 139422.5,
+    "tasksPerSecond": 1394.2,
+    "heapDeltaBytes": 1326640,
+    "caveat": "No real workers, network, device compute, or concurrent HTTP requests are included."
+  }
+]

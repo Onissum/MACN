@@ -1,0 +1,491 @@
+{
+  "version": "1.0.0-alpha.2",
+  "mode": "simulated",
+  "complete": true,
+  "startedAt": "2026-10-08T09:26:12.690Z",
+  "config": {
+    "mode": "simulated",
+    "nodes": "10,100,1000,10000",
+    "scenarios": "steady",
+    "repeats": "1",
+    "out": "examples/alpha2/scale-simulated.json",
+    "seed": "42",
+    "help": false
+  },
+  "environment": {
+    "node": "v24.19.0",
+    "os": "linux",
+    "cpuModel": "INTEL(R) XEON(R) PLATINUM 8573C",
+    "visibleLogicalCpus": 9,
+    "physicalHosts": 1
+  },
+  "runs": [
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 10,
+      "samples": 10000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "equal",
+      "verified": true,
+      "modelledMs": 17338.666666666668,
+      "wallMs": 11.063146000000017,
+      "cpuMs": 17.556,
+      "dispatchMs": 3.3427320000002396,
+      "maxDispatchMs": 0.5795780000000263,
+      "dispatchCalls": 486,
+      "events": 476,
+      "protocolMessages": 1582,
+      "peakEventQueue": 11,
+      "sampledPeakProcessRssBytes": 60022784,
+      "taskCount": 441,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 10,
+      "result": {
+        "count": 10000000,
+        "checksum": 2700765469
+      },
+      "expected": {
+        "count": 10000000,
+        "checksum": 2700765469
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    },
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 10,
+      "samples": 10000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "calibrated",
+      "verified": true,
+      "modelledMs": 3597.9766666666665,
+      "wallMs": 8.846789000000001,
+      "cpuMs": 22.011,
+      "dispatchMs": 2.5950819999998203,
+      "maxDispatchMs": 1.052254000000005,
+      "dispatchCalls": 238,
+      "events": 228,
+      "protocolMessages": 600,
+      "peakEventQueue": 11,
+      "sampledPeakProcessRssBytes": 60809216,
+      "taskCount": 220,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 10,
+      "result": {
+        "count": 10000000,
+        "checksum": 2700765469
+      },
+      "expected": {
+        "count": 10000000,
+        "checksum": 2700765469
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    },
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 10,
+      "samples": 10000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "adaptive",
+      "verified": true,
+      "modelledMs": 3520,
+      "wallMs": 5.724501999999973,
+      "cpuMs": 6.125,
+      "dispatchMs": 2.5456429999998704,
+      "maxDispatchMs": 0.8396290000000022,
+      "dispatchCalls": 237,
+      "events": 227,
+      "protocolMessages": 598,
+      "peakEventQueue": 11,
+      "sampledPeakProcessRssBytes": 61333504,
+      "taskCount": 219,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 10,
+      "result": {
+        "count": 10000000,
+        "checksum": 2700765469
+      },
+      "expected": {
+        "count": 10000000,
+        "checksum": 2700765469
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    },
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 100,
+      "samples": 100000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "equal",
+      "verified": true,
+      "modelledMs": 18346.666666666668,
+      "wallMs": 39.430852999999956,
+      "cpuMs": 67.409,
+      "dispatchMs": 18.298131999998873,
+      "maxDispatchMs": 1.680110999999954,
+      "dispatchCalls": 5212,
+      "events": 5112,
+      "protocolMessages": 17550,
+      "peakEventQueue": 101,
+      "sampledPeakProcessRssBytes": 72212480,
+      "taskCount": 5075,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 100,
+      "result": {
+        "count": 100000000,
+        "checksum": 798313186
+      },
+      "expected": {
+        "count": 100000000,
+        "checksum": 798313186
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    },
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 100,
+      "samples": 100000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "calibrated",
+      "verified": true,
+      "modelledMs": 4078.7083333333335,
+      "wallMs": 14.048813999999993,
+      "cpuMs": 40.774,
+      "dispatchMs": 8.330083000001594,
+      "maxDispatchMs": 2.273521999999957,
+      "dispatchCalls": 2609,
+      "events": 2509,
+      "protocolMessages": 6800,
+      "peakEventQueue": 101,
+      "sampledPeakProcessRssBytes": 74964992,
+      "taskCount": 2500,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 100,
+      "result": {
+        "count": 100000000,
+        "checksum": 798313186
+      },
+      "expected": {
+        "count": 100000000,
+        "checksum": 798313186
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    },
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 100,
+      "samples": 100000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "adaptive",
+      "verified": true,
+      "modelledMs": 4025,
+      "wallMs": 14.980429000000015,
+      "cpuMs": 35.693,
+      "dispatchMs": 8.531562000002168,
+      "maxDispatchMs": 3.3874000000000137,
+      "dispatchCalls": 2578,
+      "events": 2478,
+      "protocolMessages": 6738,
+      "peakEventQueue": 101,
+      "sampledPeakProcessRssBytes": 78049280,
+      "taskCount": 2469,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 100,
+      "result": {
+        "count": 100000000,
+        "checksum": 798313186
+      },
+      "expected": {
+        "count": 100000000,
+        "checksum": 798313186
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    },
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 1000,
+      "samples": 1000000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "equal",
+      "verified": true,
+      "modelledMs": 18346.666666666668,
+      "wallMs": 291.48401999999993,
+      "cpuMs": 455.207,
+      "dispatchMs": 136.2300270000111,
+      "maxDispatchMs": 4.254218000000037,
+      "dispatchCalls": 51787,
+      "events": 50787,
+      "protocolMessages": 175500,
+      "peakEventQueue": 1001,
+      "sampledPeakProcessRssBytes": 128659456,
+      "taskCount": 50750,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 1000,
+      "result": {
+        "count": 1000000000,
+        "checksum": 2684061679
+      },
+      "expected": {
+        "count": 1000000000,
+        "checksum": 2684061679
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    },
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 1000,
+      "samples": 1000000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "calibrated",
+      "verified": true,
+      "modelledMs": 4078.71,
+      "wallMs": 161.76642700000002,
+      "cpuMs": 254.499,
+      "dispatchMs": 78.58910900000387,
+      "maxDispatchMs": 15.715093000000024,
+      "dispatchCalls": 26009,
+      "events": 25009,
+      "protocolMessages": 68000,
+      "peakEventQueue": 1001,
+      "sampledPeakProcessRssBytes": 133246976,
+      "taskCount": 25000,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 1000,
+      "result": {
+        "count": 1000000000,
+        "checksum": 2684061679
+      },
+      "expected": {
+        "count": 1000000000,
+        "checksum": 2684061679
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    },
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 1000,
+      "samples": 1000000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "adaptive",
+      "verified": true,
+      "modelledMs": 4025,
+      "wallMs": 121.555746,
+      "cpuMs": 163.32,
+      "dispatchMs": 60.68374600000186,
+      "maxDispatchMs": 5.847990999999979,
+      "dispatchCalls": 25674,
+      "events": 24674,
+      "protocolMessages": 67330,
+      "peakEventQueue": 1001,
+      "sampledPeakProcessRssBytes": 148975616,
+      "taskCount": 24665,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 1000,
+      "result": {
+        "count": 1000000000,
+        "checksum": 2684061679
+      },
+      "expected": {
+        "count": 1000000000,
+        "checksum": 2684061679
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    },
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 10000,
+      "samples": 10000000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "equal",
+      "verified": true,
+      "modelledMs": 18346.666666666668,
+      "wallMs": 4706.857059,
+      "cpuMs": 5983.255,
+      "dispatchMs": 1872.1895539999573,
+      "maxDispatchMs": 42.04864800000007,
+      "dispatchCalls": 517537,
+      "events": 507537,
+      "protocolMessages": 1755000,
+      "peakEventQueue": 10001,
+      "sampledPeakProcessRssBytes": 458772480,
+      "taskCount": 507500,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 10000,
+      "result": {
+        "count": 10000000000,
+        "checksum": 3739739028
+      },
+      "expected": {
+        "count": 10000000000,
+        "checksum": 3739739028
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    },
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 10000,
+      "samples": 10000000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "calibrated",
+      "verified": true,
+      "modelledMs": 4078.7166666666667,
+      "wallMs": 1918.9786800000002,
+      "cpuMs": 2376.574,
+      "dispatchMs": 805.0514459997867,
+      "maxDispatchMs": 38.14773499999956,
+      "dispatchCalls": 260009,
+      "events": 250009,
+      "protocolMessages": 680000,
+      "peakEventQueue": 10001,
+      "sampledPeakProcessRssBytes": 585789440,
+      "taskCount": 250000,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 10000,
+      "result": {
+        "count": 10000000000,
+        "checksum": 3739739028
+      },
+      "expected": {
+        "count": 10000000000,
+        "checksum": 3739739028
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    },
+    {
+      "repeat": 1,
+      "kind": "discrete-event-simulation",
+      "nodes": 10000,
+      "samples": 10000000000,
+      "seed": 42,
+      "scenario": "steady",
+      "policy": "adaptive",
+      "verified": true,
+      "modelledMs": 4025,
+      "wallMs": 1783.022465,
+      "cpuMs": 2513.431,
+      "dispatchMs": 736.5790989999296,
+      "maxDispatchMs": 45.02414200000021,
+      "dispatchCalls": 256878,
+      "events": 246878,
+      "protocolMessages": 673738,
+      "peakEventQueue": 10001,
+      "sampledPeakProcessRssBytes": 585789440,
+      "taskCount": 246869,
+      "retries": 0,
+      "duplicates": 0,
+      "rejected": 0,
+      "contributors": 10000,
+      "result": {
+        "count": 10000000000,
+        "checksum": 3739739028
+      },
+      "expected": {
+        "count": 10000000000,
+        "checksum": 3739739028
+      },
+      "status": "completed",
+      "note": "Virtual node rates/RTT and virtual completion time. O(1) checksum fixture; no 1000-device Monte Carlo speedup. Wall/CPU/RSS describe this host and include simulation overhead."
+    }
+  ],
+  "completedAt": "2026-10-08T09:26:21.845Z",
+  "summary": [
+    {
+      "nodes": 10,
+      "scenario": "steady",
+      "medianMs": {
+        "equal": 17338.666666666668,
+        "calibrated": 3597.9766666666665,
+        "adaptive": 3520
+      },
+      "adaptiveVsEqual": 4.925757575757576,
+      "verified": true
+    },
+    {
+      "nodes": 100,
+      "scenario": "steady",
+      "medianMs": {
+        "equal": 18346.666666666668,
+        "calibrated": 4078.7083333333335,
+        "adaptive": 4025
+      },
+      "adaptiveVsEqual": 4.558178053830228,
+      "verified": true
+    },
+    {
+      "nodes": 1000,
+      "scenario": "steady",
+      "medianMs": {
+        "equal": 18346.666666666668,
+        "calibrated": 4078.71,
+        "adaptive": 4025
+      },
+      "adaptiveVsEqual": 4.558178053830228,
+      "verified": true
+    },
+    {
+      "nodes": 10000,
+      "scenario": "steady",
+      "medianMs": {
+        "equal": 18346.666666666668,
+        "calibrated": 4078.7166666666667,
+        "adaptive": 4025
+      },
+      "adaptiveVsEqual": 4.558178053830228,
+      "verified": true
+    }
+  ]
+}

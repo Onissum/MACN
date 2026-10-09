@@ -16,8 +16,10 @@ export class JobBroker {
     if (!Number.isFinite(benchmark.rate) || benchmark.rate <= 0) throw Error('Invalid benchmark');
     this.nodes.set(id, { id, name, benchmark, active: null, connected: true, lastSeen: this.now() });
     for (const entry of this.jobs.values()) {
-      entry.engine.addNode(id, name, benchmark);
-      if (entry.engine.job.status === 'running' && entry.workloadId === benchmark.workload) entry.engine.job.nodeIds.push(id);
+      entry.engine.addNode(id, name, benchmark, { admitToJob: false });
+      if (entry.engine.job.status === 'running' && entry.workloadId === benchmark.workload) {
+        entry.engine.job.nodeIds.push(id); entry.engine.job.nodeSet.add(id); entry.engine.idleNodes.add(id);
+      }
     }
     this.pump();
   }

@@ -1,7 +1,7 @@
 name: MACN alpha
 on:
   push:
-    branches: [main, macn-1.0-alpha, macn-alpha.2-lab]
+    branches: [main, macn-1.0-alpha, macn-alpha.2-lab, macn-alpha.3-batch]
     paths: ['alpha/**', 'macn-computertc-v0.5.2/**', '.github/workflows/macn-alpha.yml']
   pull_request:
     paths: ['alpha/**', 'macn-computertc-v0.5.2/**', '.github/workflows/macn-alpha.yml']
@@ -22,6 +22,21 @@ jobs:
           cache-dependency-path: alpha/package-lock.json
       - run: npm ci
       - run: npm test
+      - run: npm run batch:load -- --tasks=25
+      - run: npm run batch:http-load -- --clients=8 --requests=100 --tasks=50
+      - run: npm run lab:async -- --out results/ci-async.json
+      - run: npm run lab:async -- --scenario=disconnect --out results/ci-async-disconnect.json
+      - run: npm run lab:break-even -- --nodes 1,4,16 --samples 500000 --bytes 0,16,64 --compute 1,10 --scenarios steady,latency,churn --repeats 2 --out results/ci-break-even.json
+      - run: cat results/ci-break-even.md >> "$GITHUB_STEP_SUMMARY"
+      - run: npm run lab:compare -- --nodes 1,2,4 --samples 50000000 --repeats 3 --out results/ci-comparison.json
+      - run: cat results/ci-comparison.md >> "$GITHUB_STEP_SUMMARY"
+      - run: npm run lab:capacity -- --nodes 10,100,1000,2000 --out results/ci-capacity.json
+      - run: cat results/ci-capacity.md >> "$GITHUB_STEP_SUMMARY"
+      - id: capacity_stress
+        run: npm run lab:capacity -- --nodes 5000 --repeats 1 --out results/ci-capacity-stress.json
+        continue-on-error: true
+      - if: steps.capacity_stress.outcome == 'success'
+        run: cat results/ci-capacity-stress.md >> "$GITHUB_STEP_SUMMARY"
       - run: node test-computertc.js
         working-directory: macn-computertc-v0.5.2
       - run: npx playwright install --with-deps chromium
@@ -29,5 +44,16 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: alpha-browser-screenshots
-          path: alpha/results/*.png
+          name: alpha2-validation-artifacts
+          path: |
+            alpha/results/*.png
+            alpha/results/ci-comparison.json
+            alpha/results/ci-comparison.md
+            alpha/results/ci-break-even.json
+            alpha/results/ci-break-even.md
+            alpha/results/ci-capacity.json
+            alpha/results/ci-capacity.md
+            alpha/results/ci-capacity-stress.json
+            alpha/results/ci-capacity-stress.md
+            alpha/results/ci-async.json
+            alpha/results/ci-async-disconnect.json

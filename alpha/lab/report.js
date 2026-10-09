@@ -22,6 +22,51 @@ export function summarize(runs) {
   });
 }
 export function markdown(report) {
+  if (report.mode === 'break-even') {
+    const lines = ['# MACN simulated break-even matrix', '',
+      'Discrete-event model, not a physical cluster benchmark. Baseline is the fastest simulated node with local data; the distributed run includes task/result transfer over heterogeneous RTT and bandwidth. `bytes/unit` is split evenly between input and output.', '',
+      `Samples per run: **${report.config.samples || 10_000_000}**. Repeats per cell: **${report.config.repeats || 3}**.`, '',
+      '| Scenario | Nodes | Bytes/unit | Compute multiplier | Baseline ms | Equal ms | Calibrated ms | Adaptive ms | Adaptive speedup | Efficiency | Median transferred MiB | Break-even nodes | Verified E/C/A |',
+      '|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|'];
+    const fmt = n => Number.isFinite(n) ? n.toFixed(2) : '—';
+    for (const row of report.summary || []) {
+      const adaptive = row.policies.adaptive;
+      const equal = row.policies.equal, calibrated = row.policies.calibrated;
+      lines.push(`| ${row.scenario} | ${row.nodes} | ${row.dataBytesPerUnit} | ${row.computeMultiplier}× | ${fmt(adaptive.medianBaselineMs)} | ${fmt(equal.medianMs)} | ${fmt(calibrated.medianMs)} | ${fmt(adaptive.medianMs)} | ${fmt(adaptive.medianSpeedup)}× | ${fmt(adaptive.medianEfficiency)} | ${fmt(adaptive.medianTransferredMiB)} | ${row.breakEvenNodes ?? 'none'} | ${equal.verified}/${calibrated.verified}/${adaptive.verified} |`);
+    }
+    lines.push('', 'Times and speedups use only verified completed runs; incomplete repeats are excluded and flagged in `Verified E/C/A` (equal/calibrated/adaptive). Transferred MiB includes attempted and retried tasks. Break-even means simulated adaptive job time is no greater than the fastest single-node compute baseline. Coordinator saturation is not charged to virtual job time, so speedup can be optimistic. A speedup above 1 is not evidence of GPU equivalence. Increase compute multiplier to model a more compute-heavy workload; increase bytes/unit to model communication-heavy tasks. The model assumes fixed per-node throughput and one coordinator; it does not include Internet contention, shared Wi-Fi, thermal throttling, energy, or adversarial clients.', '');
+    return lines.join('\n');
+  }
+  if (report.mode === 'compare') {
+    const lines = ['# MACN compute comparison', '',
+      'Same seeded Monte Carlo workload: direct sequential kernel versus MACN coordinator with one or more real worker threads over loopback WebSockets. All processes run on ONE host.', '',
+      `Samples per run: **${report.config.samples || 50_000_000}**. Repeats: **${report.config.repeats || 3}**.`, '',
+      '| MACN workers | Repeats | Median setup ms | Median job ms | Throughput samples/s | Paired job speedup | End-to-end speedup* | Parallel efficiency | Verified |',
+      '|---:|---:|---:|---:|---:|---:|---:|---:|---|'];
+    const fmt = n => Number.isFinite(n) ? n.toFixed(2) : '—';
+    for (const row of report.summary || []) lines.push(`| ${row.nodes} | ${row.repeats} | ${fmt(row.medianSetupMs)} | ${fmt(row.medianJobMs)} | ${fmt(row.medianThroughput)} | ${fmt(row.medianJobSpeedup)}× | ${fmt(row.medianEndToEndSpeedup)}× | ${fmt(row.medianEfficiency)} | ${row.verified} |`);
+    lines.push('', '*Job speedup compares paired job intervals and excludes setup. End-to-end speedup includes server/worker startup and registration in this lab; it does not model persistent physical peers.', '',
+      '| Repeat | Topology | Workers | Seed | Setup ms | Job ms | Samples/s | Task RTT p50/p95/p99 ms | Retries | Verified |',
+      '|---:|---|---:|---:|---:|---:|---:|---:|---:|---|');
+    for (const run of report.runs || []) {
+      const rtt = run.taskRoundTripMs || {};
+      lines.push(`| ${run.repeat} | ${run.topology} | ${run.nodes} | ${run.seed} | ${fmt(run.setupMs)} | ${fmt(run.elapsedMs)} | ${fmt(run.throughput)} | ${fmt(rtt.p50)} / ${fmt(rtt.p95)} / ${fmt(rtt.p99)} | ${run.retries ?? 0} | ${run.verified} |`);
+    }
+    lines.push('', report.comparison?.note || 'Local loopback only; no physical-device or GPU comparison.', '');
+    return lines.join('\n');
+  }
+  if (report.mode === 'capacity') {
+    const lines = ['# MACN coordinator capacity probe', '',
+      'Real local Socket.IO/WebSocket connections to one coordinator. O(1) checksum tasks measure connection and control-plane capacity, not compute speed or GPU equivalence.', '',
+      '| Nodes | Repeat | Connected | Connect ms | Job ms | Units/s | Tasks | Messages | Task RTT p50/p95/p99 ms | Loop p99 ms | CPU ms | RSS MiB | Verified |',
+      '|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|'];
+    for (const r of report.runs) {
+      const fmt = n => Number.isFinite(n) ? n.toFixed(2) : '—';
+      lines.push(`| ${r.nodes} | ${r.repeat ?? '—'} | ${r.connected} | ${fmt(r.connectMs)} | ${fmt(r.elapsedMs)} | ${fmt(r.throughput)} | ${r.taskCount} | ${r.protocolMessages} | ${fmt(r.taskRoundTripMs.p50)} / ${fmt(r.taskRoundTripMs.p95)} / ${fmt(r.taskRoundTripMs.p99)} | ${fmt(r.eventLoopDelayMs.p99)} | ${fmt(r.processCpuMs)} | ${fmt(r.sampledPeakProcessRssBytes / 1048576)} | ${r.verified} |`);
+    }
+    lines.push('', 'All clients run on the same host as the coordinator. Loopback results do not predict WAN or physical-device limits. The normal demo connection cap remains unchanged.', '');
+    return lines.join('\n');
+  }
   const real = report.mode === 'real';
   const lines = ['# MACN alpha.2 laboratory report', '', `Mode: **${report.mode}**. Complete: **${report.complete}**.`, '',
     real ? 'Real Monte Carlo, local worker threads and loopback WebSockets on ONE host. Injected service delays; not heterogeneous physical devices.' :

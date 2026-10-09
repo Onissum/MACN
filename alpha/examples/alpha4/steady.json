@@ -1,0 +1,53 @@
+{
+  "kind": "discrete-event-async-simulation",
+  "virtual": true,
+  "resultVerified": true,
+  "samples": 300000,
+  "seed": 42,
+  "chunkSize": 5000,
+  "elapsedVirtualMs": 1250,
+  "singleFastestNodeMs": 1500,
+  "speedupVsFastestNode": 1.2,
+  "completedTasks": 60,
+  "reassignments": 0,
+  "polls": 8,
+  "result": {
+    "hits": 235569,
+    "count": 300000,
+    "pi": 3.14092
+  },
+  "nodes": [
+    {
+      "id": "desktop",
+      "unitsPerSecond": 200000,
+      "tasksClaimedIncludingRetries": 45,
+      "tasksAccepted": 45,
+      "unitsAccepted": 225000,
+      "wastedUnits": 0,
+      "offlineAtMs": null,
+      "offlineForMs": 0
+    },
+    {
+      "id": "laptop",
+      "unitsPerSecond": 60000,
+      "tasksClaimedIncludingRetries": 12,
+      "tasksAccepted": 12,
+      "unitsAccepted": 60000,
+      "wastedUnits": 0,
+      "offlineAtMs": null,
+      "offlineForMs": 0
+    },
+    {
+      "id": "old-pc",
+      "unitsPerSecond": 12000,
+      "tasksClaimedIncludingRetries": 3,
+      "tasksAccepted": 3,
+      "unitsAccepted": 15000,
+      "wastedUnits": 0,
+      "offlineAtMs": null,
+      "offlineForMs": 0
+    }
+  ],
+  "caveat": "Virtual task times and outages exercise the real BatchQueue/SQLite lifecycle; no network, simultaneous HTTP clients, or physical device runtime is measured.",
+  "scenario": "steady"
+}

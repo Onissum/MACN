@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TaskEngine } from '../src/engine.js';
 import { AdaptiveScheduler, percentiles } from '../src/scheduler.js';
+import { createPolicy } from '../src/policies.js';
 import { monteCarlo } from '../src/workloads.js';
 function fixture(opts = {}) {
   let clock = 0; const messages = [];
@@ -41,11 +42,33 @@ test('slow responsive node times out while fast node recovers its task', () => {
   while (f.engine.job.status === 'running') { f.advance(10); f.reply(f.messages.shift()); }
   assert.equal(f.engine.job.units, 100000); assert.ok(f.engine.job.reassigned >= 1);
 });
+test('parked fast node resumes when a still-in-flight task times out', () => {
+  const f = fixture(); f.node('stalled'); f.node('fast'); f.start(1000000);
+  const stalled = f.messages.find(m => m.id === 'stalled');
+  const takeFast = () => { const index = f.messages.findIndex(m => m.id === 'fast'); return index < 0 ? null : f.messages.splice(index, 1)[0]; };
+  let next = takeFast();
+  while (next && f.engine.job.status === 'running') {
+    f.advance(10); f.reply(next);
+    next = takeFast();
+  }
+  assert.equal(f.engine.job.status, 'running');
+  assert.ok(f.engine.parkedNodes.has('fast'));
+  f.advance(4000); f.engine.tick();
+  assert.ok(f.messages.some(m => m.id === 'fast' && m.task.id === stalled.task.id && m.task.attempt === 2));
+  while (f.engine.job.status === 'running') {
+    const message = takeFast();
+    assert.ok(message, 'retry work must be dispatched to the surviving idle node');
+    f.advance(10); f.reply(message);
+  }
+  assert.equal(f.engine.job.status, 'completed');
+  assert.equal(f.engine.job.reassigned, 1);
+  assert.equal(f.engine.job.units, 1000000);
+});
 test('heartbeat loss and all nodes absent preserve pending work for reconnect', () => {
   const f = fixture(); f.node('lost'); f.start(10000); const late = f.messages.shift(); f.advance(9000); f.engine.tick();
   assert.equal(f.engine.nodes.get('lost').connected, false); assert.equal(f.reply(late), false);
   // A new session is explicitly admitted to this job by the coordinator policy.
-  f.node('new'); f.engine.job.nodeIds.push('new'); f.engine.dispatch(); f.reply(f.messages.shift());
+  f.node('new'); f.engine.job.nodeIds.push('new'); f.engine.job.nodeSet.add('new'); f.engine.idleNodes.add('new'); f.engine.dispatch(); f.reply(f.messages.shift());
   assert.equal(f.engine.job.status, 'completed');
 });
 test('duplicate and unknown results cannot inflate completion', () => {
@@ -86,6 +109,31 @@ test('short jobs reserve work for each idle node after rates grow', () => {
   assert.equal(f.messages.length, 3);
   const ranges = f.messages.map(m => m.task); assert.equal(ranges.reduce((s, r) => s + r.count, 0), 10000);
   assert.ok(ranges.every(r => r.count > 0));
+});
+test('compatible node joining an adaptive job receives remaining work immediately', () => {
+  const f = fixture(); f.node('first'); f.start(100000);
+  f.node('late', 50);
+  assert.ok(f.engine.job.nodeSet.has('late'));
+  assert.ok(f.messages.some(message => message.id === 'late'));
+  assert.ok(f.engine.snapshot().nodes.find(node => node.id === 'late').assigned > 0);
+  while (f.engine.job.status === 'running') {
+    const message = f.messages.shift();
+    assert.ok(message, 'remaining task must be dispatched');
+    f.advance(10); f.reply(message);
+  }
+  assert.equal(f.engine.job.status, 'completed');
+  assert.equal(f.engine.job.units, 100000);
+});
+test('new nodes do not join baseline or fixed-partition jobs', () => {
+  const baseline = fixture(); baseline.node('base');
+  baseline.engine.start({ params: { samples: 100000, seed: 42 }, nodeIds: ['base'], mode: 'baseline' });
+  baseline.node('extra');
+  assert.equal(baseline.engine.job.nodeSet.has('extra'), false);
+
+  const fixed = fixture({ scheduler: createPolicy('equal') }); fixed.node('one'); fixed.start(100000);
+  fixed.node('two');
+  assert.equal(fixed.engine.job.nodeSet.has('two'), false);
+  assert.equal(fixed.messages.some(message => message.id === 'two'), false);
 });
 test('transport backpressure retries without losing a range', () => {
   let writable = false; const sent = [];
