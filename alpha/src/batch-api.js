@@ -25,7 +25,7 @@ export function attachBatchApi(app, queue, token) {
   });
   router.post('/jobs/:jobId/results', (req, res) => {
     const outcome = queue.submit({ jobId: req.params.jobId, ...req.body });
-    res.status(outcome.accepted ? 200 : 409).json(outcome);
+    res.status(outcome.accepted || outcome.duplicate ? 200 : outcome.received ? 202 : 409).json(outcome);
   });
   router.post('/jobs/:jobId/leases/renew', (req, res) => {
     try {

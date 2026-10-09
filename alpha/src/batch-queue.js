@@ -1,6 +1,26 @@
 import { randomUUID } from 'node:crypto';
 import { workload as getWorkload } from './workloads.js';
 
+function normalizeVerificationPolicy(policy = {}) {
+  if (!policy || typeof policy !== 'object' || Array.isArray(policy)) throw Error('verification must be an object');
+  const mode = policy.mode ?? 'trusted';
+  const redundancySampleRate = policy.redundancySampleRate ?? 0;
+  if (mode !== 'trusted') throw Error('verification.mode must be trusted');
+  if (!Number.isFinite(redundancySampleRate) || redundancySampleRate < 0 || redundancySampleRate > 1) {
+    throw Error('verification.redundancySampleRate must be between 0 and 1');
+  }
+  return { mode, redundancySampleRate };
+}
+
+function selectedForRedundancy(taskOrdinal, jobId, policy) {
+  const rate = policy.redundancySampleRate;
+  if (rate <= 0) return false;
+  if (rate >= 1) return true;
+  let hash = 2166136261;
+  for (const char of `${jobId}:${taskOrdinal}`) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
+  return hash / 0x1_0000_0000 < rate;
+}
+
 // Batch delivery uses pull requests and bounded leases. Workload code remains
 // pure and independent from transport and persistence.
 export class BatchQueue {
@@ -14,11 +34,13 @@ export class BatchQueue {
     this.now = now;
   }
 
-  createJob({ workloadId, params, chunkSize = 10_000 }) {
+  createJob({ workloadId, params, chunkSize = 10_000, verification }) {
     const w = getWorkload(workloadId);
     const validated = w.validate(params);
     if (!Number.isSafeInteger(chunkSize) || chunkSize < 1 || chunkSize > 1_000_000) throw Error('chunkSize must be 1..1000000');
-    const job = { id: randomUUID(), workloadId, params: validated, totalUnits: w.totalUnits(validated), chunkSize, createdAt: this.now() };
+    if (typeof w.verifyResult !== 'function') throw Error(`Workload ${workloadId} does not support trusted verification`);
+    const job = { id: randomUUID(), workloadId, params: validated, verification: normalizeVerificationPolicy(verification),
+      totalUnits: w.totalUnits(validated), chunkSize, createdAt: this.now() };
     this.store.createJob(job);
     return this.store.getJob(job.id);
   }
@@ -49,8 +71,9 @@ export class BatchQueue {
     const job = this.store.getJob(jobId);
     if (!job) return { accepted: false, reason: 'unknown-task' };
     const w = getWorkload(job.workloadId);
-    return this.store.acceptResult({ jobId, taskId, nodeId, leaseToken, result, computeMs, now: this.now(),
-      validateResult: w.validResult, mergeResults: w.merge });
+    return this.store.acceptResult({ jobId, taskId, nodeId, leaseToken, result, computeMs, now: this.now(), maxAttempts: this.maxAttempts,
+      validateResult: w.validResult, verifyResult: (task, value) => w.verifyResult(task.payload, value), mergeResults: w.merge,
+      requiresRedundancy: (ordinal, id, policy) => selectedForRedundancy(ordinal, id, policy) });
   }
 
   renew({ jobId, nodeId, leases }) {

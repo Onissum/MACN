@@ -20,6 +20,7 @@
     "lab:break-even": "node lab/cli.js --mode break-even",
     "batch:load": "node lab/batch-load.js",
     "batch:http-load": "node lab/batch-http-load.js",
+    "batch:verify-cost": "node lab/batch-verification-cost.js",
     "lab:async": "node lab/async-sim.js",
     "batch:worker": "node src/batch-worker.js"
   },

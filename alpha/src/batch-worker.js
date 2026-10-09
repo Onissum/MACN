@@ -48,8 +48,10 @@ export async function runBatchWorker({ baseUrl, token, nodeId, jobId, targetSeco
       try {
         const outcome = await request(`/jobs/${jobId}/results`, { taskId: item.taskId, nodeId: item.nodeId,
           leaseToken: item.leaseToken, result: item.result, computeMs: item.computeMs });
-        if (outcome.accepted || outcome.duplicate) { spool.delete(jobId, item.taskId); active.delete(item.taskId); }
-        onEvent({ type: 'task-result', taskId: item.taskId, accepted: Boolean(outcome.accepted), duplicate: Boolean(outcome.duplicate), computeMs: +item.computeMs.toFixed(2) });
+        if (outcome.accepted || outcome.duplicate || outcome.pendingVerification) { spool.delete(jobId, item.taskId); active.delete(item.taskId); }
+        onEvent({ type: 'task-result', taskId: item.taskId, accepted: Boolean(outcome.accepted),
+          verified: Boolean(outcome.verified), pendingVerification: Boolean(outcome.pendingVerification),
+          duplicate: Boolean(outcome.duplicate), computeMs: +item.computeMs.toFixed(2) });
       } catch (error) {
         // A 409 means this lease was fenced, expired, or already completed.
         // The authoritative coordinator has either reassigned or committed it.

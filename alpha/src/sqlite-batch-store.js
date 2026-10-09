@@ -45,11 +45,39 @@ export class SqliteBatchStore {
       ) STRICT;
       CREATE INDEX IF NOT EXISTS batch_tasks_claim_idx ON batch_tasks(job_id, status, ordinal);
       CREATE INDEX IF NOT EXISTS batch_tasks_expiry_idx ON batch_tasks(job_id, status, lease_until);
+      CREATE TABLE IF NOT EXISTS batch_task_results (
+        id INTEGER PRIMARY KEY,
+        task_id TEXT NOT NULL REFERENCES batch_tasks(id) ON DELETE CASCADE,
+        node_id TEXT NOT NULL,
+        attempt INTEGER NOT NULL,
+        result_json TEXT NOT NULL,
+        received_at INTEGER NOT NULL,
+        verification_status TEXT NOT NULL CHECK(verification_status IN ('received','pending_redundancy','verified','rejected','legacy')),
+        verification_ms REAL NOT NULL DEFAULT 0,
+        reason TEXT,
+        UNIQUE(task_id, attempt)
+      ) STRICT;
+      CREATE TABLE IF NOT EXISTS batch_task_candidates (
+        task_id TEXT PRIMARY KEY REFERENCES batch_tasks(id) ON DELETE CASCADE,
+        node_id TEXT NOT NULL,
+        attempt INTEGER NOT NULL,
+        result_json TEXT NOT NULL,
+        compute_ms REAL NOT NULL,
+        received_at INTEGER NOT NULL
+      ) STRICT;
     `);
+    const addColumn = (table, name, declaration) => {
+      const columns = this.db.prepare(`PRAGMA table_info(${table})`).all();
+      if (!columns.some(column => column.name === name)) this.db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${declaration}`);
+    };
+    // Additive migration: existing jobs remain readable, and old completed
+    // results retain their historical status instead of being silently reset.
+    addColumn('batch_jobs', 'verification_json', `TEXT NOT NULL DEFAULT '{"mode":"trusted","redundancySampleRate":0}'`);
+    addColumn('batch_tasks', 'verification_state', `TEXT NOT NULL DEFAULT 'legacy' CHECK(verification_state IN ('legacy','not_started','received','pending_redundancy','verified','rejected'))`);
     this.statements = {
       createJob: this.db.prepare(`INSERT INTO batch_jobs
-        (id, workload_id, params_json, status, total_units, chunk_size, created_at)
-        VALUES (?, ?, ?, 'running', ?, ?, ?)`),
+        (id, workload_id, params_json, status, total_units, chunk_size, created_at, verification_json)
+        VALUES (?, ?, ?, 'running', ?, ?, ?, ?)`),
       job: this.db.prepare('SELECT * FROM batch_jobs WHERE id = ?'),
       claimOverview: this.db.prepare(`SELECT j.*,
         (SELECT COUNT(*) FROM batch_tasks t WHERE t.job_id=j.id AND t.status='pending') AS pending_count,
@@ -61,18 +89,41 @@ export class SqliteBatchStore {
         WHERE id=? AND status='leased'`),
       retryExpired: this.db.prepare(`UPDATE batch_tasks SET status='pending', node_id=NULL, lease_token=NULL, lease_until=NULL
         WHERE id=? AND status='leased'`),
-      pending: this.db.prepare(`SELECT * FROM batch_tasks WHERE job_id=? AND status='pending' ORDER BY ordinal LIMIT 1`),
+      pending: this.db.prepare(`SELECT t.* FROM batch_tasks t WHERE t.job_id=? AND t.status='pending'
+        AND NOT EXISTS (SELECT 1 FROM batch_task_candidates c WHERE c.task_id=t.id AND c.node_id=?)
+        ORDER BY t.ordinal LIMIT 1`),
       insertTask: this.db.prepare(`INSERT INTO batch_tasks
-        (id, job_id, ordinal, payload_json, count, status, created_at)
-        VALUES (?, ?, ?, ?, ?, 'pending', ?)`),
+        (id, job_id, ordinal, payload_json, count, status, created_at, verification_state)
+        VALUES (?, ?, ?, ?, ?, 'pending', ?, 'not_started')`),
       updateCursor: this.db.prepare('UPDATE batch_jobs SET next_unit=?, status=\'running\' WHERE id=?'),
       leaseTask: this.db.prepare(`UPDATE batch_tasks SET status='leased', node_id=?, lease_token=?, lease_until=?, attempts=attempts+1
         WHERE id=? AND status='pending'`),
+      markTask: this.db.prepare('UPDATE batch_tasks SET verification_state=? WHERE id=?'),
       renewLease: this.db.prepare(`UPDATE batch_tasks SET lease_until=MAX(lease_until, ?)
         WHERE id=? AND job_id=? AND status='leased' AND node_id=? AND lease_token=? AND lease_until > ?`),
       task: this.db.prepare('SELECT * FROM batch_tasks WHERE id=? AND job_id=?'),
       completeTask: this.db.prepare(`UPDATE batch_tasks SET status='completed', result_json=?, compute_ms=?, completed_at=?
+        , verification_state='verified' WHERE id=? AND status='leased' AND node_id=? AND lease_token=?`),
+      releaseTask: this.db.prepare(`UPDATE batch_tasks SET status='pending', node_id=NULL, lease_token=NULL, lease_until=NULL, verification_state=?
         WHERE id=? AND status='leased' AND node_id=? AND lease_token=?`),
+      failTaskNow: this.db.prepare(`UPDATE batch_tasks SET status='failed', node_id=NULL, lease_token=NULL, lease_until=NULL, verification_state='rejected'
+        WHERE id=? AND status='leased' AND node_id=? AND lease_token=?`),
+      candidate: this.db.prepare('SELECT * FROM batch_task_candidates WHERE task_id=?'),
+      saveCandidate: this.db.prepare(`INSERT INTO batch_task_candidates(task_id,node_id,attempt,result_json,compute_ms,received_at)
+        VALUES(?,?,?,?,?,?) ON CONFLICT(task_id) DO UPDATE SET node_id=excluded.node_id,attempt=excluded.attempt,
+        result_json=excluded.result_json,compute_ms=excluded.compute_ms,received_at=excluded.received_at`),
+      deleteCandidate: this.db.prepare('DELETE FROM batch_task_candidates WHERE task_id=?'),
+      insertResult: this.db.prepare(`INSERT INTO batch_task_results(task_id,node_id,attempt,result_json,received_at,verification_status,verification_ms,reason)
+        VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(task_id,attempt) DO UPDATE SET result_json=excluded.result_json,
+        received_at=excluded.received_at,verification_status=excluded.verification_status,verification_ms=excluded.verification_ms,reason=excluded.reason`),
+      updateResultStatus: this.db.prepare(`UPDATE batch_task_results SET verification_status=?,verification_ms=?,reason=? WHERE task_id=? AND attempt=?`),
+      resultCounts: this.db.prepare(`SELECT
+        COUNT(*) AS received,
+        SUM(CASE WHEN verification_status='pending_redundancy' THEN 1 ELSE 0 END) AS pendingVerification,
+        SUM(CASE WHEN verification_status='verified' THEN 1 ELSE 0 END) AS verified,
+        SUM(CASE WHEN verification_status='rejected' THEN 1 ELSE 0 END) AS rejected,
+        SUM(verification_ms) AS verification_ms
+        FROM batch_task_results r JOIN batch_tasks t ON t.id=r.task_id WHERE t.job_id=?`),
       completeJob: this.db.prepare(`UPDATE batch_jobs SET completed_units=?, status=?, completed_at=?, result_json=?, error=? WHERE id=?`),
       allResults: this.db.prepare(`SELECT result_json FROM batch_tasks WHERE job_id=? AND status='completed' ORDER BY ordinal`),
       counters: this.db.prepare(`SELECT
@@ -93,7 +144,7 @@ export class SqliteBatchStore {
   }
 
   createJob(job) {
-    this.statements.createJob.run(job.id, job.workloadId, JSON.stringify(job.params), job.totalUnits, job.chunkSize, job.createdAt);
+    this.statements.createJob.run(job.id, job.workloadId, JSON.stringify(job.params), job.totalUnits, job.chunkSize, job.createdAt, JSON.stringify(job.verification));
     return this.getJob(job.id);
   }
 
@@ -121,7 +172,7 @@ export class SqliteBatchStore {
       const claimed = [];
       let job = current;
       while (claimed.length < limit) {
-        let task = this.statements.pending.get(jobId);
+        let task = this.statements.pending.get(jobId, nodeId);
         if (!task && job.next_unit < job.total_units) {
           const count = Math.min(job.chunk_size, job.total_units - job.next_unit);
           const payload = makeTask(job.next_unit, count, JSON.parse(job.params_json));
@@ -130,9 +181,14 @@ export class SqliteBatchStore {
           this.statements.insertTask.run(id, jobId, ordinal, JSON.stringify(payload), count, now);
           this.statements.updateCursor.run(job.next_unit + count, jobId);
           job = { ...job, next_unit: job.next_unit + count };
-          task = this.statements.pending.get(jobId);
+          task = this.statements.pending.get(jobId, nodeId);
         }
         if (!task) break;
+        if (task.attempts >= maxAttempts) {
+          this.statements.failTask.run(task.id);
+          this.statements.completeJob.run(job.completed_units, 'failed', now, null, 'Verification retry limit exceeded', jobId);
+          return [];
+        }
         const leaseToken = randomUUID();
         const leaseUntil = now + leaseMs;
         const changed = this.statements.leaseTask.run(nodeId, leaseToken, leaseUntil, task.id).changes;
@@ -144,7 +200,7 @@ export class SqliteBatchStore {
     });
   }
 
-  acceptResult({ jobId, taskId, nodeId, leaseToken, result, computeMs, now, validateResult, mergeResults }) {
+  acceptResult({ jobId, taskId, nodeId, leaseToken, result, computeMs, now, maxAttempts, validateResult, verifyResult, mergeResults, requiresRedundancy }) {
     return this.transaction(() => {
       const job = this.statements.job.get(jobId), task = this.statements.task.get(taskId, jobId);
       if (!job || !task) return { accepted: false, reason: 'unknown-task' };
@@ -157,9 +213,53 @@ export class SqliteBatchStore {
       }
       const payload = JSON.parse(task.payload_json);
       if (!Number.isFinite(computeMs) || computeMs < 0 || !validateResult({ payload, count: task.count }, result)) {
+        this.statements.insertResult.run(task.id, nodeId, task.attempts, JSON.stringify(result ?? null), now, 'rejected', 0, 'invalid-format');
+        this.statements.markTask.run('rejected', task.id);
+        if (task.attempts >= maxAttempts) {
+          this.statements.failTaskNow.run(task.id, nodeId, leaseToken);
+          this.statements.completeJob.run(job.completed_units, 'failed', now, null, 'Invalid result retry limit exceeded', jobId);
+        } else this.statements.releaseTask.run('rejected', task.id, nodeId, leaseToken);
         return { accepted: false, reason: 'invalid-result' };
       }
-      const changed = this.statements.completeTask.run(JSON.stringify(result), computeMs, now, task.id, nodeId, leaseToken).changes;
+
+      this.statements.insertResult.run(task.id, nodeId, task.attempts, JSON.stringify(result), now, 'received', 0, null);
+      const candidate = this.statements.candidate.get(task.id);
+      if (!candidate && requiresRedundancy(task.ordinal, job.id, JSON.parse(job.verification_json))) {
+        this.statements.saveCandidate.run(task.id, nodeId, task.attempts, JSON.stringify(result), computeMs, now);
+        this.statements.updateResultStatus.run('pending_redundancy', 0, null, task.id, task.attempts);
+        const released = this.statements.releaseTask.run('pending_redundancy', task.id, nodeId, leaseToken).changes;
+        if (released !== 1) return { accepted: false, reason: 'stale-lease' };
+        return { accepted: false, received: true, pendingVerification: true, reason: 'awaiting-independent-result' };
+      }
+
+      const verification = verifyResult({ payload, count: task.count }, result);
+      this.statements.updateResultStatus.run(verification.valid ? 'verified' : 'rejected', verification.verificationMs,
+        verification.valid ? null : 'trusted-recompute-mismatch', task.id, task.attempts);
+      let acceptedResult = result, acceptedComputeMs = computeMs;
+      if (candidate) {
+        const primary = JSON.parse(candidate.result_json);
+        const primaryCheck = verifyResult({ payload, count: task.count }, primary);
+        const primaryStatus = primaryCheck.valid ? 'verified' : 'rejected';
+        this.statements.updateResultStatus.run(primaryStatus, primaryCheck.verificationMs,
+          primaryCheck.valid ? null : 'trusted-recompute-mismatch', task.id, candidate.attempt);
+        if (primaryCheck.valid) { acceptedResult = primary; acceptedComputeMs = candidate.compute_ms; }
+        else if (!verification.valid) {
+          this.statements.deleteCandidate.run(task.id);
+          if (task.attempts >= maxAttempts) {
+            this.statements.failTaskNow.run(task.id, nodeId, leaseToken);
+            this.statements.completeJob.run(job.completed_units, 'failed', now, null, 'Repeated unverified results', jobId);
+          } else this.statements.releaseTask.run('rejected', task.id, nodeId, leaseToken);
+          return { accepted: false, reason: 'unverified-result' };
+        }
+      } else if (!verification.valid) {
+        if (task.attempts >= maxAttempts) {
+          this.statements.failTaskNow.run(task.id, nodeId, leaseToken);
+          this.statements.completeJob.run(job.completed_units, 'failed', now, null, 'Repeated unverified results', jobId);
+        } else this.statements.releaseTask.run('rejected', task.id, nodeId, leaseToken);
+        return { accepted: false, reason: 'unverified-result' };
+      }
+      this.statements.deleteCandidate.run(task.id);
+      const changed = this.statements.completeTask.run(JSON.stringify(acceptedResult), acceptedComputeMs, now, task.id, nodeId, leaseToken).changes;
       if (changed !== 1) return { accepted: false, reason: 'stale-lease' };
       const completedUnits = job.completed_units + task.count;
       const done = completedUnits === job.total_units;
@@ -167,7 +267,7 @@ export class SqliteBatchStore {
       const merged = done ? mergeResults(this.statements.allResults.all(jobId).map(row => JSON.parse(row.result_json))) : null;
       this.statements.completeJob.run(completedUnits, done ? 'completed' : 'running', done ? now : null,
         done ? JSON.stringify(merged) : null, null, jobId);
-      return { accepted: true, duplicate: false, jobStatus: done ? 'completed' : 'running' };
+      return { accepted: true, verified: true, duplicate: false, jobStatus: done ? 'completed' : 'running' };
     });
   }
 
@@ -187,7 +287,11 @@ export class SqliteBatchStore {
     const row = this.statements.job.get(id);
     if (!row) return null;
     const counters = this.statements.counters.get(id);
+    const verification = this.statements.resultCounts.get(id);
     return { id: row.id, workloadId: row.workload_id, params: JSON.parse(row.params_json), status: row.status,
+      verificationPolicy: JSON.parse(row.verification_json), verification: { received: verification.received || 0,
+        pending: verification.pendingVerification || 0, verified: verification.verified || 0, rejected: verification.rejected || 0,
+        accepted: counters.completed || 0, verificationMs: verification.verification_ms || 0 },
       totalUnits: row.total_units, allocatedUnits: row.next_unit, completedUnits: row.completed_units,
       remainingUnits: row.total_units - row.completed_units, chunkSize: row.chunk_size,
       tasks: { created: counters.created || 0, pending: counters.pending || 0, leased: counters.leased || 0,

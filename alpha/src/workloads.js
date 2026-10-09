@@ -26,6 +26,15 @@ export const monteCarlo = {
   validResult(task, result) {
     return result && result.count === task.count && Number.isInteger(result.hits) && result.hits >= 0 && result.hits <= task.count;
   },
+  // Trusted coordinator-side verification is deliberately separate from the
+  // inexpensive wire-format/range check above. The deterministic seed/index
+  // contract lets the coordinator independently recompute every result.
+  verifyResult(task, result) {
+    const started = performance.now();
+    const expected = this.compute(task);
+    const valid = this.validResult(task, result) && result.hits === expected.hits && result.count === expected.count;
+    return { valid, expected, verificationMs: performance.now() - started };
+  },
   merge(results) {
     const { hits, count } = results.reduce((a, r) => ({ hits: a.hits + r.hits, count: a.count + r.count }), { hits: 0, count: 0 });
     return { hits, count, pi: 4 * hits / count };
