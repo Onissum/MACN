@@ -133,6 +133,10 @@ export class SqliteBatchStore {
         SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) AS completed,
         SUM(CASE WHEN status='failed' THEN 1 ELSE 0 END) AS failed,
         SUM(CASE WHEN attempts > 1 THEN attempts - 1 ELSE 0 END) AS reassignments
+        FROM batch_tasks WHERE job_id=?`),
+      verificationTaskCounts: this.db.prepare(`SELECT
+        SUM(CASE WHEN status='completed' AND verification_state='verified' THEN 1 ELSE 0 END) AS accepted,
+        SUM(CASE WHEN status='completed' AND verification_state='legacy' THEN 1 ELSE 0 END) AS legacyAccepted
         FROM batch_tasks WHERE job_id=?`)
     };
   }
@@ -288,10 +292,12 @@ export class SqliteBatchStore {
     if (!row) return null;
     const counters = this.statements.counters.get(id);
     const verification = this.statements.resultCounts.get(id);
+    const taskVerification = this.statements.verificationTaskCounts.get(id);
     return { id: row.id, workloadId: row.workload_id, params: JSON.parse(row.params_json), status: row.status,
       verificationPolicy: JSON.parse(row.verification_json), verification: { received: verification.received || 0,
         pending: verification.pendingVerification || 0, verified: verification.verified || 0, rejected: verification.rejected || 0,
-        accepted: counters.completed || 0, verificationMs: verification.verification_ms || 0 },
+        accepted: taskVerification.accepted || 0, legacyAccepted: taskVerification.legacyAccepted || 0,
+        verificationMs: verification.verification_ms || 0 },
       totalUnits: row.total_units, allocatedUnits: row.next_unit, completedUnits: row.completed_units,
       remainingUnits: row.total_units - row.completed_units, chunkSize: row.chunk_size,
       tasks: { created: counters.created || 0, pending: counters.pending || 0, leased: counters.leased || 0,

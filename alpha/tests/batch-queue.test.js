@@ -219,6 +219,8 @@ test('additive migration preserves completed Alpha.4 jobs and accepts new verifi
   assert.equal(previous.completedUnits, 1_000);
   assert.deepEqual(previous.result, { hits: 800, count: 1_000, pi: 3.2 });
   assert.equal(previous.tasks.completed, 1);
+  assert.equal(previous.verification.accepted, 0);
+  assert.equal(previous.verification.legacyAccepted, 1);
   const newJob = queue.createJob({ workloadId: monteCarlo.id, params: { samples: 1_000, seed: 4 }, chunkSize: 1_000 });
   const lease = queue.claim({ jobId: newJob.id, nodeId: 'new-worker' })[0];
   assert.equal(queue.submit({ jobId: newJob.id, taskId: lease.id, nodeId: 'new-worker', leaseToken: lease.leaseToken,
