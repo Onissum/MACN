@@ -51,9 +51,9 @@ Contratto previsto per ogni workload: versione e input immutabili; suddivisione 
 | Batch API | API HTTP pull per job, task, risultati e rinnovo lease | Token bearer condiviso; nessun account o quota per utente |
 | Coda | SQLite con task persistenti, scadenza, rinnovo, retry limitato, fencing tramite token e accettazione una sola volta | Un coordinatore e un database SQLite; niente failover distribuito |
 | Worker | CLI Node, benchmark locale, thread di calcolo, richieste pull e spool SQLite dei risultati | Non c'è ancora il worker browser/mobile Batch né un gestore completo dei limiti volontari |
-| Workload | Monte Carlo deterministico con validazione della forma del risultato e merge | Il coordinatore non ricalcola il risultato: la forma valida non prova che il calcolo sia corretto |
+| Workload | Monte Carlo deterministico, validazione del formato, ricalcolo fidato e merge | La verifica indipendente è workload-specifica e usa il coordinatore come riferimento fidato |
 | Simulazioni | Simulatori con code/task reali e tempo virtuale; carichi di nodi simulati | Non sono dispositivi fisici, Internet, né richieste concorrenti salvo il probe HTTP locale |
-| Verifica | Fencing, deduplicazione e test di confronto con baseline | Nessun quorum configurabile, verifica indipendente o contabilità di crediti |
+| Verifica | Ricalcolo fidato di Monte Carlo, stati ricevuto/verificato/rifiutato/accettato e ridondanza campionata tra nodi distinti | Nessun quorum generale, reputazione dei nodi o contabilità di crediti |
 | Sicurezza | Segreto condiviso per la demo | Mancano identità/ruoli, TLS e isolamento del codice: non aprire a volontari pubblici |
 
 Il benchmark espone due unità esplicite per compatibilità: `rate` è unità/ms per lo scheduler Adaptive storico; `unitsPerSecond` è unità/s per Batch. Worker, dimensionamento dei pacchetti, lease e EWMA Batch devono usare quest'ultima. Nel campione baseline, 250.000 campioni in 1,670 ms producevano `rate ≈ 149.686` unità/ms, ma il Batch li trattava come 149.686 unità/s invece di circa 149,7 milioni unità/s. Il limite di 32 task mascherava l'errore con alcuni chunk piccoli; chunk più grandi potevano ricevere meno lavoro e stime di lease eccessivamente prudenti. Il worker è in Node.js; un telefono può partecipare solo se può eseguire Node in questa alpha, non tramite una normale scheda browser.
@@ -70,21 +70,23 @@ I due probe HTTP sono una misura per run su loopback e SQLite in memoria. La dif
 
 Suite browser locale: non eseguita perché Chromium mancava e il download Playwright è fallito con archivio incompleto nell'ambiente di sviluppo. La CI GitHub è il controllo finale del test browser. Il test autonomo del protocollo ComputeRTC v0.5.2 passa.
 
-## Roadmap — fasi successive, solo progettate
+## Fase B — Verifica affidabile del risultato
 
-### Fase B — Verifica del risultato
+Ogni risultato Monte Carlo deve superare prima il controllo del formato e poi un ricalcolo indipendente da parte del coordinatore. Solo il risultato che coincide con il riferimento fidato può completare le unità del task. La policy per job è configurabile con `verification.mode="trusted"` e `redundancySampleRate` fra 0 e 1: i task campionati richiedono un secondo nodo distinto. In caso di disaccordo, il calcolo fidato decide quale risultato è corretto; se entrambi sono errati, il task torna in coda. SQLite registra gli invii e gli esiti, e la migrazione additiva mantiene leggibili i job Alpha.4 preesistenti senza certificare retroattivamente i risultati storici.
 
-Definire policy per workload: controlli deterministici o proprietà matematiche quando possibili; ricalcolo a campione per lavori semplici; doppia esecuzione/quorum solo quando il rischio giustifica il costo; rilevamento di risposte incoerenti. Conservare stati separati per ricevuto, validato e accettato. Non pagare crediti per risultati non validati. Isolare il workload prima di ammettere codice di terzi.
+Il costo misurato su questa macchina per 500.000 campioni, sette run dopo un warm-up, è stato 3,423 ms mediani per il calcolo e 3,460 ms per la verifica. In questo microbenchmark, la verifica costa circa il 101% di un'esecuzione worker. Il fattore stimato di lavoro algoritmico diventa circa 2,01× con solo ricalcolo fidato e 4,02× se si seleziona la ridondanza per ogni task. Il rapporto dipende da hardware e carico e non misura rete, SQLite, o dispositivi eterogenei.
 
-### Fase C — Reciprocità e crediti
+Limiti ancora aperti: l'oracolo si basa sullo stesso workload deterministico incluso nel coordinatore e non protegge da un coordinatore compromesso; le policy non sono universali; un task selezionato per doppia esecuzione resta in attesa se non è disponibile un secondo nodo; gli esiti incoerenti vengono ritentati, ma non esiste ancora una quarantena o reputazione del worker. Nessun risultato storico Alpha.4 viene ricalcolato durante la migrazione.
+
+### Fase C — Reciprocità e crediti (non implementata)
 
 Introdurre identità utente separate da dispositivi, proprietario e coda multiutente, quote gratuite iniziali e limiti per evitare monopolio. Registrare i crediti solo dopo la validazione, con regole versionate per ciascun workload e un tetto per evitare abusi. Prima broker centrale con ruoli Requestor/Provider; niente P2P richiesto per questa fase.
 
-### Fase D — Scalabilità misurata
+### Fase D — Scalabilità misurata (non implementata)
 
 Procedere per gradini 100, 1.000, 10.000, 100.000 nodi simulati e poi testare worker HTTP concorrenti su più processi/host. Registrare richieste/s, task utili/s, memoria, CPU, I/O, latenza p50/p95/p99 e tempo di recupero. Distinguere sempre nodi registrati, attivi e richieste simultanee. Passare da SQLite a PostgreSQL, separare dati o aggiungere coordinatori solo quando una prova ripetibile mostra un limite concreto.
 
-### Fase E — Tre dispositivi reali
+### Fase E — Tre dispositivi reali (non implementata)
 
 In una LAN privata protetta: un nodo richiede un job, due worker eterogenei lo ricevono via pull; spegnere deliberatamente un worker; aspettare scadenza/riassegnazione; confrontare risultato e copertura con il calcolo sequenziale. Registrare modello, sistema operativo, versioni, rate, tempi, rete e condizioni energetiche. Non esporre API non protette su Internet.
 

@@ -26,7 +26,9 @@ curl -sS -X POST http://localhost:3003/api/batch/jobs \
   -d '{"workloadId":"monte-carlo-v1","params":{"samples":5000000,"seed":42},"chunkSize":25000}'
 ```
 
-Copy the returned `id` as `JOB`. On each Node-capable machine, start one worker process (the node IDs must be unique):
+Copy the returned `id` as `JOB`. New jobs use trusted verification by default: the coordinator recomputes every task from the deterministic seed and absolute sample indices before accepting it. To ask a different worker to independently repeat a deterministic sample of tasks, include for example `"verification":{"mode":"trusted","redundancySampleRate":0.1}` in the job request. The rate is between 0 and 1; zero (the default) avoids duplicate worker execution, while 1 repeats every task. A redundant result stays pending until a different node claims it. The coordinator's trusted calculation still decides the outcome if workers disagree.
+
+On each Node-capable machine, start one worker process (the node IDs must be unique):
 
 ```sh
 MACN_URL='http://192.168.1.20:3003' MACN_TOKEN="$TOKEN" MACN_NODE_ID='desktop' MACN_JOB_ID='JOB' npm run batch:worker
@@ -38,9 +40,19 @@ Use `laptop` and `phone-node` as IDs on the other devices. A smartphone can join
 curl -sS http://192.168.1.20:3003/api/batch/jobs/JOB -H "Authorization: Bearer $TOKEN"
 ```
 
-The benchmark keeps the legacy `rate` value in units/millisecond for the Adaptive WebSocket scheduler and exposes `unitsPerSecond` explicitly for Batch. Batch uses that field for package sizing and lease estimates; its EWMA also measures units/second after each task. `MACN_WORK_WINDOW_SECONDS` (default 30, accepted range 1–300) controls how much work it requests per pull, capped at 32 tasks. For example, pass `MACN_WORK_WINDOW_SECONDS=60` to a capable desktop to reduce polling, while a slower node naturally receives fewer tasks. Computation runs in a worker thread so the client can renew active leases while a long task is running. Lease length is estimated from the reserved package with a safety margin (minimum 60 seconds, maximum 30 minutes); a lost worker's tasks become eligible when the lease expires and can be reissued up to four attempts. Results require the current lease token and are accepted once.
+The benchmark keeps the legacy `rate` value in units/millisecond for the Adaptive WebSocket scheduler and exposes `unitsPerSecond` explicitly for Batch. Batch uses that field for package sizing and lease estimates; its EWMA also measures units/second after each task. `MACN_WORK_WINDOW_SECONDS` (default 30, accepted range 1–300) controls how much work it requests per pull, capped at 32 tasks. For example, pass `MACN_WORK_WINDOW_SECONDS=60` to a capable desktop to reduce polling, while a slower node naturally receives fewer tasks. Computation runs in a worker thread so the client can renew active leases while a long task is running. Lease length is estimated from the reserved package with a safety margin (minimum 60 seconds, maximum 30 minutes); a lost worker's tasks become eligible when the lease expires and can be reissued up to four attempts. Results require the current lease token; format checks alone are not sufficient for acceptance.
 
 Before sending a computed result, the worker writes it to a local SQLite outbox (`~/.macn/batch-spool-<node-id>.sqlite` by default; override with `MACN_SPOOL_DB`). If the coordinator is temporarily unreachable, the worker retries delivery after reconnection. A result already committed by the coordinator survives coordinator restart in its SQLite ledger. A locally spooled result whose lease expired or was reassigned is rejected by fencing; MACN then keeps the authoritative attempt and safely recomputes only that task. Protect the worker's home directory: the outbox contains results and lease tokens.
+
+The job response separates result counters under `verification`: `received` counts submissions recorded, `pending` counts submissions waiting for an independent worker, `verified` and `rejected` count trusted checks, `accepted` counts logical tasks committed into the final result, and `verificationMs` is accumulated coordinator recomputation time. A valid-shaped but incorrect Monte Carlo result is recorded as rejected and never increments completed units. If two redundant workers disagree, the coordinator recomputes the task and accepts the matching result; if neither matches, both are rejected and the task is retried. Attempt history and redundancy candidates persist in SQLite. Older completed Alpha.4 results remain preserved as historical rows; migration does not retroactively certify them.
+
+Measure the local compute cost with:
+
+```sh
+npm run batch:verify-cost -- --samples=500000 --iterations=7
+```
+
+This reports median worker-kernel and trusted-verifier times plus estimated compute factors. It is a same-process microbenchmark, not a physical-device or network benchmark. Trusted verification roughly adds one trusted recomputation per task. Redundancy rate `p` adds a second worker computation and second trusted recomputation for the sampled fraction; expected total algorithmic compute is approximately `2 + 2p` times one unverified run when all machines are treated as equal. Coordinator CPU is not free and must be measured separately at scale.
 
 ## Repeatable local scale probe
 
@@ -62,5 +74,6 @@ To test task timing with heterogeneous workers and simulated outages using the r
 - Pull size uses the startup benchmark and a bounded target window, with per-task EWMA updates. There are no CPU/memory budgets, worker capability negotiation, fairness, or operator dashboard for Batch yet.
 - The whole returned package shares a lease expiry estimated from the benchmark. Workers renew leases during computation and persist computed results locally, but a worker offline longer than its lease cannot reserve ownership indefinitely; after expiry a newer attempt wins and a stale result is rejected.
 - Retry count exhaustion fails the job; it does not split tasks for a slower heterogeneous node.
-- No cryptographic verification or sandboxing. Only trusted workers and this deterministic demonstration workload are appropriate.
-- Next: add a browser worker interface and per-node benchmark telemetry; implement bounded local work queue and lease renewal; introduce concurrent HTTP load tests and SQLite/Postgres measurements; then assess persistent-store migration based on measured contention. Add auth scopes, HTTPS deployment, quotas and workload sandbox before public participation.
+- Verification is specific to deterministic Monte Carlo and trusts the coordinator's own implementation; it is not protection against a compromised coordinator or coordinated malicious workers. Other workloads must define their own independent verifier. No sandboxing, identities, quotas, TLS termination, or public-volunteer protections are included.
+- Redundant candidates wait for a different node; with fewer than two available workers the sampled task cannot finish. Retry exhaustion fails the job rather than quarantining or scoring unreliable nodes.
+- Next: add verifier contracts for additional workloads, validation policy controls and failure/quarantine telemetry. Only later evaluate auth scopes, HTTPS deployment, quotas and workload isolation before any public participation.
