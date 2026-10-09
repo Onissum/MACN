@@ -1,7 +1,7 @@
 name: MACN alpha
 on:
   push:
-    branches: [main, macn-1.0-alpha, macn-alpha.2-lab, macn-alpha.3-batch]
+    branches: [main, macn-1.0-alpha, macn-alpha.2-lab, macn-alpha.3-batch, macn-alpha.3-benchmark-fix]
     paths: ['alpha/**', 'macn-computertc-v0.5.2/**', '.github/workflows/macn-alpha.yml']
   pull_request:
     paths: ['alpha/**', 'macn-computertc-v0.5.2/**', '.github/workflows/macn-alpha.yml']
