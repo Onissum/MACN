@@ -38,6 +38,10 @@ test('HTTP batch job is shared by three pull workers and merged exactly once', a
   assert.equal(result.tasks.completed, 3);
   assert.equal(result.tasks.failed, 0);
   assert.ok(result.result.pi > 3 && result.result.pi < 3.3);
+  const verifierMetrics = await (await fetch(`${baseUrl}/api/batch/verification/metrics`, { headers })).json();
+  assert.equal(verifierMetrics.completed, 3);
+  assert.ok(verifierMetrics.recent.computeP50Ms >= 0);
+  assert.ok(verifierMetrics.recent.endToEndP95Ms >= verifierMetrics.recent.computeP50Ms);
 });
 
 test('HTTP API reports pending and verified states for sampled redundant work', async t => {

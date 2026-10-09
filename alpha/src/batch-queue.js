@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { workload as getWorkload } from './workloads.js';
+import { BatchVerifierPool } from './batch-verifier-pool.js';
 
 function normalizeVerificationPolicy(policy = {}) {
   if (!policy || typeof policy !== 'object' || Array.isArray(policy)) throw Error('verification must be an object');
@@ -24,7 +25,8 @@ function selectedForRedundancy(taskOrdinal, jobId, policy) {
 // Batch delivery uses pull requests and bounded leases. Workload code remains
 // pure and independent from transport and persistence.
 export class BatchQueue {
-  constructor(store, { leaseMs = 60_000, leaseSafetyMarginMs = 30_000, maxLeaseMs = 1_800_000, maxAttempts = 4, maxClaim = 32, now = Date.now } = {}) {
+  constructor(store, { leaseMs = 60_000, leaseSafetyMarginMs = 30_000, maxLeaseMs = 1_800_000, maxAttempts = 4, maxClaim = 32, now = Date.now,
+    verificationWorkers = 1, maxPendingVerifications = 512, verificationTimeoutMs = 120_000, onEvent } = {}) {
     this.store = store;
     this.leaseMs = leaseMs;
     this.leaseSafetyMarginMs = leaseSafetyMarginMs;
@@ -32,6 +34,9 @@ export class BatchQueue {
     this.maxAttempts = maxAttempts;
     this.maxClaim = maxClaim;
     this.now = now;
+    this.verificationTimeoutMs = verificationTimeoutMs;
+    this.verifier = new BatchVerifierPool({ size: verificationWorkers, maxQueue: maxPendingVerifications, onEvent });
+    this.inFlight = new Map();
   }
 
   createJob({ workloadId, params, chunkSize = 10_000, verification }) {
@@ -67,13 +72,44 @@ export class BatchQueue {
       now, makeTask: (start, count, params) => w.makeTask(start, count, params) });
   }
 
-  submit({ jobId, taskId, nodeId, leaseToken, result, computeMs }) {
+  async submit({ jobId, taskId, nodeId, leaseToken, result, computeMs }) {
     const job = this.store.getJob(jobId);
     if (!job) return { accepted: false, reason: 'unknown-task' };
     const w = getWorkload(job.workloadId);
-    return this.store.acceptResult({ jobId, taskId, nodeId, leaseToken, result, computeMs, now: this.now(), maxAttempts: this.maxAttempts,
-      validateResult: w.validResult, verifyResult: (task, value) => w.verifyResult(task.payload, value), mergeResults: w.merge,
+    const context = this.store.receiveResult({ jobId, taskId, nodeId, leaseToken, result, computeMs, now: this.now(), maxAttempts: this.maxAttempts,
+      verificationTimeoutMs: this.verificationTimeoutMs, validateResult: w.validResult,
       requiresRedundancy: (ordinal, id, policy) => selectedForRedundancy(ordinal, id, policy) });
+    if (!context.needsVerification) return context;
+    const key = `${context.taskId}:${context.attempt}`;
+    if (this.inFlight.has(key)) return this.inFlight.get(key);
+    const pending = this.verifyAndFinalize(context, w).finally(() => this.inFlight.delete(key));
+    this.inFlight.set(key, pending);
+    return pending;
+  }
+
+  async verifyAndFinalize(context, workload) {
+    const checks = await Promise.all([
+      this.verifier.verify({ workloadId: context.workloadId, task: context.payload, result: context.result }),
+      ...(context.candidate ? [this.verifier.verify({ workloadId: context.workloadId, task: context.payload, result: context.candidate.result })] : [])
+    ]);
+    const [current, candidate = null] = checks;
+    return this.store.finalizeVerification({ verificationContext: context, currentCheck: current, candidateCheck: candidate,
+      now: this.now(), maxAttempts: this.maxAttempts, mergeResults: workload.merge });
+  }
+
+  async recoverPending() {
+    const records = this.store.pendingVerificationRecords(this.now());
+    const maxBatch = this.verifier.maxQueue;
+    for (let offset = 0; offset < records.length; offset += maxBatch) {
+      await Promise.all(records.slice(offset, offset + maxBatch).map(context => {
+        const key = `${context.taskId}:${context.attempt}`;
+        if (this.inFlight.has(key)) return this.inFlight.get(key);
+        const pending = this.verifyAndFinalize(context, getWorkload(context.workloadId)).finally(() => this.inFlight.delete(key));
+        this.inFlight.set(key, pending);
+        return pending;
+      }));
+    }
+    return records.length;
   }
 
   renew({ jobId, nodeId, leases }) {
@@ -90,5 +126,10 @@ export class BatchQueue {
   }
 
   getJob(id) { return this.store.getJob(id); }
-  close() { this.store.close(); }
+  verificationMetrics() { return this.verifier.snapshot(); }
+  async close() {
+    if (this.closePromise) return this.closePromise;
+    this.closePromise = (async () => { await this.verifier.close(); this.store.close(); })();
+    return this.closePromise;
+  }
 }

@@ -11,7 +11,7 @@ import { monteCarlo } from '../src/workloads.js';
 // This measures local coordinator/SQLite polling plus trusted verification.
 // Worker compute is represented by exact deterministic results, without any
 // physical devices, worker threads, concurrent clients or network transport.
-export function runBatchLoad({ nodes = 1_000, tasks = 1_000 } = {}) {
+export async function runBatchLoad({ nodes = 1_000, tasks = 1_000 } = {}) {
   if (!Number.isSafeInteger(nodes) || nodes < 1 || !Number.isSafeInteger(tasks) || tasks < 1) throw Error('nodes and tasks must be positive integers');
   const dir = join(tmpdir(), `macn-batch-load-${randomUUID()}`), filename = join(dir, 'load.sqlite');
   mkdirSync(dir, { recursive: true });
@@ -30,7 +30,7 @@ export function runBatchLoad({ nodes = 1_000, tasks = 1_000 } = {}) {
         polls++;
         const [task] = queue.claim({ jobId: job.id, nodeId: `virtual-${i}`, limit: 1 });
         if (!task) continue;
-        const accepted = queue.submit({ jobId: job.id, taskId: task.id, nodeId: `virtual-${i}`, leaseToken: task.leaseToken,
+        const accepted = await queue.submit({ jobId: job.id, taskId: task.id, nodeId: `virtual-${i}`, leaseToken: task.leaseToken,
           result: monteCarlo.compute(task.payload), computeMs: 0 });
         if (!accepted.accepted) throw Error('Deterministic virtual-worker result rejected');
         completed++;
@@ -49,11 +49,12 @@ export function runBatchLoad({ nodes = 1_000, tasks = 1_000 } = {}) {
       polls, elapsedMs: +elapsedMs.toFixed(2), pollsPerSecond: +(polls / (elapsedMs / 1_000)).toFixed(1),
       tasksPerSecond: +(tasks / (elapsedMs / 1_000)).toFixed(1), heapDeltaBytes: process.memoryUsage().heapUsed - memoryBefore,
       caveat: 'Virtual workers return correct deterministic results; coordinator verification is included. No physical workers, network, device compute or concurrent HTTP requests are included.' };
-  } finally { queue.close(); rmSync(dir, { recursive: true, force: true }); }
+  } finally { await queue.close(); rmSync(dir, { recursive: true, force: true }); }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = Object.fromEntries(process.argv.slice(2).map(arg => { const [k, v] = arg.replace(/^--/, '').split('='); return [k, Number(v)]; }));
-  const results = [1_000, 10_000, 100_000].map(nodes => runBatchLoad({ nodes, tasks: args.tasks || 1_000 }));
+  const results = [];
+  for (const nodes of [1_000, 10_000, 100_000]) results.push(await runBatchLoad({ nodes, tasks: args.tasks || 1_000 }));
   console.log(JSON.stringify(results, null, 2));
 }

@@ -14,7 +14,7 @@ const defaultWorkers = [
 // Discrete-event simulator: virtual time advances to task completion, node
 // outage/recovery, polling, or lease expiry. It exercises BatchQueue + SQLite,
 // while task compute duration is modeled from the worker's measured rate.
-export function runAsyncSimulation({ samples = 300_000, seed = 42, chunkSize = 5_000, workers = defaultWorkers,
+export async function runAsyncSimulation({ samples = 300_000, seed = 42, chunkSize = 5_000, workers = defaultWorkers,
   pollMs = 250, leaseMs = 5_000, leaseSafetyMarginMs = 5_000, maxAttempts = 4, maxClaim = 32,
   maxVirtualMs = 24 * 60 * 60 * 1_000 } = {}) {
   if (!Number.isSafeInteger(samples) || samples < 1_000 || !Array.isArray(workers) || workers.length < 1) throw Error('Invalid sample or worker configuration');
@@ -70,7 +70,7 @@ export function runAsyncSimulation({ samples = 300_000, seed = 42, chunkSize = 5
         if (!node.active || node.active.finishAt > now) continue;
         const { task, durationMs } = node.active;
         const result = monteCarlo.compute(task.payload);
-        const outcome = queue.submit({ jobId: job.id, taskId: task.id, nodeId: node.id, leaseToken: task.leaseToken,
+        const outcome = await queue.submit({ jobId: job.id, taskId: task.id, nodeId: node.id, leaseToken: task.leaseToken,
           result, computeMs: durationMs });
         leases.delete(task.id);
         if (outcome.accepted && !acceptedTaskIds.has(task.id)) {
@@ -126,16 +126,16 @@ export function runAsyncSimulation({ samples = 300_000, seed = 42, chunkSize = 5
         tasksClaimedIncludingRetries: node.assigned, tasksAccepted: node.accepted, unitsAccepted: node.acceptedUnits,
         wastedUnits: node.wastedUnits, offlineAtMs: node.offlineAtMs, offlineForMs: node.offlineForMs })),
       caveat: 'Virtual task times and outages exercise the real BatchQueue/SQLite lifecycle; no network, simultaneous HTTP clients, or physical device runtime is measured.' };
-  } finally { queue.close(); }
+  } finally { await queue.close(); }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = Object.fromEntries(process.argv.slice(2).map(arg => { const [key, ...rest] = arg.replace(/^--/, '').split('='); return [key, rest.join('=')]; }));
   let output;
   if (!args.scenario || args.scenario === 'steady') {
-    output = runAsyncSimulation({ samples: Number(args.samples || 300_000), seed: Number(args.seed || 42) });
+    output = await runAsyncSimulation({ samples: Number(args.samples || 300_000), seed: Number(args.seed || 42) });
   } else if (args.scenario === 'disconnect') {
-    output = runAsyncSimulation({ samples: Number(args.samples || 10_000), seed: Number(args.seed || 42), chunkSize: 100,
+    output = await runAsyncSimulation({ samples: Number(args.samples || 10_000), seed: Number(args.seed || 42), chunkSize: 100,
       pollMs: 50, leaseMs: 1_000, leaseSafetyMarginMs: 1_000,
       workers: [{ id: 'desktop', unitsPerSecond: 10_000, targetSeconds: 1 }, { id: 'laptop', unitsPerSecond: 5_000, targetSeconds: 1 },
         { id: 'old-pc', unitsPerSecond: 100, targetSeconds: 1, offlineAtMs: 100, offlineForMs: 10_000 }] });

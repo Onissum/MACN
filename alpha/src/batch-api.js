@@ -23,9 +23,16 @@ export function attachBatchApi(app, queue, token) {
       res.json({ tasks });
     } catch (error) { res.status(400).json({ error: error.message }); }
   });
-  router.post('/jobs/:jobId/results', (req, res) => {
-    const outcome = queue.submit({ jobId: req.params.jobId, ...req.body });
-    res.status(outcome.accepted || outcome.duplicate ? 200 : outcome.received ? 202 : 409).json(outcome);
+  router.get('/verification/metrics', (_req, res) => res.json(queue.verificationMetrics()));
+  router.post('/jobs/:jobId/results', async (req, res) => {
+    try {
+      const outcome = await queue.submit({ jobId: req.params.jobId, ...req.body });
+      res.status(outcome.accepted || outcome.duplicate ? 200 : outcome.received ? 202 : 409).json(outcome);
+    } catch (error) {
+      const status = error.code === 'VERIFIER_BUSY' ? 503 : 500;
+      if (status === 503) res.setHeader('Retry-After', '2');
+      res.status(status).json({ error: status === 503 ? 'verification-busy' : 'verification-failed' });
+    }
   });
   router.post('/jobs/:jobId/leases/renew', (req, res) => {
     try {

@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { runAsyncSimulation } from '../lab/async-sim.js';
 
-test('heterogeneous asynchronous workers finish independently and merge the exact baseline', () => {
-  const result = runAsyncSimulation();
+test('heterogeneous asynchronous workers finish independently and merge the exact baseline', async () => {
+  const result = await runAsyncSimulation();
   assert.equal(result.resultVerified, true);
   assert.equal(result.completedTasks, 60);
   assert.ok(result.speedupVsFastestNode > 1);
@@ -12,8 +12,8 @@ test('heterogeneous asynchronous workers finish independently and merge the exac
   assert.ok(result.nodes[0].unitsAccepted > result.nodes[2].unitsAccepted);
 });
 
-test('a disconnected worker lease expires and its work is reassigned without losing results', () => {
-  const result = runAsyncSimulation({ samples: 10_000, chunkSize: 100, pollMs: 50, leaseMs: 1_000,
+test('a disconnected worker lease expires and its work is reassigned without losing results', async () => {
+  const result = await runAsyncSimulation({ samples: 10_000, chunkSize: 100, pollMs: 50, leaseMs: 1_000,
     leaseSafetyMarginMs: 1_000, workers: [
       { id: 'desktop', unitsPerSecond: 10_000, targetSeconds: 1 },
       { id: 'laptop', unitsPerSecond: 5_000, targetSeconds: 1 },
