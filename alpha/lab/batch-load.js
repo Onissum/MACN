@@ -8,8 +8,9 @@ import { BatchQueue } from '../src/batch-queue.js';
 import { SqliteBatchStore } from '../src/sqlite-batch-store.js';
 import { monteCarlo } from '../src/workloads.js';
 
-// This measures local coordinator/SQLite polling overhead only. Workers and
-// network are represented by sequential virtual pollers; compute is synthetic.
+// This measures local coordinator/SQLite polling plus trusted verification.
+// Worker compute is represented by exact deterministic results, without any
+// physical devices, worker threads, concurrent clients or network transport.
 export function runBatchLoad({ nodes = 1_000, tasks = 1_000 } = {}) {
   if (!Number.isSafeInteger(nodes) || nodes < 1 || !Number.isSafeInteger(tasks) || tasks < 1) throw Error('nodes and tasks must be positive integers');
   const dir = join(tmpdir(), `macn-batch-load-${randomUUID()}`), filename = join(dir, 'load.sqlite');
@@ -22,15 +23,16 @@ export function runBatchLoad({ nodes = 1_000, tasks = 1_000 } = {}) {
   let completed = 0, polls = 0;
   try {
     // Cycle through virtual node IDs. Each poll receives at most one task and
-    // immediately returns a valid deterministic-shape synthetic result.
+    // returns the correct Monte Carlo result so the coordinator's verifier is
+    // exercised instead of bypassed with a merely well-formed fake result.
     while (completed < tasks) {
       for (let i = 0; i < nodes && completed < tasks; i++) {
         polls++;
         const [task] = queue.claim({ jobId: job.id, nodeId: `virtual-${i}`, limit: 1 });
         if (!task) continue;
         const accepted = queue.submit({ jobId: job.id, taskId: task.id, nodeId: `virtual-${i}`, leaseToken: task.leaseToken,
-          result: { hits: 0, count: task.count }, computeMs: 0 });
-        if (!accepted.accepted) throw Error('Synthetic result rejected');
+          result: monteCarlo.compute(task.payload), computeMs: 0 });
+        if (!accepted.accepted) throw Error('Deterministic virtual-worker result rejected');
         completed++;
       }
     }
@@ -46,7 +48,7 @@ export function runBatchLoad({ nodes = 1_000, tasks = 1_000 } = {}) {
       runtime: { node: process.version, platform: process.platform, arch: process.arch, logicalCpus: cpus().length, totalMemoryBytes: totalmem() },
       polls, elapsedMs: +elapsedMs.toFixed(2), pollsPerSecond: +(polls / (elapsedMs / 1_000)).toFixed(1),
       tasksPerSecond: +(tasks / (elapsedMs / 1_000)).toFixed(1), heapDeltaBytes: process.memoryUsage().heapUsed - memoryBefore,
-      caveat: 'No real workers, network, device compute, or concurrent HTTP requests are included.' };
+      caveat: 'Virtual workers return correct deterministic results; coordinator verification is included. No physical workers, network, device compute or concurrent HTTP requests are included.' };
   } finally { queue.close(); rmSync(dir, { recursive: true, force: true }); }
 }
 
