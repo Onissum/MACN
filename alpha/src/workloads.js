@@ -47,5 +47,8 @@ export function benchmark(id = monteCarlo.id) {
     times.push(Math.max(0.01, performance.now() - start));
   }
   times.sort((a, b) => a - b);
-  return { workload: id, rate: task.count / times[2], durationMs: times[2], samples: task.count };
+  // `rate` remains units/ms for the existing Adaptive scheduler. Batch workers
+  // use the explicit unitsPerSecond value so the transport contract is clear.
+  const rate = task.count / times[2];
+  return { workload: id, rate, unitsPerSecond: rate * 1_000, durationMs: times[2], samples: task.count };
 }

@@ -56,6 +56,18 @@ test('measured capacity sizes pull packages within configured limits', t => {
   assert.throws(() => f.queue.claim({ jobId: slowJob.id, nodeId: 'invalid', unitsPerSecond: 0, targetSeconds: 1 }), /unitsPerSecond/);
 });
 
+test('faster workers reserve work in proportion to their units per second and receive sufficient leases', t => {
+  const f = fixture({ leaseMs: 1_000, leaseSafetyMarginMs: 1_000, maxClaim: 32 }); t.after(f.dispose);
+  const job = f.queue.createJob({ workloadId: monteCarlo.id, params: { samples: 100_000, seed: 4 }, chunkSize: 1_000 });
+  const fast = f.queue.claim({ jobId: job.id, nodeId: 'fast', unitsPerSecond: 10_000, targetSeconds: 1 });
+  const slow = f.queue.claim({ jobId: job.id, nodeId: 'slow', unitsPerSecond: 2_000, targetSeconds: 1 });
+  assert.equal(fast.length, 10);
+  assert.equal(slow.length, 2);
+  assert.equal(fast.length / slow.length, 10_000 / 2_000);
+  assert.ok(fast.every(task => task.leaseMs >= Math.ceil((fast.length * 1_000 / 10_000) * 2_000 + 1_000)));
+  assert.ok(slow.every(task => task.leaseMs >= Math.ceil((slow.length * 1_000 / 2_000) * 2_000 + 1_000)));
+});
+
 test('lease renewal extends active work but cannot revive an expired lease', t => {
   const f = fixture({ leaseMs: 100 }); t.after(f.dispose);
   const job = f.queue.createJob({ workloadId: monteCarlo.id, params: { samples: 1_000, seed: 7 }, chunkSize: 1_000 });
