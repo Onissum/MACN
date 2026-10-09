@@ -56,6 +56,18 @@ test('measured capacity sizes pull packages within configured limits', t => {
   assert.throws(() => f.queue.claim({ jobId: slowJob.id, nodeId: 'invalid', unitsPerSecond: 0, targetSeconds: 1 }), /unitsPerSecond/);
 });
 
+test('faster workers reserve work in proportion to units per second and receive sufficient leases', t => {
+  const f = fixture({ leaseMs: 1_000, leaseSafetyMarginMs: 1_000, maxClaim: 32 }); t.after(f.dispose);
+  const job = f.queue.createJob({ workloadId: monteCarlo.id, params: { samples: 100_000, seed: 4 }, chunkSize: 1_000 });
+  const fast = f.queue.claim({ jobId: job.id, nodeId: 'fast', unitsPerSecond: 10_000, targetSeconds: 1 });
+  const slow = f.queue.claim({ jobId: job.id, nodeId: 'slow', unitsPerSecond: 2_000, targetSeconds: 1 });
+  assert.equal(fast.length, 10);
+  assert.equal(slow.length, 2);
+  assert.equal(fast.length / slow.length, 10_000 / 2_000);
+  assert.ok(fast.every(task => task.leaseMs >= Math.ceil((fast.length * 1_000 / 10_000) * 2_000 + 1_000)));
+  assert.ok(slow.every(task => task.leaseMs >= Math.ceil((slow.length * 1_000 / 2_000) * 2_000 + 1_000)));
+});
+
 test('lease renewal extends active work but cannot revive an expired lease', t => {
   const f = fixture({ leaseMs: 100 }); t.after(f.dispose);
   const job = f.queue.createJob({ workloadId: monteCarlo.id, params: { samples: 1_000, seed: 7 }, chunkSize: 1_000 });
@@ -78,6 +90,30 @@ test('task ledger survives coordinator restart', t => {
   assert.equal(reopened.getJob(job.id).tasks.leased, 1);
   assert.equal(reopened.claim({ jobId: job.id, nodeId: 'other', limit: 1 }).length, 1);
   assert.equal(task.id, `${job.id}:task:0`);
+});
+
+test('accepted task results survive coordinator restart without being counted twice', t => {
+  const f = fixture(); t.after(f.dispose);
+  const job = f.queue.createJob({ workloadId: monteCarlo.id, params: { samples: 2_000, seed: 17 }, chunkSize: 1_000 });
+  const first = f.queue.claim({ jobId: job.id, nodeId: 'worker-a', limit: 1 })[0];
+  const firstResult = result(first);
+  assert.equal(f.queue.submit({ jobId: job.id, taskId: first.id, nodeId: 'worker-a', leaseToken: first.leaseToken,
+    result: firstResult, computeMs: 12 }).accepted, true);
+  f.queue.close();
+  f.queue = new BatchQueue(new SqliteBatchStore(join(f.dir, 'batch.sqlite')), { leaseMs: 100, now: () => 10_001 });
+
+  const resumed = f.queue.getJob(job.id);
+  assert.equal(resumed.completedUnits, 1_000);
+  assert.equal(resumed.tasks.completed, 1);
+  assert.equal(f.queue.submit({ jobId: job.id, taskId: first.id, nodeId: 'worker-a', leaseToken: first.leaseToken,
+    result: firstResult, computeMs: 12 }).duplicate, true);
+  const second = f.queue.claim({ jobId: job.id, nodeId: 'worker-b', limit: 1 })[0];
+  assert.equal(second.payload.start, 1_000);
+  assert.equal(f.queue.submit({ jobId: job.id, taskId: second.id, nodeId: 'worker-b', leaseToken: second.leaseToken,
+    result: result(second), computeMs: 15 }).jobStatus, 'completed');
+  const completed = f.queue.getJob(job.id);
+  assert.equal(completed.completedUnits, 2_000);
+  assert.deepEqual(completed.result, monteCarlo.merge([monteCarlo.compute({ start: 0, count: 2_000, seed: 17 })]));
 });
 
 test('retry limit fails a repeatedly abandoned task and job', t => {

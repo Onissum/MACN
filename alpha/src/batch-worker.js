@@ -62,13 +62,14 @@ export async function runBatchWorker({ baseUrl, token, nodeId, jobId, targetSeco
   };
   try {
     const profile = benchmark();
+    let unitsPerSecond = profile.unitsPerSecond;
     onEvent({ type: 'worker-start', nodeId, baseUrl, benchmark: profile, spoolFile });
     while (!signal.aborted) {
       const active = new Map(spool.list(jobId).map(item => [item.taskId, { taskId: item.taskId, leaseToken: item.leaseToken }]));
       await postSpooled(active);
       if (signal.aborted) break;
       let tasks;
-      try { ({ tasks } = await request(`/jobs/${jobId}/work`, { nodeId, unitsPerSecond: profile.rate, targetSeconds })); }
+      try { ({ tasks } = await request(`/jobs/${jobId}/work`, { nodeId, unitsPerSecond, targetSeconds })); }
       catch (error) {
         if (signal.aborted) break;
         onEvent({ type: 'poll-error', message: error.message }); await wait(pollMs); continue;
@@ -93,8 +94,8 @@ export async function runBatchWorker({ baseUrl, token, nodeId, jobId, targetSeco
             const start = performance.now();
             const result = await compute(task.payload);
             const computeMs = performance.now() - start;
-            profile.rate = updateRateEstimate(profile.rate, task.count, Math.max(computeMs, 0.01));
-            onEvent({ type: 'capacity-update', nodeId, unitsPerSecond: +profile.rate.toFixed(2) });
+            unitsPerSecond = updateRateEstimate(unitsPerSecond, task.count, Math.max(computeMs, 0.01));
+            onEvent({ type: 'capacity-update', nodeId, unitsPerSecond: +unitsPerSecond.toFixed(2) });
             spool.put({ jobId, taskId: task.id, nodeId, leaseToken: task.leaseToken, result, computeMs });
             await postSpooled(active);
           } catch (error) { active.delete(task.id); onEvent({ type: 'task-error', taskId: task.id, message: error.message }); }
